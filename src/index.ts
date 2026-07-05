@@ -1,7 +1,8 @@
 import { createApp } from 'vue';
 import type { App } from 'vue';
-import { createPinia } from 'pinia';
+import { createPinia, type Pinia } from 'pinia';
 import AppVue from './App.vue';
+import SettingsView from './components/SettingsView.vue';
 import { useSettingsStore, usePlayerStore, usePlaylistStore } from './stores';
 import { createSTStorageAdapter } from './storage/STStorageAdapter';
 import { createSTEventBridge } from './tavern/STEventBridge';
@@ -13,6 +14,8 @@ let app: App<Element> | null = null;
 let eventBridge: STEventBridge | null = null;
 let appReadyHandler: (() => void) | null = null;
 let settingsEntry: HTMLElement | null = null;
+let settingsApp: App<Element> | null = null;
+let piniaInstance: Pinia | null = null;
 
 const SETTINGS_HTML = `
 <div class="inline-drawer">
@@ -21,7 +24,7 @@ const SETTINGS_HTML = `
     <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
   </div>
   <div class="inline-drawer-content stmp-ext-settings-content">
-    <p>悬浮音乐播放器已加载。点击播放器浮窗进行操作。</p>
+    <div id="stmp-settings-mount"></div>
   </div>
 </div>
 `;
@@ -31,15 +34,22 @@ function addSettingsEntry(): void {
   if (!$container || !$container.length) return;
   $container.append(SETTINGS_HTML);
   settingsEntry = $container.children('.inline-drawer').last()[0] ?? null;
-  if (settingsEntry) {
-    const header = settingsEntry.querySelector('.inline-drawer-toggle');
-    header?.addEventListener('click', () => {
-      window.dispatchEvent(new CustomEvent('stmp:toggle-expand'));
-    });
+  if (!settingsEntry) return;
+
+  // Mount SettingsView into the settings panel, sharing the same Pinia instance
+  const mount = settingsEntry.querySelector('#stmp-settings-mount');
+  if (mount && piniaInstance) {
+    settingsApp = createApp(SettingsView);
+    settingsApp.use(piniaInstance);
+    settingsApp.mount(mount);
   }
 }
 
 function removeSettingsEntry(): void {
+  if (settingsApp) {
+    settingsApp.unmount();
+    settingsApp = null;
+  }
   settingsEntry?.remove();
   settingsEntry = null;
 }
@@ -133,6 +143,7 @@ export async function init(): Promise<void> {
     document.body.appendChild(container);
 
     const pinia = createPinia();
+    piniaInstance = pinia;
     app = createApp(AppVue);
     app.use(pinia);
     app.mount(container);
@@ -196,6 +207,7 @@ export function destroy(): void {
   if (root) root.remove();
 
   removeSettingsEntry();
+  piniaInstance = null;
 }
 
 export function disable(): void {

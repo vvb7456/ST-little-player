@@ -233,8 +233,7 @@ function toggleProvider(id: string): void {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  max-height: 240px;
-  overflow-y: auto;
+  padding: 10px 0;
 }
 
 .stmp-setting-group {

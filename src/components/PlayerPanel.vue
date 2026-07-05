@@ -4,7 +4,6 @@ import { usePlayerStore, usePlaylistStore, useSettingsStore } from '@/stores/ind
 import type { PlayMode } from '@/types';
 import PlaylistView from './PlaylistView.vue';
 import SearchView from './SearchView.vue';
-import SettingsView from './SettingsView.vue';
 
 defineEmits<{ collapse: [] }>();
 
@@ -12,7 +11,7 @@ const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();
 const settingsStore = useSettingsStore();
 
-const activeTab = ref<'list' | 'search' | 'settings'>('list');
+const activeTab = ref<'list' | 'search'>('list');
 const showLyrics = ref(true);
 const coverError = ref(false);
 
@@ -172,20 +171,12 @@ function onVolume(e: Event): void {
       >
         Search
       </button>
-      <button
-        class="stmp-tab"
-        :class="{ active: activeTab === 'settings' }"
-        @click="activeTab = 'settings'"
-      >
-        Settings
-      </button>
     </div>
 
     <!-- Tab Content -->
     <div class="stmp-tab-content">
       <PlaylistView v-if="activeTab === 'list'" />
       <SearchView v-else-if="activeTab === 'search'" />
-      <SettingsView v-else-if="activeTab === 'settings'" />
     </div>
   </div>
 </template>
