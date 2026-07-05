@@ -28,19 +28,25 @@ export class NetEaseProvider implements MusicProvider {
   }
 
   async search(keyword: string): Promise<SearchResult[]> {
-    const data = await this.fetchJson(
-      `${this.baseURL}?types=search&name=${encodeURIComponent(keyword)}&count=20&pages=1`,
-    );
-    if (!Array.isArray(data)) return [];
-    return data.map((item: any) => ({
-      id: String(item.id ?? ''),
-      name: String(item.name ?? ''),
-      artist: Array.isArray(item.artist)
-        ? item.artist.join(', ')
-        : String(item.artist ?? ''),
-      duration: item.duration ? Number(item.duration) : undefined,
-      provider: this.id,
-    }));
+    // Retry up to 3 times — the API occasionally returns null/empty
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const data = await this.fetchJson(
+        `${this.baseURL}?types=search&name=${encodeURIComponent(keyword)}&count=20&pages=1`,
+      );
+      if (Array.isArray(data) && data.length > 0) {
+        return data.map((item: any) => ({
+          id: String(item.id ?? ''),
+          name: String(item.name ?? ''),
+          artist: Array.isArray(item.artist)
+            ? item.artist.join(', ')
+            : String(item.artist ?? ''),
+          duration: item.duration ? Number(item.duration) : undefined,
+          provider: this.id,
+        }));
+      }
+      if (attempt < 2) await new Promise(r => setTimeout(r, 500));
+    }
+    return [];
   }
 
   async resolve(id: string): Promise<ResolvedTrack | null> {
