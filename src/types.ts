@@ -4,7 +4,7 @@ export interface MusicProvider {
   id: string;
   name: string;
   search(keyword: string): Promise<SearchResult[]>;
-  resolve(id: string): Promise<ResolvedTrack | null>;
+  resolve(id: string, picId?: string): Promise<ResolvedTrack | null>;
 }
 
 export interface SearchResult {
@@ -13,6 +13,7 @@ export interface SearchResult {
   artist: string;
   duration?: number;
   provider: string;
+  picId?: string;
 }
 
 export interface ResolvedTrack {
@@ -34,6 +35,7 @@ export interface PlaylistItem {
   messageId?: number;
   providerId?: string;
   providerTrackId?: string;
+  providerPicId?: string;
   localBlobKey?: string;
   addedAt: number;
 }

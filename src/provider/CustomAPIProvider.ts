@@ -46,7 +46,7 @@ export class CustomAPIProvider implements MusicProvider {
     }));
   }
 
-  async resolve(id: string): Promise<ResolvedTrack | null> {
+  async resolve(id: string, _picId?: string): Promise<ResolvedTrack | null> {
     if (!this.resolveURL) return null;
     const url = this.resolveURL.replace('{id}', encodeURIComponent(id));
     const data = await this.fetchJson(url);

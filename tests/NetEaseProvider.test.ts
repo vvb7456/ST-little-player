@@ -83,7 +83,7 @@ describe('NetEaseProvider', () => {
       return jsonResp(null);
     });
     const p = new NetEaseProvider();
-    const track = await p.resolve('123');
+    const track = await p.resolve('123', '456');
     expect(track).toEqual({
       url: 'http://a/x.mp3',
       lyric: '[00:00] lala',

@@ -42,6 +42,7 @@ export class NetEaseProvider implements MusicProvider {
             : String(item.artist ?? ''),
           duration: item.duration ? Number(item.duration) : undefined,
           provider: this.id,
+          picId: item.pic_id ? String(item.pic_id) : undefined,
         }));
       }
       if (attempt < 2) await new Promise(r => setTimeout(r, 500));
@@ -49,14 +50,16 @@ export class NetEaseProvider implements MusicProvider {
     return [];
   }
 
-  async resolve(id: string): Promise<ResolvedTrack | null> {
+  async resolve(id: string, picId?: string): Promise<ResolvedTrack | null> {
     const urlData = await this.fetchJson(
       `${this.baseURL}?types=url&id=${encodeURIComponent(id)}&br=320`,
     );
     if (!urlData || !urlData.url) return null;
     const [lyricData, picData] = await Promise.all([
       this.fetchJson(`${this.baseURL}?types=lyric&id=${encodeURIComponent(id)}`),
-      this.fetchJson(`${this.baseURL}?types=pic&id=${encodeURIComponent(id)}`),
+      picId
+        ? this.fetchJson(`${this.baseURL}?types=pic&id=${encodeURIComponent(picId)}`)
+        : Promise.resolve(null),
     ]);
     return {
       url: String(urlData.url),

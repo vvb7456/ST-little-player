@@ -22,7 +22,7 @@ export class LocalFileProvider implements MusicProvider {
     return [];
   }
 
-  async resolve(id: string): Promise<ResolvedTrack | null> {
+  async resolve(id: string, _picId?: string): Promise<ResolvedTrack | null> {
     if (!this.storage) return null;
     const blob = await this.storage.getItem('stmp:audio:' + id);
     if (!blob) return null;

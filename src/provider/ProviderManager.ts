@@ -27,13 +27,13 @@ export class ProviderManager {
     return merged;
   }
 
-  async resolve(id: string, providerId: string): Promise<ResolvedTrack | null> {
+  async resolve(id: string, providerId: string, picId?: string): Promise<ResolvedTrack | null> {
     const provider = this.getProvider(providerId);
     if (!provider) return null;
     return new Promise<ResolvedTrack | null>((resolve) => {
       const timer = setTimeout(() => resolve(null), 15000);
       provider
-        .resolve(id)
+        .resolve(id, picId)
         .then((res) => {
           clearTimeout(timer);
           resolve(res);

@@ -104,6 +104,7 @@ export const usePlaylistStore = defineStore('playlist', {
         source: 'user',
         providerId: result.provider,
         providerTrackId: result.id,
+        providerPicId: result.picId,
         addedAt: Date.now(),
       };
       this.list.push(item);
@@ -184,57 +185,34 @@ export const usePlaylistStore = defineStore('playlist', {
         }
       }
 
-      // 2. Has provider+trackId: resolve directly (with short-lived cache)
+      // 2. Has provider+trackId: resolve directly (always fresh, no cache — URLs expire fast)
       if (!resolved && item.providerId && item.providerTrackId) {
-        const cacheKey = `stmp:resolve:${item.providerId}:${item.providerTrackId}`;
-        // Use short TTL — NetEase URLs expire
-        const cached = await storage.getCache<{ url: string; lyric?: string; cover?: string }>(cacheKey);
-        if (cached) {
-          resolved = {
-            url: cached.url,
-            lyric: cached.lyric,
-            cover: cached.cover,
-            name: item.song,
-            artist: item.artist ?? '',
-            source: item.providerId,
-          };
-        } else {
-          const mgr = createDefaultProviders(settingsStore.settings.providers);
-          const track = await mgr.resolve(item.providerId, item.providerTrackId);
-          if (track) {
-            track.name = item.song;
-            track.artist = item.artist ?? track.artist;
-            resolved = track;
-            await storage.setCache(cacheKey, {
-              url: track.url,
-              lyric: track.lyric,
-              cover: track.cover,
-            }, 600_000); // 10 min TTL
-          }
+        const mgr = createDefaultProviders(settingsStore.settings.providers);
+        const track = await mgr.resolve(item.providerId, item.providerTrackId, item.providerPicId);
+        if (track) {
+          track.name = item.song;
+          track.artist = item.artist ?? track.artist;
+          resolved = track;
         }
       }
 
-      // 3. Chat cue: only song/artist name, no provider trackId → search first
+      // 3. Fallback: search by name and resolve (also used when path 2 fails)
       if (!resolved && item.song) {
         const mgr = createDefaultProviders(settingsStore.settings.providers);
         const query = item.artist ? `${item.song} ${item.artist}` : item.song;
         const results = await mgr.searchAll(query);
-        if (results.length > 0) {
-          // Pick first result, resolve it
-          const best = results[0];
-          item.providerId = best.provider;
-          item.providerTrackId = best.id;
-          const track = await mgr.resolve(best.id, best.provider);
+        // Try up to 3 results — first may have empty URL (copyright), skip to next
+        for (let i = 0; i < Math.min(results.length, 3); i++) {
+          const candidate = results[i];
+          const track = await mgr.resolve(candidate.id, candidate.provider, candidate.picId);
           if (track) {
-            track.name = best.name;
-            track.artist = best.artist;
+            item.providerId = candidate.provider;
+            item.providerTrackId = candidate.id;
+            item.providerPicId = candidate.picId;
+            track.name = candidate.name;
+            track.artist = candidate.artist;
             resolved = track;
-            const cacheKey = `stmp:resolve:${item.providerId}:${item.providerTrackId}`;
-            await storage.setCache(cacheKey, {
-              url: track.url,
-              lyric: track.lyric,
-              cover: track.cover,
-            }, 600_000);
+            break;
           }
         }
       }
@@ -244,12 +222,6 @@ export const usePlaylistStore = defineStore('playlist', {
         if (typeof toastr !== 'undefined') {
           toastr.warning(`无法播放: ${item.song}`);
         }
-        // Auto-skip to next after a short delay
-        setTimeout(() => {
-          const playerStore = usePlayerStore();
-          if (playerStore.isPlaying) return;
-          void this.next();
-        }, 1000);
         return;
       }
 
