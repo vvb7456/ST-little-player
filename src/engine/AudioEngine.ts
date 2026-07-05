@@ -6,10 +6,13 @@ export class AudioEngine {
 
   constructor() {
     this.audio = new Audio();
+    this.audio.crossOrigin = 'anonymous';
+    this.audio.preload = 'auto';
   }
 
   load(url: string): void {
     this.audio.src = url;
+    this.audio.load();
   }
 
   async play(): Promise<void> {

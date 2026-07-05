@@ -7,6 +7,8 @@ class FakeAudio {
   paused = true;
   currentTime = 0;
   duration = NaN;
+  crossOrigin: string | null = null;
+  preload = 'auto';
   private listeners = new Map<string, Set<(ev: { type: string }) => void>>();
 
   addEventListener(type: string, listener: (ev: { type: string }) => void): void {
@@ -20,6 +22,7 @@ class FakeAudio {
     this.listeners.get(event.type)?.forEach((l) => l(event));
     return true;
   }
+  load(): void {}
   play(): Promise<void> {
     this.paused = false;
     return Promise.resolve();

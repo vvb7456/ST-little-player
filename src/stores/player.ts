@@ -61,6 +61,9 @@ export const usePlayerStore = defineStore('player', {
         this.currentLyricIndex = -1;
       }
       await engine.play();
+      if (track.cover) {
+        // preload cover
+      }
     },
 
     async play(): Promise<void> {

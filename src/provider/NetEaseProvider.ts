@@ -45,7 +45,7 @@ export class NetEaseProvider implements MusicProvider {
 
   async resolve(id: string): Promise<ResolvedTrack | null> {
     const urlData = await this.fetchJson(
-      `${this.baseURL}?types=url&id=${encodeURIComponent(id)}`,
+      `${this.baseURL}?types=url&id=${encodeURIComponent(id)}&br=320`,
     );
     if (!urlData || !urlData.url) return null;
     const [lyricData, picData] = await Promise.all([

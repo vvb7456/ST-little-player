@@ -124,7 +124,7 @@ export const usePlaylistStore = defineStore('playlist', {
     play(index: number): void {
       if (index < 0 || index >= this.list.length) return;
       this.currentIndex = index;
-      this.resolveAndPlay(index);
+      void this.resolveAndPlay(index);
     },
 
     next(): void {
@@ -170,19 +170,24 @@ export const usePlaylistStore = defineStore('playlist', {
       if (!storage) return;
 
       let resolved = null;
+
+      // 1. Local file: blob → object URL
       if (item.source === 'local' && item.localBlobKey) {
         const blob = await storage.getBlob(item.localBlobKey);
         if (blob) {
-          const url = URL.createObjectURL(blob);
           resolved = {
-            url,
+            url: URL.createObjectURL(blob),
             name: item.song,
             artist: item.artist ?? '',
             source: 'local',
           };
         }
-      } else if (item.providerId && item.providerTrackId) {
+      }
+
+      // 2. Has provider+trackId: resolve directly (with short-lived cache)
+      if (!resolved && item.providerId && item.providerTrackId) {
         const cacheKey = `stmp:resolve:${item.providerId}:${item.providerTrackId}`;
+        // Use short TTL — NetEase URLs expire
         const cached = await storage.getCache<{ url: string; lyric?: string; cover?: string }>(cacheKey);
         if (cached) {
           resolved = {
@@ -193,27 +198,58 @@ export const usePlaylistStore = defineStore('playlist', {
             artist: item.artist ?? '',
             source: item.providerId,
           };
+        } else {
+          const mgr = createDefaultProviders(settingsStore.settings.providers);
+          const track = await mgr.resolve(item.providerId, item.providerTrackId);
+          if (track) {
+            track.name = item.song;
+            track.artist = item.artist ?? track.artist;
+            resolved = track;
+            await storage.setCache(cacheKey, {
+              url: track.url,
+              lyric: track.lyric,
+              cover: track.cover,
+            }, 600_000); // 10 min TTL
+          }
         }
       }
 
-      if (!resolved && item.providerId && item.providerTrackId) {
+      // 3. Chat cue: only song/artist name, no provider trackId → search first
+      if (!resolved && item.song) {
         const mgr = createDefaultProviders(settingsStore.settings.providers);
-        const track = await mgr.resolve(item.providerTrackId, item.providerId);
-        if (track) {
-          track.name = item.song;
-          track.artist = item.artist ?? track.artist;
-          resolved = track;
-          const cacheKey = `stmp:resolve:${item.providerId}:${item.providerTrackId}`;
-          await storage.setCache(cacheKey, {
-            url: track.url,
-            lyric: track.lyric,
-            cover: track.cover,
-          }, 3600_000);
+        const query = item.artist ? `${item.song} ${item.artist}` : item.song;
+        const results = await mgr.searchAll(query);
+        if (results.length > 0) {
+          // Pick first result, resolve it
+          const best = results[0];
+          item.providerId = best.provider;
+          item.providerTrackId = best.id;
+          const track = await mgr.resolve(best.id, best.provider);
+          if (track) {
+            track.name = best.name;
+            track.artist = best.artist;
+            resolved = track;
+            const cacheKey = `stmp:resolve:${item.providerId}:${item.providerTrackId}`;
+            await storage.setCache(cacheKey, {
+              url: track.url,
+              lyric: track.lyric,
+              cover: track.cover,
+            }, 600_000);
+          }
         }
       }
 
       if (!resolved) {
         console.warn(`[playlist] resolve failed for "${item.song}"`);
+        if (typeof toastr !== 'undefined') {
+          toastr.warning(`无法播放: ${item.song}`);
+        }
+        // Auto-skip to next after a short delay
+        setTimeout(() => {
+          const playerStore = usePlayerStore();
+          if (playerStore.isPlaying) return;
+          void this.next();
+        }, 1000);
         return;
       }
 
