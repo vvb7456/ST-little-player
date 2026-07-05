@@ -4537,7 +4537,7 @@ class Pc {
 }
 class Mc {
   constructor(t) {
-    this.id = "netease", this.name = "网易云", this.baseURL = t?.baseURL ?? "https://music-api.gdstudio.xyz/api.php";
+    this.id = "netease", this.name = "网易云", this.baseURL = t?.baseURL?.trim() || "https://music-api.gdstudio.xyz/api.php";
   }
   async fetchJson(t, s = 5e3) {
     try {

@@ -11,7 +11,7 @@ export class NetEaseProvider implements MusicProvider {
 
   constructor(config?: NetEaseConfig) {
     this.baseURL =
-      config?.baseURL ?? 'https://music-api.gdstudio.xyz/api.php';
+      config?.baseURL?.trim() || 'https://music-api.gdstudio.xyz/api.php';
   }
 
   private async fetchJson(url: string, timeoutMs = 5000): Promise<any | null> {
