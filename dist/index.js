@@ -5187,7 +5187,7 @@ const os = /* @__PURE__ */ Ns("playlist", {
             ae in P && (_[ae] = P[ae]);
           if (typeof _.volume != "number" || _.volume < 0 || _.volume > 100)
             throw new Error("Invalid volume");
-          if (!["list", "random", "single"].includes(_.playMode))
+          if (typeof _.playMode != "string" || !["list", "random", "single"].includes(_.playMode))
             throw new Error("Invalid playMode");
           if (_.providers && !Array.isArray(_.providers))
             throw new Error("Invalid providers");
@@ -5333,7 +5333,7 @@ const os = /* @__PURE__ */ Ns("playlist", {
       ])
     ]));
   }
-}), Pa = /* @__PURE__ */ Pt(Ra, [["__scopeId", "data-v-e6294cd3"]]), Ma = { class: "stmp-panel" }, Aa = { class: "stmp-topbar" }, La = { class: "stmp-cover" }, Oa = ["src"], $a = {
+}), Pa = /* @__PURE__ */ Pt(Ra, [["__scopeId", "data-v-f47a91bd"]]), Ma = { class: "stmp-panel" }, Aa = { class: "stmp-topbar" }, La = { class: "stmp-cover" }, Oa = ["src"], $a = {
   key: 1,
   class: "stmp-cover-placeholder"
 }, Da = { class: "stmp-track-info" }, ka = { class: "stmp-track-name" }, Ua = {

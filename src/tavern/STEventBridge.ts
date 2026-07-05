@@ -1,16 +1,15 @@
 import type { InternalEvent, InternalEventListener } from '@/types';
 
-type STEventTypes = typeof SillyTavern.getContext extends () => infer C
-  ? C extends { event_types: infer ET }
-    ? ET
-    : never
-  : never;
-
-type STEventName = STEventTypes[keyof STEventTypes];
+/**
+ * SillyTavern event name type. ST exposes event types as string keys on
+ * the `event_types` object from `getContext()`. We type loosely as string
+ * to remain compatible across ST versions without a hard type dependency.
+ */
+type STEventName = string;
 
 interface EventSource {
-  on(event: STEventName, listener: (...args: any[]) => void): void;
-  removeListener(event: STEventName, listener: (...args: any[]) => void): void;
+  on(event: string, listener: (...args: any[]) => void): void;
+  removeListener(event: string, listener: (...args: any[]) => void): void;
 }
 
 /**

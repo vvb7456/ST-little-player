@@ -86,7 +86,7 @@ const importData = (): void => {
       if (typeof filtered.volume !== 'number' || filtered.volume < 0 || filtered.volume > 100) {
         throw new Error('Invalid volume');
       }
-      if (!['list', 'random', 'single'].includes(filtered.playMode)) {
+      if (typeof filtered.playMode !== 'string' || !['list', 'random', 'single'].includes(filtered.playMode)) {
         throw new Error('Invalid playMode');
       }
       if (filtered.providers && !Array.isArray(filtered.providers)) {
