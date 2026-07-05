@@ -140,7 +140,8 @@ export async function init(): Promise<void> {
   try {
     const container = document.createElement('div');
     container.id = 'st-music-player-root';
-    document.body.appendChild(container);
+    // Attach to <html> instead of <body> to escape ST's mobile body{position:fixed;overflow:hidden}
+    document.documentElement.appendChild(container);
 
     const pinia = createPinia();
     piniaInstance = pinia;

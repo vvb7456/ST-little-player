@@ -5720,7 +5720,7 @@ const us = /* @__PURE__ */ Js("playlist", {
       })) : (L(), lt(qc, { key: 0 }))
     ], 34));
   }
-}), Xa = /* @__PURE__ */ bt(qa, [["__scopeId", "data-v-01a201a1"]]), Za = { class: "stmp-settings" }, Qa = { class: "stmp-setting-group" }, eu = { class: "stmp-setting-row" }, tu = ["checked", "onChange"], su = ["onUpdate:modelValue"], nu = ["onUpdate:modelValue"], iu = ["onUpdate:modelValue"], ru = { class: "stmp-setting-group" }, ou = { class: "stmp-setting-label" }, lu = ["value"], cu = { class: "stmp-setting-group" }, au = ["value"], uu = ["value"], fu = { class: "stmp-setting-group" }, du = { class: "stmp-setting-row" }, hu = ["checked"], pu = { class: "stmp-setting-group" }, gu = { class: "stmp-rules" }, mu = ["onClick"], vu = { class: "stmp-rule-add" }, yu = /* @__PURE__ */ vt({
+}), Xa = /* @__PURE__ */ bt(qa, [["__scopeId", "data-v-de81f0c8"]]), Za = { class: "stmp-settings" }, Qa = { class: "stmp-setting-group" }, eu = { class: "stmp-setting-row" }, tu = ["checked", "onChange"], su = ["onUpdate:modelValue"], nu = ["onUpdate:modelValue"], iu = ["onUpdate:modelValue"], ru = { class: "stmp-setting-group" }, ou = { class: "stmp-setting-label" }, lu = ["value"], cu = { class: "stmp-setting-group" }, au = ["value"], uu = ["value"], fu = { class: "stmp-setting-group" }, du = { class: "stmp-setting-row" }, hu = ["checked"], pu = { class: "stmp-setting-group" }, gu = { class: "stmp-rules" }, mu = ["onClick"], vu = { class: "stmp-rule-add" }, yu = /* @__PURE__ */ vt({
   __name: "SettingsView",
   setup(e) {
     const t = ge(), s = /* @__PURE__ */ Ie(""), n = [
@@ -6131,7 +6131,7 @@ function Pu(e, t, s) {
 async function Au() {
   try {
     const e = document.createElement("div");
-    e.id = "st-music-player-root", document.body.appendChild(e);
+    e.id = "st-music-player-root", document.documentElement.appendChild(e);
     const t = wc();
     As = t, Rt = Hr(Xa), Rt.use(t), Rt.mount(e);
     const s = ge(), n = Lc();

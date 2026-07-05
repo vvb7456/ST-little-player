@@ -231,6 +231,8 @@ onBeforeUnmount(() => {
   border-radius: 16px 16px 0 0;
   max-height: 70vh;
   overflow-y: auto;
+  touch-action: auto !important;
+  z-index: 999999 !important;
 }
 
 .stmp-mobile.stmp-expanded {
