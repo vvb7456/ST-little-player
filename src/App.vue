@@ -34,8 +34,15 @@ let boundOnDrag: ((e: PointerEvent) => void) | null = null;
 let boundStopDrag: (() => void) | null = null;
 
 function startDrag(e: PointerEvent): void {
-  if (isMobile.value) return;
   const target = e.target as HTMLElement;
+
+  // On mobile: no drag, but allow tap to expand/collapse
+  if (isMobile.value) {
+    // Ignore taps on interactive elements
+    if (target.closest('button')) return;
+    toggleExpand();
+    return;
+  }
 
   // Never drag from these interactive elements
   if (target.closest('input, .stmp-tab, .stmp-result, .stmp-item, .stmp-upload-btn, .stmp-search-input, .stmp-controls, .stmp-lyrics, .stmp-lyrics-toggle, .stmp-tabs, .stmp-tab-content')) return;
