@@ -2,25 +2,30 @@ import type { MusicProvider, SearchResult, ResolvedTrack } from '../types';
 
 export interface NetEaseConfig {
   baseURL?: string;
+  apiBase?: string;
 }
 
 /**
- * NetEase music provider via gdstudio public API.
+ * NetEase music provider.
  *
- * Key resilience patterns (learned from reference script analysis):
- * - 5s AbortController timeout on all fetches
- * - Search retry: up to 6 attempts (API returns [] ~60% of the time)
- * - Audio playability probe: validate URL with Audio element before returning
- * - No br parameter: accept server default bitrate
- * - Lyric + pic fetched in parallel after URL is validated
+ * Architecture:
+ * - Search/lyric/detail: proxied through our own nginx → NetEase official API
+ *   (100% stable, no rate limiting, no empty results)
+ * - URL resolve: gdstudio API (only thing that returns playable audio URLs)
+ *
+ * The apiBase defaults to our self-hosted proxy. Users can override
+ * via provider config if they host their own.
  */
 export class NetEaseProvider implements MusicProvider {
   id = 'netease';
   name = '网易云';
-  private baseURL: string;
+  private apiBase: string;
+  private urlBase: string;
 
   constructor(config?: NetEaseConfig) {
-    this.baseURL =
+    this.apiBase =
+      config?.apiBase?.trim() || 'https://jgauby2m0k6n.erocraft.com';
+    this.urlBase =
       config?.baseURL?.trim() || 'https://music-api.gdstudio.xyz/api.php';
   }
 
@@ -40,8 +45,7 @@ export class NetEaseProvider implements MusicProvider {
   /**
    * Probe whether an audio URL is actually playable.
    * Uses Audio element (not fetch) because media elements work cross-origin
-   * without CORS headers — fetch would be blocked.
-   * 3s timeout, resolves boolean.
+   * without CORS headers. 3s timeout, resolves boolean.
    */
   probeAudio(url: string, timeoutMs = 3000): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
@@ -79,51 +83,47 @@ export class NetEaseProvider implements MusicProvider {
   }
 
   async search(keyword: string): Promise<SearchResult[]> {
-    // API returns [] ~60% of the time under rapid requests.
-    // Retry up to 6 times with short backoff.
-    for (let attempt = 0; attempt < 6; attempt++) {
-      const data = await this.fetchJson(
-        `${this.baseURL}?types=search&name=${encodeURIComponent(keyword)}&count=20&pages=1`,
-      );
-      if (Array.isArray(data) && data.length > 0) {
-        return data.map((item: any) => ({
-          id: String(item.id ?? ''),
-          name: String(item.name ?? ''),
-          artist: Array.isArray(item.artist)
-            ? item.artist.join(', ')
-            : String(item.artist ?? ''),
-          duration: item.duration ? Number(item.duration) : undefined,
-          provider: this.id,
-          picId: item.pic_id ? String(item.pic_id) : undefined,
-        }));
-      }
-      // Backoff: 300, 600, 900, 1200, 1500ms
-      if (attempt < 5) await new Promise(r => setTimeout(r, 300 * (attempt + 1)));
-    }
-    return [];
+    const data = await this.fetchJson(
+      `${this.apiBase}/search?s=${encodeURIComponent(keyword)}&type=1&offset=0&limit=20`,
+    );
+    const songs = data?.result?.songs;
+    if (!Array.isArray(songs)) return [];
+
+    return songs.map((item: any) => ({
+      id: String(item.id ?? ''),
+      name: String(item.name ?? ''),
+      artist: Array.isArray(item.artists)
+        ? item.artists.map((a: any) => a.name).join(', ')
+        : String(item.artists?.[0]?.name ?? ''),
+      duration: item.duration ? Math.floor(item.duration / 1000) : undefined,
+      provider: this.id,
+      picId: item.album?.picId ? String(item.album.picId) : undefined,
+    }));
   }
 
-  async resolve(id: string, picId?: string): Promise<ResolvedTrack | null> {
-    // Fetch URL (no br param — accept server default)
+  async resolve(id: string, _picId?: string): Promise<ResolvedTrack | null> {
+    // Get playable URL from gdstudio
     const urlData = await this.fetchJson(
-      `${this.baseURL}?types=url&id=${encodeURIComponent(id)}`,
+      `${this.urlBase}?types=url&id=${encodeURIComponent(id)}`,
     );
-    if (!urlData || !urlData.url) {
-      return null;
-    }
+    if (!urlData || !urlData.url) return null;
 
-    // Fetch lyric + pic in parallel (only after URL is confirmed present)
-    const [lyricData, picData] = await Promise.all([
-      this.fetchJson(`${this.baseURL}?types=lyric&id=${encodeURIComponent(id)}`),
-      picId
-        ? this.fetchJson(`${this.baseURL}?types=pic&id=${encodeURIComponent(picId)}`)
-        : Promise.resolve(null),
+    // Fetch lyric + cover in parallel from official API
+    const [lyricData, detailData] = await Promise.all([
+      this.fetchJson(
+        `${this.apiBase}/lyric?os=pc&id=${encodeURIComponent(id)}&lv=-1&kv=-1&tv=-1`,
+      ),
+      this.fetchJson(
+        `${this.apiBase}/detail?ids=%5B${encodeURIComponent(id)}%5D`,
+      ),
     ]);
+
+    const song = detailData?.songs?.[0];
 
     return {
       url: String(urlData.url),
-      lyric: lyricData?.lyric ? String(lyricData.lyric) : undefined,
-      cover: picData?.url ? String(picData.url) : undefined,
+      lyric: lyricData?.lrc?.lyric ? String(lyricData.lrc.lyric) : undefined,
+      cover: song?.album?.picUrl ? String(song.album.picUrl) : undefined,
       name: '',
       artist: '',
       source: this.id,
@@ -133,7 +133,6 @@ export class NetEaseProvider implements MusicProvider {
   /**
    * Search + resolve + probe in one call.
    * Iterates search results until finding one with a playable URL.
-   * This is the primary resilience mechanism against API flakiness.
    */
   async searchAndResolve(
     keyword: string,
@@ -143,12 +142,10 @@ export class NetEaseProvider implements MusicProvider {
     const results = await this.search(query);
     if (results.length === 0) return null;
 
-    // Try each result until we find one with a playable URL
     for (const result of results) {
       const track = await this.resolve(result.id, result.picId);
       if (!track) continue;
 
-      // Probe audio playability (3s timeout)
       const playable = await this.probeAudio(track.url);
       if (!playable) {
         console.warn(`[NetEase] audio probe failed for id=${result.id}, trying next`);

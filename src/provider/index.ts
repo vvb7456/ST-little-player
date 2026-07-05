@@ -19,7 +19,7 @@ export function createDefaultProviders(
     const cfg = c.config ?? {};
     switch (c.id) {
       case 'netease':
-        return new NetEaseProvider({ baseURL: cfg.baseURL });
+        return new NetEaseProvider({ baseURL: cfg.baseURL, apiBase: cfg.apiBase });
       case 'local':
         return new LocalFileProvider({
           storage: cfg.storage

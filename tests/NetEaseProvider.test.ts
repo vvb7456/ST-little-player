@@ -25,21 +25,35 @@ describe('NetEaseProvider', () => {
     expect(p.name).toBe('网易云');
   });
 
-  it('uses default baseURL', () => {
+  it('uses default apiBase and urlBase', () => {
     const p = new NetEaseProvider();
-    expect((p as any).baseURL).toBe(
-      'https://music-api.gdstudio.xyz/api.php',
-    );
+    expect((p as any).apiBase).toBe('https://jgauby2m0k6n.erocraft.com');
+    expect((p as any).urlBase).toBe('https://music-api.gdstudio.xyz/api.php');
   });
 
-  it('search maps results to SearchResult[]', async () => {
+  it('search maps NetEase official API results to SearchResult[]', async () => {
     mockFetch.mockImplementation((url: string) => {
-      expect(url).toContain('types=search');
-      expect(url).toContain('name=test');
-      return jsonResp([
-        { id: 10, name: 'Song', artist: ['A', 'B'], duration: 120 },
-        { id: 11, name: 'Song2', artist: 'C' },
-      ]);
+      expect(url).toContain('/search');
+      expect(url).toContain('s=test');
+      return jsonResp({
+        result: {
+          songs: [
+            {
+              id: 10,
+              name: 'Song',
+              artists: [{ name: 'A' }, { name: 'B' }],
+              duration: 120000,
+              album: { picId: 999, name: 'Album' },
+            },
+            {
+              id: 11,
+              name: 'Song2',
+              artists: [{ name: 'C' }],
+              album: { name: 'Album2' },
+            },
+          ],
+        },
+      });
     });
     const p = new NetEaseProvider();
     const results = await p.search('test');
@@ -50,9 +64,11 @@ describe('NetEaseProvider', () => {
       artist: 'A, B',
       duration: 120,
       provider: 'netease',
+      picId: '999',
     });
     expect(results[1].artist).toBe('C');
     expect(results[1].duration).toBeUndefined();
+    expect(results[1].picId).toBeUndefined();
   });
 
   it('search returns empty array on fetch failure', async () => {
@@ -62,23 +78,31 @@ describe('NetEaseProvider', () => {
     expect(results).toEqual([]);
   });
 
-  it('search returns empty array on non-array response', async () => {
-    mockFetch.mockImplementation(() => jsonResp({ error: 'no' }));
+  it('search returns empty array on missing songs field', async () => {
+    mockFetch.mockImplementation(() => jsonResp({ result: {} }));
     const p = new NetEaseProvider();
     const results = await p.search('test');
     expect(results).toEqual([]);
   });
 
-  it('resolve returns ResolvedTrack with url, lyric, cover', async () => {
+  it('resolve returns ResolvedTrack with url, lyric, cover from detail', async () => {
     mockFetch.mockImplementation((url: string) => {
       if (url.includes('types=url')) {
         return jsonResp({ url: 'http://a/x.mp3' });
       }
-      if (url.includes('types=lyric')) {
-        return jsonResp({ lyric: '[00:00] lala' });
+      if (url.includes('/lyric')) {
+        return jsonResp({ lrc: { lyric: '[00:00] lala' } });
       }
-      if (url.includes('types=pic')) {
-        return jsonResp({ url: 'http://a/cover.jpg' });
+      if (url.includes('/detail')) {
+        return jsonResp({
+          songs: [
+            {
+              name: 'Song',
+              artists: [{ name: 'A' }],
+              album: { picUrl: 'http://a/cover.jpg' },
+            },
+          ],
+        });
       }
       return jsonResp(null);
     });
@@ -111,7 +135,7 @@ describe('NetEaseProvider', () => {
     expect(track).toBeNull();
   });
 
-  it('resolve still works without lyric and pic', async () => {
+  it('resolve still works without lyric and cover', async () => {
     mockFetch.mockImplementation((url: string) => {
       if (url.includes('types=url')) {
         return jsonResp({ url: 'http://a/x.mp3' });
