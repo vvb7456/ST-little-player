@@ -45,6 +45,24 @@ export class ProviderManager {
     });
   }
 
+  /**
+   * Search + resolve + probe across all providers.
+   * Tries each provider in priority order, iterating search results
+   * until a playable track is found.
+   */
+  async searchAndResolve(keyword: string, artist?: string): Promise<ResolvedTrack | null> {
+    for (const provider of this.providers) {
+      if (!provider.searchAndResolve) continue;
+      try {
+        const track = await provider.searchAndResolve(keyword, artist);
+        if (track) return track;
+      } catch {
+        // continue to next provider
+      }
+    }
+    return null;
+  }
+
   getProvider(id: string): MusicProvider | undefined {
     return this.providers.find((p) => p.id === id);
   }

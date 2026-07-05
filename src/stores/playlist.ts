@@ -3,6 +3,7 @@ import type {
   Cue,
   PlaylistItem,
   PlayMode,
+  ResolvedTrack,
   ScanCursor,
   SearchResult,
 } from '@/types';
@@ -172,7 +173,8 @@ export const usePlaylistStore = defineStore('playlist', {
       const storage = settingsStore.storage;
       if (!storage) return;
 
-      let resolved = null;
+      let resolved: ResolvedTrack | null = null;
+      const mgr = createDefaultProviders(settingsStore.settings.providers);
 
       // 1. Local file: blob → object URL
       if (item.source === 'local' && item.localBlobKey) {
@@ -187,35 +189,11 @@ export const usePlaylistStore = defineStore('playlist', {
         }
       }
 
-      // 2. Has provider+trackId: resolve directly (always fresh, no cache — URLs expire fast)
-      if (!resolved && item.providerId && item.providerTrackId) {
-        const mgr = createDefaultProviders(settingsStore.settings.providers);
-        const track = await mgr.resolve(item.providerId, item.providerTrackId, item.providerPicId);
-        if (track) {
-          track.name = item.song;
-          track.artist = item.artist ?? track.artist;
-          resolved = track;
-        }
-      }
-
-      // 3. Fallback: search by name and resolve (also used when path 2 fails)
+      // 2. Search + resolve + probe (iterates results until playable)
       if (!resolved && item.song) {
-        const mgr = createDefaultProviders(settingsStore.settings.providers);
-        const query = item.artist ? `${item.song} ${item.artist}` : item.song;
-        const results = await mgr.searchAll(query);
-        // Try up to 3 results — first may have empty URL (copyright), skip to next
-        for (let i = 0; i < Math.min(results.length, 3); i++) {
-          const candidate = results[i];
-          const track = await mgr.resolve(candidate.id, candidate.provider, candidate.picId);
-          if (track) {
-            item.providerId = candidate.provider;
-            item.providerTrackId = candidate.id;
-            item.providerPicId = candidate.picId;
-            track.name = candidate.name;
-            track.artist = candidate.artist;
-            resolved = track;
-            break;
-          }
+        resolved = await mgr.searchAndResolve(item.song, item.artist);
+        if (resolved) {
+          item.providerId = resolved.source;
         }
       }
 

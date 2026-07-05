@@ -5,6 +5,7 @@ export interface MusicProvider {
   name: string;
   search(keyword: string): Promise<SearchResult[]>;
   resolve(id: string, picId?: string): Promise<ResolvedTrack | null>;
+  searchAndResolve?(keyword: string, artist?: string): Promise<ResolvedTrack | null>;
 }
 
 export interface SearchResult {
