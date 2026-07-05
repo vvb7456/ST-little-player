@@ -130,7 +130,8 @@ function isPlaying(result: SearchResult): boolean {
 }
 
 .stmp-search-input:focus {
-  border-color: var(--SmartThemeQuoteColor, rgba(255, 255, 255, 0.3));
+  border-color: rgba(255, 255, 255, 0.15);
+  outline: none;
 }
 
 .stmp-icon-btn {

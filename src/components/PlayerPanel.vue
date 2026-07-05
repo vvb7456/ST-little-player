@@ -154,8 +154,15 @@ function toggleMute(): void {
       </div>
     </div>
 
-    <!-- Controls -->
+    <!-- Controls: playMode | prev | play | next | volume -->
     <div class="stmp-controls">
+      <button
+        class="stmp-ctrl-btn"
+        aria-label="切换播放模式"
+        @click="cyclePlayMode"
+      >
+        <Icon :name="playModeIcon[settingsStore.settings.playMode]" :size="18" />
+      </button>
       <button class="stmp-ctrl-btn" aria-label="上一首" @click="playlistStore.prev()">
         <Icon name="prev" :size="18" />
       </button>
@@ -168,14 +175,6 @@ function toggleMute(): void {
       </button>
       <button class="stmp-ctrl-btn" aria-label="下一首" @click="playlistStore.next()">
         <Icon name="next" :size="18" />
-      </button>
-      <button
-        class="stmp-ctrl-btn"
-        :class="{ active: settingsStore.settings.playMode !== 'list' }"
-        aria-label="切换播放模式"
-        @click="cyclePlayMode"
-      >
-        <Icon :name="playModeIcon[settingsStore.settings.playMode]" :size="18" />
       </button>
 
       <!-- Volume: icon always visible, slider hidden until hover -->
@@ -360,7 +359,32 @@ function toggleMute(): void {
 }
 
 .stmp-range {
+  -webkit-appearance: none;
+  appearance: none;
   width: 100%;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  cursor: pointer;
+  outline: none;
+}
+
+.stmp-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--SmartThemeQuoteColor, #fff);
+  cursor: pointer;
+}
+
+.stmp-range::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: var(--SmartThemeQuoteColor, #fff);
   cursor: pointer;
 }
 
@@ -372,13 +396,27 @@ function toggleMute(): void {
   color: var(--SmartThemeBodyColor, #ccc);
 }
 
-/* Controls: 5 icons equal spacing, play bigger */
+/* Controls: playMode far-left, play/pause centered, volume far-right */
 .stmp-controls {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto auto auto 1fr;
   align-items: center;
-  justify-content: space-evenly;
   padding: 0 4px;
-  position: relative;
+  height: 40px;
+  gap: 8px;
+}
+
+/* col1: playMode (left-aligned), col5: volume (right-aligned) */
+.stmp-controls > .stmp-ctrl-btn:first-child {
+  justify-self: start;
+}
+
+.stmp-controls > .stmp-volume-container {
+  justify-self: end;
+}
+
+.stmp-play-btn {
+  opacity: 1;
 }
 
 .stmp-ctrl-btn {
@@ -401,15 +439,6 @@ function toggleMute(): void {
   opacity: 1;
 }
 
-.stmp-ctrl-btn.active {
-  color: var(--SmartThemeQuoteColor, #7e57c2);
-  opacity: 1;
-}
-
-.stmp-play-btn {
-  opacity: 1;
-}
-
 /* Volume container */
 .stmp-volume-container {
   position: relative;
@@ -426,9 +455,10 @@ function toggleMute(): void {
   transform-origin: bottom center;
   transition: transform 0.2s ease, opacity 0.2s ease;
   opacity: 0;
-  padding: 8px 4px;
-  background: rgba(0, 0, 0, 0.5);
-  border-radius: 8px;
+  padding: 10px 6px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   margin-bottom: 4px;
   pointer-events: none;
 }
@@ -439,14 +469,51 @@ function toggleMute(): void {
   pointer-events: auto;
 }
 
+/* Custom vertical volume slider */
 .stmp-volume-vertical {
+  -webkit-appearance: none;
+  appearance: none;
   writing-mode: vertical-lr;
   direction: rtl;
-  width: 8px;
+  width: 6px;
   height: 80px;
   cursor: pointer;
-  -webkit-appearance: slider-vertical;
-  appearance: slider-vertical;
+  background: transparent;
+  outline: none;
+}
+
+.stmp-volume-vertical::-webkit-slider-runnable-track {
+  width: 4px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+.stmp-volume-vertical::-moz-range-track {
+  width: 4px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
+
+.stmp-volume-vertical::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--SmartThemeQuoteColor, #fff);
+  margin-left: -4px;
+  cursor: pointer;
+}
+
+.stmp-volume-vertical::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: var(--SmartThemeQuoteColor, #fff);
+  cursor: pointer;
 }
 
 .stmp-tabs {
