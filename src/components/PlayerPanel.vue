@@ -5,6 +5,7 @@ import type { PlayMode } from '@/types';
 import Icon from './Icon.vue';
 import PlaylistView from './PlaylistView.vue';
 import SearchView from './SearchView.vue';
+import { t } from '@/i18n';
 
 defineEmits<{ collapse: [] }>();
 
@@ -111,14 +112,14 @@ function toggleMute(): void {
         <Icon v-else name="music" :size="24" />
       </div>
       <div class="stmp-track-info">
-        <div class="stmp-track-name">{{ playerStore.currentTrack?.name || 'No Song' }}</div>
+        <div class="stmp-track-name">{{ playerStore.currentTrack?.name || t('No Song') }}</div>
         <div v-if="playerStore.currentTrack?.artist" class="stmp-track-artist">
           {{ playerStore.currentTrack.artist }}
         </div>
       </div>
       <button
         class="stmp-icon-btn"
-        aria-label="收起面板"
+        :aria-label="t('Collapse panel')"
         @click.stop="$emit('collapse')"
       >
         <Icon name="chevron-down" :size="18" />
@@ -134,7 +135,7 @@ function toggleMute(): void {
       </div>
     </div>
     <div v-else class="stmp-lyrics-toggle" @click="showLyrics = true">
-      <Icon name="chevron-up" :size="14" /> show lyrics
+      <Icon name="chevron-up" :size="14" /> {{ t('show lyrics') }}
     </div>
 
     <!-- Progress -->
@@ -154,26 +155,22 @@ function toggleMute(): void {
       </div>
     </div>
 
-    <!-- Controls: playMode | prev | play | next | volume -->
+    <!-- Controls: 5 buttons equal spacing -->
     <div class="stmp-controls">
-      <button
-        class="stmp-ctrl-btn"
-        aria-label="切换播放模式"
-        @click="cyclePlayMode"
-      >
+      <button class="stmp-ctrl-btn" :aria-label="t('Toggle play mode')" @click="cyclePlayMode">
         <Icon :name="playModeIcon[settingsStore.settings.playMode]" :size="18" />
       </button>
-      <button class="stmp-ctrl-btn" aria-label="上一首" @click="playlistStore.prev()">
+      <button class="stmp-ctrl-btn" :aria-label="t('Previous')" @click="playlistStore.prev()">
         <Icon name="prev" :size="18" />
       </button>
       <button
         class="stmp-ctrl-btn stmp-play-btn"
-        :aria-label="playerStore.isPlaying ? '暂停' : '播放'"
+        :aria-label="playerStore.isPlaying ? t('Pause') : t('Play')"
         @click="playerStore.togglePlay()"
       >
         <Icon :name="playerStore.isPlaying ? 'pause' : 'play'" :size="24" />
       </button>
-      <button class="stmp-ctrl-btn" aria-label="下一首" @click="playlistStore.next()">
+      <button class="stmp-ctrl-btn" :aria-label="t('Next')" @click="playlistStore.next()">
         <Icon name="next" :size="18" />
       </button>
 
@@ -185,7 +182,7 @@ function toggleMute(): void {
       >
         <button
           class="stmp-ctrl-btn"
-          aria-label="静音/取消静音"
+          :aria-label="t('Mute / Unmute')"
           @click="toggleMute"
         >
           <Icon :name="playerStore.volume === 0 ? 'volume-mute' : 'volume'" :size="18" />
@@ -211,14 +208,14 @@ function toggleMute(): void {
         :class="{ active: activeTab === 'list' }"
         @click="activeTab = 'list'"
       >
-        List
+        {{ t('List') }}
       </button>
       <button
         class="stmp-tab"
         :class="{ active: activeTab === 'search' }"
         @click="activeTab = 'search'"
       >
-        Search
+        {{ t('Search') }}
       </button>
     </div>
 
@@ -396,27 +393,14 @@ function toggleMute(): void {
   color: var(--SmartThemeBodyColor, #ccc);
 }
 
-/* Controls: playMode far-left, play/pause centered, volume far-right */
+/* Controls: 5 buttons equal spacing with left/right padding */
 .stmp-controls {
-  display: grid;
-  grid-template-columns: 1fr auto auto auto 1fr;
+  display: flex;
   align-items: center;
-  padding: 0 4px;
+  justify-content: space-evenly;
+  padding: 0 12px;
   height: 40px;
-  gap: 8px;
-}
-
-/* col1: playMode (left-aligned), col5: volume (right-aligned) */
-.stmp-controls > .stmp-ctrl-btn:first-child {
-  justify-self: start;
-}
-
-.stmp-controls > .stmp-volume-container {
-  justify-self: end;
-}
-
-.stmp-play-btn {
-  opacity: 1;
+  position: relative;
 }
 
 .stmp-ctrl-btn {
@@ -439,6 +423,10 @@ function toggleMute(): void {
   opacity: 1;
 }
 
+.stmp-play-btn {
+  opacity: 1;
+}
+
 /* Volume container */
 .stmp-volume-container {
   position: relative;
@@ -455,10 +443,7 @@ function toggleMute(): void {
   transform-origin: bottom center;
   transition: transform 0.2s ease, opacity 0.2s ease;
   opacity: 0;
-  padding: 10px 6px;
-  background: rgba(0, 0, 0, 0.6);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 8px 4px;
   margin-bottom: 4px;
   pointer-events: none;
 }

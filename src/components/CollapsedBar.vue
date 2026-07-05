@@ -2,10 +2,11 @@
 import { computed } from 'vue';
 import { usePlayerStore } from '@/stores/index';
 import Icon from './Icon.vue';
+import { t } from '@/i18n';
 
 const playerStore = usePlayerStore();
 
-const songName = computed(() => playerStore.currentTrack?.name || '未播放');
+const songName = computed(() => playerStore.currentTrack?.name || t('No Song'));
 </script>
 
 <template>
@@ -13,7 +14,7 @@ const songName = computed(() => playerStore.currentTrack?.name || '未播放');
     <span class="stmp-collapsed-title">{{ songName }}</span>
     <button
       class="stmp-icon-btn"
-      :aria-label="playerStore.isPlaying ? '暂停' : '播放'"
+      :aria-label="playerStore.isPlaying ? t('Pause') : t('Play')"
       @click.stop="playerStore.togglePlay()"
     >
       <Icon :name="playerStore.isPlaying ? 'pause' : 'play'" :size="16" />

@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { usePlaylistStore, useSettingsStore } from '@/stores/index';
 import type { PlaylistItem } from '@/types';
 import Icon from './Icon.vue';
+import { t } from '@/i18n';
 
 const playlistStore = usePlaylistStore();
 const settingsStore = useSettingsStore();
@@ -41,9 +42,9 @@ const groups = computed(() => {
 });
 
 const groupLabels: Record<string, string> = {
-  chat: 'From Chat',
-  user: 'My List',
-  local: 'Local Files',
+  chat: t('From Chat'),
+  user: t('My List'),
+  local: t('Local Files'),
 };
 
 function play(index: number): void {
@@ -65,11 +66,11 @@ function remove(index: number): void {
         @change="onFileSelect"
         style="display:none"
       />
-      <button class="stmp-upload-btn" aria-label="上传本地音频" @click="triggerUpload">
-        + 添加本地文件
+      <button class="stmp-upload-btn" :aria-label="t('Add local file')" @click="triggerUpload">
+        + {{ t('Add local file') }}
       </button>
     </div>
-    <div v-if="playlistStore.isEmpty" class="stmp-empty">No Songs</div>
+    <div v-if="playlistStore.isEmpty" class="stmp-empty">{{ t('No Songs') }}</div>
     <template v-else>
       <div v-for="src in ['chat', 'user', 'local']" :key="src" class="stmp-group">
         <template v-if="groups[src].length">

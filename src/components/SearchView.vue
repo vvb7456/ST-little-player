@@ -4,6 +4,7 @@ import { useSearchStore, usePlaylistStore, useSettingsStore } from '@/stores/ind
 import { createDefaultProviders } from '@/provider/index';
 import type { SearchResult } from '@/types';
 import Icon from './Icon.vue';
+import { t } from '@/i18n';
 
 const searchStore = useSearchStore();
 const playlistStore = usePlaylistStore();
@@ -61,7 +62,7 @@ function isPlaying(result: SearchResult): boolean {
       <input
         v-model="keyword"
         class="stmp-search-input"
-        placeholder="Search Song..."
+        :placeholder="t('Search Song...')"
         @keydown.enter="doSearch"
       />
       <button class="stmp-icon-btn" :disabled="searchStore.isSearching" @click="doSearch">
@@ -72,13 +73,13 @@ function isPlaying(result: SearchResult): boolean {
 
     <div v-if="searchStore.error" class="stmp-search-error">
       <span>{{ searchStore.error }}</span>
-      <button class="stmp-retry-btn" aria-label="重试搜索" @click="retrySearch">重试</button>
+      <button class="stmp-retry-btn" :aria-label="t('Retry')" @click="retrySearch">{{ t('Retry') }}</button>
     </div>
 
-    <div v-if="searchStore.isSearching" class="stmp-search-loading">Searching...</div>
+    <div v-if="searchStore.isSearching" class="stmp-search-loading">{{ t('Searching...') }}</div>
 
     <div v-else-if="keyword && !searchStore.results.length" class="stmp-search-empty">
-      No results
+      {{ t('No results') }}
     </div>
 
     <div v-if="searchStore.results.length" class="stmp-results">
@@ -95,7 +96,7 @@ function isPlaying(result: SearchResult): boolean {
         <button
           class="stmp-icon-btn stmp-result-add"
           :class="{ added: isAdded(result) }"
-          :aria-label="isAdded(result) ? '已添加' : '加入列表'"
+          :aria-label="isAdded(result) ? t('Added') : t('Add to list')"
           @click.stop="addToList(result)"
         >
           <Icon :name="isAdded(result) ? 'check' : 'plus'" :size="16" />

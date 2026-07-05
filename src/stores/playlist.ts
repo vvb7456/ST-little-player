@@ -12,6 +12,7 @@ import { CURSOR_KEY, USERLIST_KEY } from '@/storage';
 import { createDefaultProviders } from '@/provider';
 import { useSettingsStore } from './settings';
 import { usePlayerStore } from './player';
+import { t } from '@/i18n';
 
 function genId(): string {
   return `stmp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -200,7 +201,7 @@ export const usePlaylistStore = defineStore('playlist', {
       if (!resolved) {
         console.warn(`[playlist] resolve failed for "${item.song}"`);
         if (typeof toastr !== 'undefined') {
-          toastr.warning(`无法播放: ${item.song}`);
+          toastr.warning(`${t('Cannot play')}: ${item.song}`);
         }
         return;
       }
