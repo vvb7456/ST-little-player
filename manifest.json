@@ -1,0 +1,16 @@
+{
+    "display_name": "悬浮音乐播放器",
+    "loading_order": 20,
+    "requires": [],
+    "optional": [],
+    "dependencies": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "opencode",
+    "version": "1.0.0",
+    "homePage": "https://github.com/opencode/st-music-player",
+    "auto_update": false,
+    "hooks": {
+        "activate": "init"
+    }
+}
