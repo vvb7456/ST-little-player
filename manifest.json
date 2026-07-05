@@ -4,13 +4,17 @@
     "requires": [],
     "optional": [],
     "dependencies": [],
-    "js": "index.js",
-    "css": "style.css",
+    "js": "dist/index.js",
+    "css": "dist/style.css",
     "author": "opencode",
     "version": "1.0.0",
-    "homePage": "https://github.com/opencode/st-music-player",
+    "homePage": "https://github.com/vvb7456/ST-little-player",
     "auto_update": false,
+    "minimum_client_version": "1.0.0",
     "hooks": {
-        "activate": "init"
+        "activate": "init",
+        "disable": "disable",
+        "delete": "delete",
+        "clean": "clean"
     }
 }

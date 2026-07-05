@@ -41,18 +41,26 @@ export const useSettingsStore = defineStore('settings', {
       const stored = storage.getSettings<ExtensionSettings>();
       const defaults = defaultSettings();
       if (stored) {
-        // Backfill config objects for providers that lack one (legacy data).
-        const merged: ExtensionSettings = {
-          ...defaults,
-          ...stored,
-          providers: defaults.providers.map((d) => {
-            const existing = stored.providers?.find((p) => p.id === d.id);
-            return existing
-              ? { ...existing, config: existing.config ?? d.config ?? {} }
-              : d;
-          }),
-        };
-        this.settings = merged;
+        // Use ST's bundled lodash for deep merge
+        const lodash = (typeof SillyTavern !== 'undefined' && SillyTavern.getContext()?.libs?.lodash)
+          ? SillyTavern.getContext().libs.lodash
+          : null;
+        if (lodash) {
+          this.settings = lodash.merge(structuredClone(defaults), stored);
+        } else {
+          // Fallback: manual deep merge for providers
+          this.settings = {
+            ...defaults,
+            ...stored,
+            providers: defaults.providers.map((d) => {
+              const existing = stored.providers?.find((p) => p.id === d.id);
+              return existing
+                ? { ...existing, config: existing.config ?? d.config ?? {} }
+                : d;
+            }),
+            customCueRules: stored.customCueRules ?? defaults.customCueRules,
+          };
+        }
       } else {
         this.settings = defaults;
       }

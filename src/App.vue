@@ -88,6 +88,10 @@ function toggleExpand(): void {
   isExpanded.value = !isExpanded.value;
 }
 
+const onToggleExpand = (): void => {
+  isExpanded.value = !isExpanded.value;
+};
+
 onMounted(() => {
   const pos = settingsStore.settings.position;
   if (pos && widgetRef.value && !isMobile.value) {
@@ -98,12 +102,14 @@ onMounted(() => {
   }
   window.addEventListener('resize', updateMobile);
   window.addEventListener('keydown', onKeyDown);
+  window.addEventListener('stmp:toggle-expand', onToggleExpand);
 });
 
 onBeforeUnmount(() => {
   stopDrag();
   window.removeEventListener('resize', updateMobile);
   window.removeEventListener('keydown', onKeyDown);
+  window.removeEventListener('stmp:toggle-expand', onToggleExpand);
 });
 </script>
 

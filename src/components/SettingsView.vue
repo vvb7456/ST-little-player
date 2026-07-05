@@ -50,12 +50,7 @@ const clearCache = async (): Promise<void> => {
   const storage = settingsStore.storage;
   if (storage) {
     await storage.clearCache();
-    const toastr = (window as unknown as { toastr?: { success?: (m: string) => void } }).toastr;
-    if (toastr?.success) {
-      toastr.success('缓存已清理');
-    } else {
-      console.log('缓存已清理');
-    }
+    toastr.success('缓存已清理');
   }
 };
 
@@ -79,16 +74,35 @@ const importData = (): void => {
     if (!file) return;
     const text = await file.text();
     try {
-      const data = JSON.parse(text) as Partial<typeof settingsStore.settings>;
-      Object.assign(settingsStore.settings, data);
+      const data = JSON.parse(text);
+      // Validate structure before merging
+      if (typeof data !== 'object' || data === null) throw new Error('Not an object');
+      const validKeys = ['volume', 'playMode', 'position', 'autoPlayOnNewCue', 'providers', 'customCueRules'];
+      const filtered: Record<string, unknown> = {};
+      for (const key of validKeys) {
+        if (key in data) filtered[key] = data[key];
+      }
+      // Type-check critical fields
+      if (typeof filtered.volume !== 'number' || filtered.volume < 0 || filtered.volume > 100) {
+        throw new Error('Invalid volume');
+      }
+      if (!['list', 'random', 'single'].includes(filtered.playMode)) {
+        throw new Error('Invalid playMode');
+      }
+      if (filtered.providers && !Array.isArray(filtered.providers)) {
+        throw new Error('Invalid providers');
+      }
+      if (filtered.customCueRules && !Array.isArray(filtered.customCueRules)) {
+        throw new Error('Invalid customCueRules');
+      }
+      // Merge validated data
+      const settingsStore = useSettingsStore();
+      Object.assign(settingsStore.settings, filtered);
       settingsStore.save();
-      const toastr = (window as unknown as { toastr?: { success?: (m: string) => void } }).toastr;
-      if (toastr?.success) toastr.success('设置已导入');
-      else console.log('设置已导入');
+      toastr.success('设置已导入');
     } catch (err) {
       console.error('Import failed', err);
-      const toastr = (window as unknown as { toastr?: { error?: (m: string) => void } }).toastr;
-      if (toastr?.error) toastr.error('导入失败: JSON 格式错误');
+      toastr.error('导入失败: ' + (err instanceof Error ? err.message : 'JSON 格式错误'));
     }
   };
   input.click();
