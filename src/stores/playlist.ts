@@ -20,7 +20,6 @@ export const usePlaylistStore = defineStore('playlist', {
   state: () => ({
     list: [] as PlaylistItem[],
     currentIndex: -1,
-    playMode: 'list' as PlayMode,
     chatIndexer: null as ChatIndexer | null,
     chatId: null as string | null,
   }),
@@ -31,6 +30,9 @@ export const usePlaylistStore = defineStore('playlist', {
     },
     isEmpty(state): boolean {
       return state.list.length === 0;
+    },
+    playMode(): PlayMode {
+      return useSettingsStore().settings.playMode;
     },
   },
 

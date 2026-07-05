@@ -3,12 +3,15 @@ import { ref } from 'vue';
 import { useSearchStore, usePlaylistStore, useSettingsStore } from '@/stores/index';
 import { createDefaultProviders } from '@/provider/index';
 import type { SearchResult } from '@/types';
+import Icon from './Icon.vue';
 
 const searchStore = useSearchStore();
 const playlistStore = usePlaylistStore();
 const settingsStore = useSettingsStore();
 
 const keyword = ref(searchStore.keyword);
+const addedIds = ref<Set<string>>(new Set());
+const playingId = ref<string | null>(null);
 
 async function doSearch(): Promise<void> {
   searchStore.setKeyword(keyword.value);
@@ -21,12 +24,34 @@ const retrySearch = (): void => {
 };
 
 function addAndPlay(result: SearchResult): void {
+  const key = result.provider + result.id;
+  if (playingId.value === key) return; // prevent double-click
+  playingId.value = key;
   const beforeLen = playlistStore.list.length;
   playlistStore.addFromSearch(result);
   const newIdx = playlistStore.list.length - 1;
   if (newIdx >= beforeLen) {
     playlistStore.play(newIdx);
   }
+  setTimeout(() => {
+    addedIds.value.add(key);
+    playingId.value = null;
+  }, 600);
+}
+
+function addToList(result: SearchResult): void {
+  const key = result.provider + result.id;
+  if (addedIds.value.has(key)) return;
+  playlistStore.addFromSearch(result);
+  addedIds.value.add(key);
+}
+
+function isAdded(result: SearchResult): boolean {
+  return addedIds.value.has(result.provider + result.id);
+}
+
+function isPlaying(result: SearchResult): boolean {
+  return playingId.value === result.provider + result.id;
 }
 </script>
 
@@ -39,8 +64,9 @@ function addAndPlay(result: SearchResult): void {
         placeholder="Search Song..."
         @keydown.enter="doSearch"
       />
-      <button class="stmp-search-btn" :disabled="searchStore.isSearching" @click="doSearch">
-        {{ searchStore.isSearching ? '...' : '🔍' }}
+      <button class="stmp-icon-btn" :disabled="searchStore.isSearching" @click="doSearch">
+        <Icon v-if="!searchStore.isSearching" name="search" :size="16" />
+        <Icon v-else name="loader" :size="16" class="stmp-spin" />
       </button>
     </div>
 
@@ -60,13 +86,20 @@ function addAndPlay(result: SearchResult): void {
         v-for="result in searchStore.results"
         :key="result.provider + result.id"
         class="stmp-result"
-        @click="addAndPlay(result)"
+        :class="{ 'stmp-result-playing': isPlaying(result) }"
       >
-        <div class="stmp-result-info">
+        <div class="stmp-result-info" @click="addAndPlay(result)">
           <span class="stmp-result-name">{{ result.name }}</span>
           <span v-if="result.artist" class="stmp-result-artist">{{ result.artist }}</span>
         </div>
-        <span class="stmp-result-provider">{{ result.provider }}</span>
+        <button
+          class="stmp-icon-btn stmp-result-add"
+          :class="{ added: isAdded(result) }"
+          :aria-label="isAdded(result) ? '已添加' : '加入列表'"
+          @click.stop="addToList(result)"
+        >
+          <Icon :name="isAdded(result) ? 'check' : 'plus'" :size="16" />
+        </button>
       </div>
     </div>
   </div>
@@ -100,19 +133,35 @@ function addAndPlay(result: SearchResult): void {
   border-color: var(--SmartThemeQuoteColor, rgba(255, 255, 255, 0.3));
 }
 
-.stmp-search-btn {
+.stmp-icon-btn {
   background: none;
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
   color: var(--SmartThemeBodyColor, #fff);
   cursor: pointer;
-  padding: 4px 10px;
-  font-size: 14px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
 }
 
-.stmp-search-btn:disabled {
+.stmp-icon-btn:disabled {
   opacity: 0.5;
   cursor: wait;
+}
+
+.stmp-icon-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.stmp-spin {
+  animation: stmp-spin 0.8s linear infinite;
+}
+
+@keyframes stmp-spin {
+  to { transform: rotate(360deg); }
 }
 
 .stmp-search-error {
@@ -154,10 +203,9 @@ function addAndPlay(result: SearchResult): void {
 .stmp-result {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 8px;
+  gap: 4px;
+  padding: 6px 4px 6px 8px;
   border-radius: 8px;
-  cursor: pointer;
   transition: background 0.15s;
 }
 
@@ -165,11 +213,22 @@ function addAndPlay(result: SearchResult): void {
   background: rgba(255, 255, 255, 0.08);
 }
 
+.stmp-result-playing {
+  background: var(--SmartThemeQuoteColor, rgba(126, 87, 194, 0.15));
+  animation: stmp-flash 0.6s ease;
+}
+
+@keyframes stmp-flash {
+  0% { background: var(--SmartThemeQuoteColor, rgba(126, 87, 194, 0.4)); }
+  100% { background: var(--SmartThemeQuoteColor, rgba(126, 87, 194, 0.15)); }
+}
+
 .stmp-result-info {
   flex: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .stmp-result-name {
@@ -189,12 +248,19 @@ function addAndPlay(result: SearchResult): void {
   color: var(--SmartThemeBodyColor, #ccc);
 }
 
-.stmp-result-provider {
-  font-size: calc(var(--fontSize, 14px) * 0.68);
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: var(--SmartThemeQuoteColor, rgba(255, 255, 255, 0.12));
-  color: var(--SmartThemeBodyColor, #ccc);
-  flex-shrink: 0;
+.stmp-result-add {
+  border: none;
+  padding: 4px;
+  opacity: 0.5;
+}
+
+.stmp-result-add:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.stmp-result-add.added {
+  color: #4caf50;
+  opacity: 1;
 }
 </style>

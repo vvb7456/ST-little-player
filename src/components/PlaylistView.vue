@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { usePlaylistStore, useSettingsStore } from '@/stores/index';
 import type { PlaylistItem } from '@/types';
+import Icon from './Icon.vue';
 
 const playlistStore = usePlaylistStore();
 const settingsStore = useSettingsStore();
@@ -85,7 +86,9 @@ function remove(index: number): void {
               <span class="stmp-item-song">{{ entry.item.song }}</span>
               <span v-if="entry.item.artist" class="stmp-item-artist">{{ entry.item.artist }}</span>
             </div>
-            <button class="stmp-item-del" @click.stop="remove(entry.index)">✕</button>
+            <button class="stmp-item-del" @click.stop="remove(entry.index)">
+              <Icon name="x" :size="14" />
+            </button>
           </div>
         </template>
       </div>

@@ -2,6 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import { usePlayerStore, usePlaylistStore, useSettingsStore } from '@/stores/index';
 import type { PlayMode } from '@/types';
+import Icon from './Icon.vue';
 import PlaylistView from './PlaylistView.vue';
 import SearchView from './SearchView.vue';
 
@@ -57,9 +58,9 @@ function onSeek(e: Event): void {
 
 const playModeOrder: PlayMode[] = ['list', 'random', 'single'];
 const playModeIcon: Record<PlayMode, string> = {
-  list: '🔁',
-  random: '🔀',
-  single: '🔂',
+  list: 'repeat',
+  random: 'shuffle',
+  single: 'repeat-one',
 };
 
 function cyclePlayMode(): void {
@@ -67,7 +68,6 @@ function cyclePlayMode(): void {
   const idx = playModeOrder.indexOf(current);
   const next = playModeOrder[(idx + 1) % playModeOrder.length];
   settingsStore.setPlayMode(next);
-  playlistStore.playMode = next;
 }
 
 function onVolume(e: Event): void {
@@ -87,7 +87,7 @@ function onVolume(e: Event): void {
           alt="cover"
           @error="onCoverError"
         />
-        <span v-else class="stmp-cover-placeholder">♪</span>
+        <Icon v-else name="music" :size="24" />
       </div>
       <div class="stmp-track-info">
         <div class="stmp-track-name">{{ playerStore.currentTrack?.name || 'No Song' }}</div>
@@ -96,19 +96,25 @@ function onVolume(e: Event): void {
         </div>
       </div>
       <button
-        class="stmp-collapse-btn"
+        class="stmp-icon-btn"
         aria-label="收起面板"
         @click="$emit('collapse')"
-      >▾</button>
+      >
+        <Icon name="chevron-down" :size="18" />
+      </button>
     </div>
 
     <!-- Lyrics -->
     <div v-if="showLyrics" class="stmp-lyrics" @click="showLyrics = false">
       <div v-if="currentLyric" class="stmp-lyric-current">{{ currentLyric }}</div>
       <div v-if="nextLyric" class="stmp-lyric-next">{{ nextLyric }}</div>
-      <div v-if="!currentLyric && !nextLyric" class="stmp-lyric-empty">♪</div>
+      <div v-if="!currentLyric && !nextLyric" class="stmp-lyric-empty">
+        <Icon name="music" :size="18" />
+      </div>
     </div>
-    <div v-else class="stmp-lyrics-toggle" @click="showLyrics = true">♪ show lyrics</div>
+    <div v-else class="stmp-lyrics-toggle" @click="showLyrics = true">
+      <Icon name="chevron-up" :size="14" /> show lyrics
+    </div>
 
     <!-- Progress -->
     <div class="stmp-progress">
@@ -129,30 +135,38 @@ function onVolume(e: Event): void {
 
     <!-- Controls -->
     <div class="stmp-controls">
-      <button class="stmp-ctrl-btn" aria-label="上一首" @click="playlistStore.prev()">⏮</button>
+      <button class="stmp-icon-btn" aria-label="上一首" @click="playlistStore.prev()">
+        <Icon name="prev" :size="20" />
+      </button>
       <button
-        class="stmp-ctrl-btn stmp-play-btn"
+        class="stmp-icon-btn stmp-play-btn"
         :aria-label="playerStore.isPlaying ? '暂停' : '播放'"
         @click="playerStore.togglePlay()"
       >
-        {{ playerStore.isPlaying ? '⏸' : '▶' }}
+        <Icon :name="playerStore.isPlaying ? 'pause' : 'play'" :size="22" />
       </button>
-      <button class="stmp-ctrl-btn" aria-label="下一首" @click="playlistStore.next()">⏭</button>
+      <button class="stmp-icon-btn" aria-label="下一首" @click="playlistStore.next()">
+        <Icon name="next" :size="20" />
+      </button>
       <button
-        class="stmp-ctrl-btn"
+        class="stmp-icon-btn"
+        :class="{ active: settingsStore.settings.playMode !== 'list' }"
         aria-label="切换播放模式"
         @click="cyclePlayMode"
       >
-        {{ playModeIcon[settingsStore.settings.playMode] }}
+        <Icon :name="playModeIcon[settingsStore.settings.playMode]" :size="18" />
       </button>
-      <input
-        type="range"
-        min="0"
-        max="100"
-        :value="playerStore.volume"
-        class="stmp-volume"
-        @input="onVolume"
-      />
+      <div class="stmp-volume-wrap">
+        <Icon name="volume" :size="16" />
+        <input
+          type="range"
+          min="0"
+          max="100"
+          :value="playerStore.volume"
+          class="stmp-volume"
+          @input="onVolume"
+        />
+      </div>
     </div>
 
     <!-- Tabs -->
@@ -205,18 +219,14 @@ function onVolume(e: Event): void {
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.3);
+  color: var(--SmartThemeBodyColor, #ccc);
+  opacity: 0.5;
 }
 
 .stmp-cover img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-
-.stmp-cover-placeholder {
-  font-size: 24px;
-  opacity: 0.5;
-  color: var(--SmartThemeBodyColor, #ccc);
 }
 
 .stmp-track-info {
@@ -242,19 +252,26 @@ function onVolume(e: Event): void {
   color: var(--SmartThemeBodyColor, #ccc);
 }
 
-.stmp-collapse-btn {
+.stmp-icon-btn {
   background: none;
   border: none;
   color: var(--SmartThemeBodyColor, #ccc);
   cursor: pointer;
-  font-size: 18px;
-  padding: 2px 6px;
-  border-radius: 6px;
+  padding: 4px;
+  border-radius: 8px;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
-.stmp-collapse-btn:hover {
+.stmp-icon-btn:hover {
   background: rgba(255, 255, 255, 0.1);
+}
+
+.stmp-icon-btn.active {
+  color: var(--SmartThemeQuoteColor, #7e57c2);
 }
 
 .stmp-lyrics {
@@ -278,7 +295,6 @@ function onVolume(e: Event): void {
 }
 
 .stmp-lyric-empty {
-  font-size: 18px;
   opacity: 0.3;
   color: var(--SmartThemeBodyColor, #ccc);
 }
@@ -290,6 +306,10 @@ function onVolume(e: Event): void {
   cursor: pointer;
   padding: 2px;
   color: var(--SmartThemeBodyColor, #ccc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .stmp-progress {
@@ -314,31 +334,23 @@ function onVolume(e: Event): void {
 .stmp-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   justify-content: center;
-}
-
-.stmp-ctrl-btn {
-  background: none;
-  border: none;
-  color: var(--SmartThemeBodyColor, #fff);
-  cursor: pointer;
-  font-size: 18px;
-  padding: 4px 8px;
-  border-radius: 8px;
-  transition: background 0.15s;
-}
-
-.stmp-ctrl-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
 }
 
 .stmp-play-btn {
   font-size: 22px;
 }
 
+.stmp-volume-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  opacity: 0.7;
+}
+
 .stmp-volume {
-  width: 70px;
+  width: 60px;
   cursor: pointer;
 }
 

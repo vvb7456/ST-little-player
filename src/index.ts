@@ -163,7 +163,6 @@ export async function init(): Promise<void> {
 
     const playlistStore = usePlaylistStore();
     playlistStore.init(indexer);
-    playlistStore.playMode = settingsStore.settings.playMode;
 
     addSettingsEntry();
 

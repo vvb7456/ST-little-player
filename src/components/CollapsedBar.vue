@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { usePlayerStore } from '@/stores/index';
+import Icon from './Icon.vue';
 
 defineEmits<{ expand: [] }>();
 
@@ -13,11 +14,11 @@ const songName = computed(() => playerStore.currentTrack?.name || '未播放');
   <div class="stmp-collapsed-bar" @click="$emit('expand')">
     <span class="stmp-collapsed-title">{{ songName }}</span>
     <button
-      class="stmp-collapsed-btn"
+      class="stmp-icon-btn"
       :aria-label="playerStore.isPlaying ? '暂停' : '播放'"
       @click.stop="playerStore.togglePlay()"
     >
-      {{ playerStore.isPlaying ? '⏸' : '▶' }}
+      <Icon :name="playerStore.isPlaying ? 'pause' : 'play'" :size="16" />
     </button>
   </div>
 </template>
@@ -43,14 +44,15 @@ const songName = computed(() => playerStore.currentTrack?.name || '未播放');
   color: var(--SmartThemeBodyColor, #fff);
 }
 
-.stmp-collapsed-btn {
+.stmp-icon-btn {
   background: none;
   border: none;
   color: var(--SmartThemeBodyColor, #fff);
-  font-size: 16px;
   cursor: pointer;
   padding: 0 4px;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 </style>

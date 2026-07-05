@@ -51,10 +51,19 @@ export class NetEaseProvider implements MusicProvider {
   }
 
   async resolve(id: string, picId?: string): Promise<ResolvedTrack | null> {
-    const urlData = await this.fetchJson(
-      `${this.baseURL}?types=url&id=${encodeURIComponent(id)}&br=320`,
-    );
-    if (!urlData || !urlData.url) return null;
+    // Retry URL fetch up to 3 times — API sometimes returns empty url on first try
+    let urlData: any = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      urlData = await this.fetchJson(
+        `${this.baseURL}?types=url&id=${encodeURIComponent(id)}&br=320`,
+      );
+      if (urlData && urlData.url) break;
+      if (attempt < 2) await new Promise(r => setTimeout(r, 400));
+    }
+    if (!urlData || !urlData.url) {
+      console.warn(`[NetEase] resolve: url endpoint returned empty for id=${id}`);
+      return null;
+    }
     const [lyricData, picData] = await Promise.all([
       this.fetchJson(`${this.baseURL}?types=lyric&id=${encodeURIComponent(id)}`),
       picId
