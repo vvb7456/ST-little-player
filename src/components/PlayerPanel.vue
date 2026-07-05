@@ -15,6 +15,8 @@ const settingsStore = useSettingsStore();
 const activeTab = ref<'list' | 'search'>('list');
 const showLyrics = ref(true);
 const coverError = ref(false);
+const showVolumeSlider = ref(false);
+let volumeHoverTimer: ReturnType<typeof setTimeout> | null = null;
 
 const coverUrl = computed(() => playerStore.currentTrack?.cover || '');
 
@@ -74,12 +76,31 @@ function onVolume(e: Event): void {
   const target = e.target as HTMLInputElement;
   playerStore.setVolume(Number(target.value));
 }
+
+function onVolumeEnter(): void {
+  if (volumeHoverTimer) clearTimeout(volumeHoverTimer);
+  showVolumeSlider.value = true;
+}
+
+function onVolumeLeave(): void {
+  volumeHoverTimer = setTimeout(() => {
+    showVolumeSlider.value = false;
+  }, 300);
+}
+
+function toggleMute(): void {
+  if (playerStore.volume > 0) {
+    playerStore.setVolume(0);
+  } else {
+    playerStore.setVolume(65);
+  }
+}
 </script>
 
 <template>
   <div class="stmp-panel">
-    <!-- Top Bar -->
-    <div class="stmp-topbar">
+    <!-- Top Bar (draggable handle) -->
+    <div class="stmp-topbar stmp-drag-handle">
       <div class="stmp-cover">
         <img
           v-if="coverUrl && !coverError"
@@ -98,7 +119,7 @@ function onVolume(e: Event): void {
       <button
         class="stmp-icon-btn"
         aria-label="收起面板"
-        @click="$emit('collapse')"
+        @click.stop="$emit('collapse')"
       >
         <Icon name="chevron-down" :size="18" />
       </button>
@@ -135,37 +156,52 @@ function onVolume(e: Event): void {
 
     <!-- Controls -->
     <div class="stmp-controls">
-      <button class="stmp-icon-btn" aria-label="上一首" @click="playlistStore.prev()">
-        <Icon name="prev" :size="20" />
+      <button class="stmp-ctrl-btn" aria-label="上一首" @click="playlistStore.prev()">
+        <Icon name="prev" :size="18" />
       </button>
       <button
-        class="stmp-icon-btn stmp-play-btn"
+        class="stmp-ctrl-btn stmp-play-btn"
         :aria-label="playerStore.isPlaying ? '暂停' : '播放'"
         @click="playerStore.togglePlay()"
       >
-        <Icon :name="playerStore.isPlaying ? 'pause' : 'play'" :size="22" />
+        <Icon :name="playerStore.isPlaying ? 'pause' : 'play'" :size="24" />
       </button>
-      <button class="stmp-icon-btn" aria-label="下一首" @click="playlistStore.next()">
-        <Icon name="next" :size="20" />
+      <button class="stmp-ctrl-btn" aria-label="下一首" @click="playlistStore.next()">
+        <Icon name="next" :size="18" />
       </button>
       <button
-        class="stmp-icon-btn"
+        class="stmp-ctrl-btn"
         :class="{ active: settingsStore.settings.playMode !== 'list' }"
         aria-label="切换播放模式"
         @click="cyclePlayMode"
       >
         <Icon :name="playModeIcon[settingsStore.settings.playMode]" :size="18" />
       </button>
-      <div class="stmp-volume-wrap">
-        <Icon name="volume" :size="16" />
-        <input
-          type="range"
-          min="0"
-          max="100"
-          :value="playerStore.volume"
-          class="stmp-volume"
-          @input="onVolume"
-        />
+
+      <!-- Volume: icon always visible, slider hidden until hover -->
+      <div
+        class="stmp-volume-container"
+        @mouseenter="onVolumeEnter"
+        @mouseleave="onVolumeLeave"
+      >
+        <button
+          class="stmp-ctrl-btn"
+          aria-label="静音/取消静音"
+          @click="toggleMute"
+        >
+          <Icon :name="playerStore.volume === 0 ? 'volume-mute' : 'volume'" :size="18" />
+        </button>
+        <div class="stmp-volume-popup" :class="{ show: showVolumeSlider }">
+          <input
+            type="range"
+            min="0"
+            max="100"
+            :value="playerStore.volume"
+            class="stmp-volume-vertical"
+            orient="vertical"
+            @input="onVolume"
+          />
+        </div>
       </div>
     </div>
 
@@ -207,6 +243,15 @@ function onVolume(e: Event): void {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.stmp-drag-handle {
+  cursor: grab;
+  touch-action: none;
+}
+
+.stmp-drag-handle:active {
+  cursor: grabbing;
 }
 
 .stmp-cover {
@@ -270,10 +315,6 @@ function onVolume(e: Event): void {
   background: rgba(255, 255, 255, 0.1);
 }
 
-.stmp-icon-btn.active {
-  color: var(--SmartThemeQuoteColor, #7e57c2);
-}
-
 .stmp-lyrics {
   text-align: center;
   padding: 4px 8px;
@@ -331,27 +372,81 @@ function onVolume(e: Event): void {
   color: var(--SmartThemeBodyColor, #ccc);
 }
 
+/* Controls: 5 icons equal spacing, play bigger */
 .stmp-controls {
   display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: space-evenly;
+  padding: 0 4px;
+  position: relative;
+}
+
+.stmp-ctrl-btn {
+  background: none;
+  border: none;
+  color: var(--SmartThemeBodyColor, #ccc);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background 0.15s;
+  display: flex;
+  align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+
+.stmp-ctrl-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 1;
+}
+
+.stmp-ctrl-btn.active {
+  color: var(--SmartThemeQuoteColor, #7e57c2);
+  opacity: 1;
 }
 
 .stmp-play-btn {
-  font-size: 22px;
+  opacity: 1;
 }
 
-.stmp-volume-wrap {
+/* Volume container */
+.stmp-volume-container {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 4px;
-  opacity: 0.7;
+  flex-shrink: 0;
 }
 
-.stmp-volume {
-  width: 60px;
+.stmp-volume-popup {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) scaleY(0);
+  transform-origin: bottom center;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  opacity: 0;
+  padding: 8px 4px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  margin-bottom: 4px;
+  pointer-events: none;
+}
+
+.stmp-volume-popup.show {
+  transform: translateX(-50%) scaleY(1);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.stmp-volume-vertical {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  width: 8px;
+  height: 80px;
   cursor: pointer;
+  -webkit-appearance: slider-vertical;
+  appearance: slider-vertical;
 }
 
 .stmp-tabs {

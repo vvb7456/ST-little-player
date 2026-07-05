@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
 import { useSettingsStore, usePlayerStore } from '@/stores/index';
 import CollapsedBar from './components/CollapsedBar.vue';
 import PlayerPanel from './components/PlayerPanel.vue';
@@ -29,63 +29,121 @@ let dragStartY = 0;
 let widgetStartX = 0;
 let widgetStartY = 0;
 let dragMoved = false;
+let isDragging = false;
 let boundOnDrag: ((e: PointerEvent) => void) | null = null;
 let boundStopDrag: (() => void) | null = null;
 
 function startDrag(e: PointerEvent): void {
-  if (isMobile.value || isExpanded.value) return;
-  if ((e.target as HTMLElement).closest('button')) return;
+  if (isMobile.value) return;
+  const target = e.target as HTMLElement;
+
+  // Never drag from these interactive elements
+  if (target.closest('input, .stmp-tab, .stmp-result, .stmp-item, .stmp-upload-btn, .stmp-search-input, .stmp-controls, .stmp-lyrics, .stmp-lyrics-toggle, .stmp-tabs, .stmp-tab-content')) return;
+
+  // In expanded mode: only drag from topbar handle, but not from the collapse button
+  if (isExpanded.value) {
+    if (!target.closest('.stmp-drag-handle')) return;
+    if (target.closest('button')) return;
+  }
+
+  // In collapsed mode: drag from anywhere except the play button
+  if (!isExpanded.value) {
+    if (target.closest('button')) return;
+  }
+
+  // Use getBoundingClientRect for accurate position (works with right/left/top/bottom)
+  const rect = widgetRef.value?.getBoundingClientRect();
+  if (!rect) return;
+
   dragStartX = e.clientX;
   dragStartY = e.clientY;
-  const pos = settingsStore.settings.position;
-  widgetStartX = pos?.x ?? (widgetRef.value?.offsetLeft ?? 0);
-  widgetStartY = pos?.y ?? (widgetRef.value?.offsetTop ?? 0);
+  widgetStartX = rect.left;
+  widgetStartY = rect.top;
   dragMoved = false;
+  isDragging = true;
+
+  // Immediately switch to left/top positioning to avoid jump
+  if (widgetRef.value) {
+    widgetRef.value.style.left = rect.left + 'px';
+    widgetRef.value.style.top = rect.top + 'px';
+    widgetRef.value.style.right = 'auto';
+    widgetRef.value.style.bottom = 'auto';
+  }
 
   boundOnDrag = onDrag;
   boundStopDrag = stopDrag;
   document.addEventListener('pointermove', boundOnDrag);
   document.addEventListener('pointerup', boundStopDrag);
+  e.preventDefault();
 }
 
 function onDrag(e: PointerEvent): void {
-  if (!widgetRef.value) return;
+  if (!widgetRef.value || !isDragging) return;
   const dx = e.clientX - dragStartX;
   const dy = e.clientY - dragStartY;
-  if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+  if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
     dragMoved = true;
   }
   let newX = widgetStartX + dx;
   let newY = widgetStartY + dy;
-  const maxX = window.innerWidth - (widgetRef.value.offsetWidth || 60);
-  const maxY = window.innerHeight - (widgetRef.value.offsetHeight || 40);
+  const w = widgetRef.value.offsetWidth || 60;
+  const h = widgetRef.value.offsetHeight || 40;
+  const maxX = window.innerWidth - w;
+  const maxY = window.innerHeight - h;
   newX = Math.max(0, Math.min(newX, maxX));
   newY = Math.max(0, Math.min(newY, maxY));
   widgetRef.value.style.left = newX + 'px';
   widgetRef.value.style.top = newY + 'px';
-  widgetRef.value.style.right = 'auto';
-  widgetRef.value.style.bottom = 'auto';
 }
 
 function stopDrag(): void {
+  isDragging = false;
   if (boundOnDrag) document.removeEventListener('pointermove', boundOnDrag);
   if (boundStopDrag) document.removeEventListener('pointerup', boundStopDrag);
   boundOnDrag = null;
   boundStopDrag = null;
+
   if (!dragMoved) {
+    // It was a click, not a drag — toggle expand
     toggleExpand();
     return;
   }
+
   if (widgetRef.value) {
     settingsStore.setPosition({
       x: widgetRef.value.offsetLeft,
       y: widgetRef.value.offsetTop,
     });
+    // After expanding, ensure widget stays fully visible
+    if (isExpanded.value) {
+      nextTick(() => clampToViewport());
+    }
   }
+}
+
+function clampToViewport(): void {
+  if (!widgetRef.value || isMobile.value) return;
+  const rect = widgetRef.value.getBoundingClientRect();
+  const w = widgetRef.value.offsetWidth;
+  const h = widgetRef.value.offsetHeight;
+  let x = rect.left;
+  let y = rect.top;
+  if (x + w > window.innerWidth) x = window.innerWidth - w;
+  if (y + h > window.innerHeight) y = window.innerHeight - h;
+  if (x < 0) x = 0;
+  if (y < 0) y = 0;
+  widgetRef.value.style.left = x + 'px';
+  widgetRef.value.style.top = y + 'px';
+  widgetRef.value.style.right = 'auto';
+  widgetRef.value.style.bottom = 'auto';
+  settingsStore.setPosition({ x, y });
 }
 
 function toggleExpand(): void {
   isExpanded.value = !isExpanded.value;
+  if (isExpanded.value) {
+    nextTick(() => clampToViewport());
+  }
 }
 
 onMounted(() => {
@@ -118,7 +176,7 @@ onBeforeUnmount(() => {
     }"
     @pointerdown="startDrag"
   >
-    <CollapsedBar v-if="!isExpanded" @expand="toggleExpand" />
+    <CollapsedBar v-if="!isExpanded" />
     <PlayerPanel v-else @collapse="toggleExpand" />
   </div>
 </template>
@@ -150,6 +208,11 @@ onBeforeUnmount(() => {
 .stmp-expanded {
   width: 320px;
   padding: 12px;
+}
+
+.stmp-expanded:not(.stmp-mobile) {
+  cursor: default;
+  touch-action: auto;
 }
 
 .stmp-mobile {

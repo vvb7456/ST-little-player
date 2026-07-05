@@ -3,15 +3,13 @@ import { computed } from 'vue';
 import { usePlayerStore } from '@/stores/index';
 import Icon from './Icon.vue';
 
-defineEmits<{ expand: [] }>();
-
 const playerStore = usePlayerStore();
 
 const songName = computed(() => playerStore.currentTrack?.name || '未播放');
 </script>
 
 <template>
-  <div class="stmp-collapsed-bar" @click="$emit('expand')">
+  <div class="stmp-collapsed-bar">
     <span class="stmp-collapsed-title">{{ songName }}</span>
     <button
       class="stmp-icon-btn"
@@ -29,7 +27,6 @@ const songName = computed(() => playerStore.currentTrack?.name || '未播放');
   align-items: center;
   gap: 8px;
   padding: 6px 14px;
-  cursor: pointer;
   user-select: none;
   max-width: 220px;
   overflow: hidden;
