@@ -4523,7 +4523,7 @@ class Pc {
   async resolve(t, s) {
     const n = this.getProvider(s);
     return n ? new Promise((r) => {
-      const i = setTimeout(() => r(null), 5e3);
+      const i = setTimeout(() => r(null), 15e3);
       n.resolve(t).then((o) => {
         clearTimeout(i), r(o);
       }).catch(() => {
@@ -4539,7 +4539,7 @@ class Mc {
   constructor(t) {
     this.id = "netease", this.name = "网易云", this.baseURL = t?.baseURL?.trim() || "https://music-api.gdstudio.xyz/api.php";
   }
-  async fetchJson(t, s = 5e3) {
+  async fetchJson(t, s = 1e4) {
     try {
       const n = new AbortController(), r = setTimeout(() => n.abort(), s), i = await fetch(t, { signal: n.signal });
       return clearTimeout(r), i.ok ? await i.json() : null;
@@ -4600,7 +4600,7 @@ class Lc {
   constructor(t) {
     this.id = "custom", this.name = "自定义 API", this.searchURL = t?.searchURL, this.resolveURL = t?.resolveURL;
   }
-  async fetchJson(t, s = 5e3) {
+  async fetchJson(t, s = 1e4) {
     try {
       const n = new AbortController(), r = setTimeout(() => n.abort(), s), i = await fetch(t, { signal: n.signal });
       return clearTimeout(r), i.ok ? await i.json() : null;

@@ -90,11 +90,11 @@ describe('ProviderManager', () => {
     expect(res).toBeNull();
   });
 
-  it('resolve times out after 5s and returns null', async () => {
-    const p1 = makeProvider('p1', [], null, { delay: 6000 });
+  it('resolve times out after 15s and returns null', async () => {
+    const p1 = makeProvider('p1', [], null, { delay: 16000 });
     const mgr = new ProviderManager([p1]);
     const promise = mgr.resolve('1', 'p1');
-    vi.advanceTimersByTime(5000);
+    vi.advanceTimersByTime(15000);
     const res = await promise;
     expect(res).toBeNull();
   });

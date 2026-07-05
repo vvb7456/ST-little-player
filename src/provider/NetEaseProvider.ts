@@ -14,7 +14,7 @@ export class NetEaseProvider implements MusicProvider {
       config?.baseURL?.trim() || 'https://music-api.gdstudio.xyz/api.php';
   }
 
-  private async fetchJson(url: string, timeoutMs = 5000): Promise<any | null> {
+  private async fetchJson(url: string, timeoutMs = 10000): Promise<any | null> {
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);

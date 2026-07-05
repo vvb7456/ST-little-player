@@ -18,7 +18,7 @@ export class CustomAPIProvider implements MusicProvider {
 
   private async fetchJson(
     url: string,
-    timeoutMs = 5000,
+    timeoutMs = 10000,
   ): Promise<any | null> {
     try {
       const controller = new AbortController();
