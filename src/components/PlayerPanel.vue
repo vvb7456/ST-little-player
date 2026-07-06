@@ -271,7 +271,7 @@ function closeOverlay(): void {
             {{ activeOverlay === 'list' ? t('Playlist') : t('Search') }}
           </span>
           <button class="stmp-overlay-close" :aria-label="t('Close')" @click.stop="closeOverlay">
-            <Icon name="chevron-down" :size="16" />
+            <Icon name="x" :size="16" />
           </button>
         </div>
         <div class="stmp-overlay-body">
