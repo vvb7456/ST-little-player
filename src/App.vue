@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
 import { useSettingsStore, usePlayerStore } from '@/stores/index';
 import CollapsedBar from './components/CollapsedBar.vue';
 import PlayerPanel from './components/PlayerPanel.vue';
@@ -10,6 +10,8 @@ const playerStore = usePlayerStore();
 const isExpanded = ref(false);
 const widgetRef = ref<HTMLElement | null>(null);
 
+const isDock = computed(() => settingsStore.settings.widgetMode === 'dock');
+
 const onKeyDown = (e: KeyboardEvent): void => {
   if (e.key === 'Escape') isExpanded.value = false;
   if (e.key === ' ' && e.target === document.body) {
@@ -18,7 +20,7 @@ const onKeyDown = (e: KeyboardEvent): void => {
   }
 };
 
-// Drag state
+// ===== Drag state (drag mode only) =====
 let dragStartX = 0;
 let dragStartY = 0;
 let widgetStartX = 0;
@@ -28,22 +30,27 @@ let isDragging = false;
 let boundOnDrag: ((e: PointerEvent) => void) | null = null;
 let boundStopDrag: (() => void) | null = null;
 
-// Whether the widget is user-dragged (free position) or docked above input
-let isUserPositioned = false;
-
 function startDrag(e: PointerEvent): void {
+  // Dock mode: no drag, just toggle on click
+  if (isDock.value) {
+    const target = e.target as HTMLElement;
+    if (target.closest('button')) return;
+    toggleExpand();
+    return;
+  }
+
   const target = e.target as HTMLElement;
 
   // Never drag from these interactive elements
   if (target.closest('input, .stmp-tab, .stmp-result, .stmp-item, .stmp-upload-btn, .stmp-search-input, .stmp-controls, .stmp-lyrics, .stmp-lyrics-toggle, .stmp-tabs, .stmp-tab-content')) return;
 
-  // In expanded mode: only drag from topbar handle, but not from the collapse button
+  // In expanded mode: only drag from topbar handle
   if (isExpanded.value) {
     if (!target.closest('.stmp-drag-handle')) return;
     if (target.closest('button')) return;
   }
 
-  // In collapsed mode: drag from anywhere except the play button
+  // In collapsed mode: drag from anywhere except buttons
   if (!isExpanded.value) {
     if (target.closest('button')) return;
   }
@@ -58,7 +65,6 @@ function startDrag(e: PointerEvent): void {
   dragMoved = false;
   isDragging = true;
 
-  // Immediately switch to left/top positioning to avoid jump
   if (widgetRef.value) {
     widgetRef.value.style.left = rect.left + 'px';
     widgetRef.value.style.top = rect.top + 'px';
@@ -100,12 +106,10 @@ function stopDrag(): void {
   boundStopDrag = null;
 
   if (!dragMoved) {
-    // It was a click, not a drag — toggle expand
     toggleExpand();
     return;
   }
 
-  isUserPositioned = true;
   if (widgetRef.value) {
     const rect = widgetRef.value.getBoundingClientRect();
     settingsStore.setPosition({ x: rect.left, y: rect.top });
@@ -134,60 +138,99 @@ function clampToViewport(): void {
 }
 
 /**
- * Dock the widget above ST's input bar (#send_form), left-aligned.
- * Used for both mini and expanded modes when the user hasn't dragged it elsewhere.
+ * Dock mode: position widget above ST's #send_form, aligned to its left edge.
+ * Reads #send_form.getBoundingClientRect() live for responsive accuracy.
  */
-function dockAboveInput(): void {
-  if (!widgetRef.value || isUserPositioned) return;
+function dockToInput(): void {
+  if (!widgetRef.value || !isDock.value) return;
 
   const sendForm = document.querySelector('#send_form');
-  let bottomAnchor = window.innerHeight;
-  if (sendForm) {
-    const rect = sendForm.getBoundingClientRect();
-    bottomAnchor = rect.top;
-  }
+  if (!sendForm) return;
 
-  const h = widgetRef.value.offsetHeight || 38;
-  let top = bottomAnchor - h - 4;
-  // Clamp: never go above viewport top
+  const formRect = sendForm.getBoundingClientRect();
+  const widgetH = widgetRef.value.offsetHeight || 38;
+
+  // Align left edge to #send_form's left edge
+  // Place above the form with a small gap
+  let top = formRect.top - widgetH - 4;
+  // Clamp: never go above viewport
   if (top < 4) top = 4;
-  widgetRef.value.style.left = '8px';
+
+  widgetRef.value.style.left = formRect.left + 'px';
   widgetRef.value.style.top = top + 'px';
   widgetRef.value.style.right = 'auto';
   widgetRef.value.style.bottom = 'auto';
 }
 
+/**
+ * Drag mode: restore saved position or default to top-right.
+ */
+function restoreDragPosition(): void {
+  if (!widgetRef.value || isDock.value) return;
+  const pos = settingsStore.settings.position;
+  if (pos) {
+    widgetRef.value.style.left = pos.x + 'px';
+    widgetRef.value.style.top = pos.y + 'px';
+  } else {
+    // Default: top-right
+    widgetRef.value.style.right = '16px';
+    widgetRef.value.style.top = '16px';
+    widgetRef.value.style.left = 'auto';
+    widgetRef.value.style.bottom = 'auto';
+  }
+}
+
 function toggleExpand(): void {
   isExpanded.value = !isExpanded.value;
   nextTick(() => {
-    if (isUserPositioned) {
-      clampToViewport();
+    if (isDock.value) {
+      dockToInput();
     } else {
-      dockAboveInput();
+      if (settingsStore.settings.position) {
+        clampToViewport();
+      }
     }
   });
 }
 
-onMounted(() => {
-  const pos = settingsStore.settings.position;
-  if (pos && pos.x !== undefined && widgetRef.value) {
-    isUserPositioned = true;
-    widgetRef.value.style.left = pos.x + 'px';
-    widgetRef.value.style.top = pos.y + 'px';
-    widgetRef.value.style.right = 'auto';
-    widgetRef.value.style.bottom = 'auto';
-  }
-  // Always dock on mount (unless user already has a saved position)
-  nextTick(() => dockAboveInput());
-
-  window.addEventListener('resize', () => {
-    if (!isUserPositioned) nextTick(() => dockAboveInput());
+// Reposition when mode switches
+watch(() => settingsStore.settings.widgetMode, (mode) => {
+  nextTick(() => {
+    if (mode === 'dock') {
+      dockToInput();
+    } else {
+      restoreDragPosition();
+    }
   });
+});
+
+onMounted(() => {
+  nextTick(() => {
+    if (isDock.value) {
+      dockToInput();
+    } else {
+      restoreDragPosition();
+    }
+  });
+
+  // Reposition on resize (both modes need it)
+  window.addEventListener('resize', onResize);
   window.addEventListener('keydown', onKeyDown);
 });
 
+function onResize(): void {
+  if (isDock.value) {
+    nextTick(() => dockToInput());
+  } else {
+    if (settingsStore.settings.position) {
+      nextTick(() => clampToViewport());
+    }
+  }
+}
+
 onBeforeUnmount(() => {
   stopDrag();
+  window.removeEventListener('resize', onResize);
   window.removeEventListener('keydown', onKeyDown);
 });
 </script>
@@ -199,6 +242,7 @@ onBeforeUnmount(() => {
     :class="{
       'stmp-expanded': isExpanded,
       'stmp-collapsed': !isExpanded,
+      'stmp-dock': isDock,
     }"
     @pointerdown="startDrag"
   >
@@ -210,8 +254,6 @@ onBeforeUnmount(() => {
 <style scoped>
 .stmp-widget {
   position: fixed;
-  top: 16px;
-  right: 16px;
   z-index: 999999;
   border-radius: 16px;
   background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1a1a2e) 75%, transparent);
@@ -223,13 +265,19 @@ onBeforeUnmount(() => {
   touch-action: auto;
 }
 
-.stmp-collapsed {
+/* Drag mode collapsed: draggable */
+.stmp-collapsed:not(.stmp-dock) {
   cursor: grab;
   touch-action: none;
 }
 
-.stmp-collapsed:active {
+.stmp-collapsed:not(.stmp-dock):active {
   cursor: grabbing;
+}
+
+/* Dock mode collapsed: clickable but not draggable */
+.stmp-collapsed.stmp-dock {
+  cursor: pointer;
 }
 
 .stmp-expanded {
@@ -238,12 +286,12 @@ onBeforeUnmount(() => {
   cursor: default;
 }
 
-.stmp-expanded .stmp-drag-handle {
+.stmp-expanded:not(.stmp-dock) .stmp-drag-handle {
   cursor: grab;
   touch-action: none;
 }
 
-.stmp-expanded .stmp-drag-handle:active {
+.stmp-expanded:not(.stmp-dock) .stmp-drag-handle:active {
   cursor: grabbing;
 }
 

@@ -69,10 +69,13 @@ export interface ScanCursor {
 
 // ===== Settings =====
 
+export type WidgetMode = 'dock' | 'drag';
+
 export interface ExtensionSettings {
   volume: number;
   playMode: PlayMode;
   position: { x: number; y: number } | null;
+  widgetMode: WidgetMode;
   autoPlayOnNewCue: boolean;
   providers: ProviderConfig[];
   customCueRules: string[];

@@ -2,6 +2,7 @@
 import { ref } from 'vue';
 import { useSettingsStore } from '@/stores/index';
 import type { PlayMode } from '@/types';
+import { t } from '@/i18n';
 
 const settingsStore = useSettingsStore();
 
@@ -178,6 +179,23 @@ function toggleProvider(id: string): void {
       <select class="stmp-select" :value="settingsStore.settings.playMode" @change="onPlayMode">
         <option v-for="m in playModes" :key="m.value" :value="m.value">{{ m.label }}</option>
       </select>
+    </div>
+
+    <!-- Widget Mode -->
+    <div class="stmp-setting-group">
+      <div class="stmp-setting-label">{{ t('Widget Mode') }}</div>
+      <div class="stmp-mode-toggle">
+        <button
+          class="stmp-mode-btn"
+          :class="{ active: settingsStore.settings.widgetMode === 'dock' }"
+          @click="settingsStore.setWidgetMode('dock')"
+        >{{ t('Dock') }}</button>
+        <button
+          class="stmp-mode-btn"
+          :class="{ active: settingsStore.settings.widgetMode === 'drag' }"
+          @click="settingsStore.setWidgetMode('drag')"
+        >{{ t('Drag') }}</button>
+      </div>
     </div>
 
     <!-- Auto Play -->
@@ -368,5 +386,30 @@ function toggleProvider(id: string): void {
 
 .stmp-data-btn:hover {
   background: rgba(255, 255, 255, 0.08);
+}
+
+.stmp-mode-toggle {
+  display: flex;
+  gap: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.stmp-mode-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--SmartThemeBodyColor, #ccc);
+  cursor: pointer;
+  padding: 6px 12px;
+  font-size: calc(var(--fontSize, 14px) * 0.82);
+  opacity: 0.5;
+  transition: all 0.15s;
+}
+
+.stmp-mode-btn.active {
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 1;
 }
 </style>

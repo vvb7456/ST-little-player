@@ -29,6 +29,11 @@ const zhCN: Record<string, string> = {
   'Added': '已添加',
   'Add to list': '加入列表',
   'Cannot play': '无法播放',
+  'Widget Mode': '播放器模式',
+  'Dock to input bar': '吸附到输入框',
+  'Free drag': '自由拖动',
+  'Dock': '吸附',
+  'Drag': '拖动',
 };
 
 let currentLang: string | null = null;

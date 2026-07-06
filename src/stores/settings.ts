@@ -19,6 +19,7 @@ function defaultSettings(): ExtensionSettings {
     volume: 65,
     playMode: 'list',
     position: null,
+    widgetMode: 'dock',
     autoPlayOnNewCue: true,
     providers: defaultProviders(),
     customCueRules: [],
@@ -78,6 +79,11 @@ export const useSettingsStore = defineStore('settings', {
 
     setPosition(pos: { x: number; y: number } | null): void {
       this.settings.position = pos;
+      this.save();
+    },
+
+    setWidgetMode(mode: import('@/types').WidgetMode): void {
+      this.settings.widgetMode = mode;
       this.save();
     },
 
