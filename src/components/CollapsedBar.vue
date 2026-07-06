@@ -82,8 +82,14 @@ function onNext(e: Event): void {
     </div>
   </div>
 
-  <!-- ===== Mobile Dock mini: full width, no cover ===== -->
+  <!-- ===== Mobile Dock mini: full width, cover + text + controls ===== -->
   <div v-else-if="props.isDock && props.isMobile" class="stmp-mini stmp-mini-dock-mobile">
+    <div class="stmp-mini-cover" v-if="coverUrl && !coverError">
+      <img :src="coverUrl" alt="" @error="onCoverError" />
+    </div>
+    <div class="stmp-mini-cover stmp-mini-cover-placeholder" v-else>
+      <Icon name="music" :size="14" />
+    </div>
     <span class="stmp-mini-text">{{ displayText }}</span>
     <div class="stmp-mini-controls">
       <button class="stmp-mini-btn" :aria-label="playerStore.isPlaying ? t('Pause') : t('Play')" @click="onPlay">
@@ -198,6 +204,11 @@ function onNext(e: Event): void {
 .stmp-mini-dock-mobile {
   width: 100%;
   padding: 4px 8px;
+}
+
+.stmp-mini-dock-mobile .stmp-mini-cover {
+  width: 28px;
+  height: 28px;
 }
 
 .stmp-mini-dock-mobile .stmp-mini-text {
