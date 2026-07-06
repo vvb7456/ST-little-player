@@ -1,11 +1,6 @@
 import type { StorageAdapter } from './StorageAdapter';
 import { MODULE_NAME } from './index';
 
-interface CacheEntry<T> {
-  value: T;
-  expiresAt: number;
-}
-
 /**
  * Minimal structural type for the localforage methods we use.
  *
@@ -115,46 +110,10 @@ export class STStorageAdapter implements StorageAdapter {
     await this.forage.removeItem(key);
   }
 
-  // ===== resolve cache (with TTL) =====
-
-  async getCache<T>(key: string): Promise<T | null> {
-    const entry = (await this.forage.getItem<CacheEntry<T>>(this.cacheKey(key))) ?? null;
-    if (entry === null) return null;
-    if (Date.now() >= entry.expiresAt) {
-      await this.forage.removeItem(this.cacheKey(key));
-      return null;
-    }
-    return entry.value;
-  }
-
-  async setCache<T>(key: string, value: T, ttlMs: number): Promise<void> {
-    const entry: CacheEntry<T> = { value, expiresAt: Date.now() + ttlMs };
-    await this.forage.setItem(this.cacheKey(key), entry);
-  }
-
-  async clearCache(): Promise<void> {
-    const forage = this.forage;
-    const prefix = this.cachePrefix();
-    const keys = await forage.keys();
-    await Promise.all(
-      keys
-        .filter((k: string) => k.startsWith(prefix))
-        .map((k: string) => forage.removeItem(k)),
-    );
-  }
-
   // ----- key helpers -----
 
   private settingsKey(): string {
     return `${MODULE_NAME}__settings`;
-  }
-
-  private cachePrefix(): string {
-    return `${MODULE_NAME}:cache:`;
-  }
-
-  private cacheKey(key: string): string {
-    return `${this.cachePrefix()}${key}`;
   }
 }
 

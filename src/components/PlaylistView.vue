@@ -8,6 +8,10 @@ import { t } from '@/i18n';
 const playlistStore = usePlaylistStore();
 const settingsStore = useSettingsStore();
 
+const localProviderEnabled = computed(() => {
+  return settingsStore.settings.providers.find((p) => p.id === 'local')?.enabled ?? false;
+});
+
 const fileInputRef = ref<HTMLInputElement | null>(null);
 
 const triggerUpload = (): void => {
@@ -58,7 +62,7 @@ function remove(index: number): void {
 
 <template>
   <div class="stmp-playlist">
-    <div class="stmp-upload-area">
+    <div class="stmp-upload-area" v-if="localProviderEnabled">
       <input
         type="file"
         accept="audio/*"

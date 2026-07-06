@@ -25,10 +25,4 @@ export interface StorageAdapter {
   getBlob(key: string): Promise<Blob | null>;
   setBlob(key: string, value: Blob): Promise<void>;
   removeBlob(key: string): Promise<void>;
-
-  // ===== resolve cache (IndexedDB, with TTL) =====
-
-  getCache<T>(key: string): Promise<T | null>;
-  setCache<T>(key: string, value: T, ttlMs: number): Promise<void>;
-  clearCache(): Promise<void>;
 }

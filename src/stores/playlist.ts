@@ -64,13 +64,18 @@ export const usePlaylistStore = defineStore('playlist', {
       const stored = storage.getMetadata<PlaylistItem[]>(USERLIST_KEY);
       if (stored && Array.isArray(stored)) {
         const userList = stored.filter((item) => item && item.source === 'user');
-        this.list = [...this.list.filter((i) => i.source !== 'user'), ...userList];
+        const localList = stored.filter((item) => item && item.source === 'local');
+        this.list = [
+          ...this.list.filter((i) => i.source !== 'user' && i.source !== 'local'),
+          ...userList,
+          ...localList,
+        ];
       }
     },
 
     addItem(item: PlaylistItem): void {
       this.list.push(item);
-      if (item.source === 'user') {
+      if (item.source === 'user' || item.source === 'local') {
         this.saveUserList();
       }
     },
@@ -78,7 +83,7 @@ export const usePlaylistStore = defineStore('playlist', {
     removeItem(index: number): void {
       if (index < 0 || index >= this.list.length) return;
       const removed = this.list.splice(index, 1)[0];
-      if (removed && removed.source === 'user') {
+      if (removed && (removed.source === 'user' || removed.source === 'local')) {
         this.saveUserList();
       }
       if (index === this.currentIndex) {
@@ -124,6 +129,7 @@ export const usePlaylistStore = defineStore('playlist', {
         addedAt: Date.now(),
       };
       this.list.push(item);
+      this.saveUserList();
     },
 
     play(index: number): void {
@@ -282,7 +288,7 @@ export const usePlaylistStore = defineStore('playlist', {
       const settingsStore = useSettingsStore();
       const storage = settingsStore.storage;
       if (!storage || !this.chatId) return;
-      const userList = this.list.filter((item) => item.source === 'user');
+      const userList = this.list.filter((item) => item.source === 'user' || item.source === 'local');
       storage.setMetadata(USERLIST_KEY, userList);
     },
 

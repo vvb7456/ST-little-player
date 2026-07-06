@@ -75,14 +75,6 @@ function removeRule(index: number): void {
 }
 
 // ===== Data tab =====
-const clearCache = async (): Promise<void> => {
-  const storage = settingsStore.storage;
-  if (storage) {
-    await storage.clearCache();
-    toastr.success(t('Cache cleared'));
-  }
-};
-
 const exportData = (): void => {
   const data = JSON.stringify(settingsStore.settings, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
@@ -292,13 +284,6 @@ const importData = (): void => {
       <!-- ===== Data ===== -->
       <div v-show="activeTab === 'data'" class="stmp-tab-panel">
         <div class="stmp-data-btns">
-          <div
-            class="menu_button menu_button_icon stmp-data-btn"
-            @click="clearCache"
-          >
-            <i class="fa-solid fa-trash-can" />
-            <span>{{ t('Clear cache') }}</span>
-          </div>
           <div
             class="menu_button menu_button_icon stmp-data-btn"
             @click="exportData"
