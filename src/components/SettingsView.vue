@@ -220,14 +220,6 @@ const importData = (): void => {
             :label="providerNames[p.id] || p.id"
             @update:model-value="() => toggleProvider(p.id)"
           />
-          <div v-if="p.id === 'netease' && p.enabled" class="stmp-provider-fields">
-            <input
-              class="text_pole"
-              v-model="p.config!.baseURL"
-              :placeholder="t('API baseURL')"
-              @change="settingsStore.save()"
-            />
-          </div>
           <div v-if="p.id === 'custom' && p.enabled" class="stmp-provider-fields">
             <input
               class="text_pole"
@@ -452,13 +444,14 @@ const importData = (): void => {
 /* ===== Data buttons ===== */
 .stmp-data-btns {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   gap: 5px;
 }
 
 .stmp-data-btn {
+  flex: 1;
   margin: 0;
-  justify-content: flex-start;
-  gap: 8px;
+  justify-content: center;
+  gap: 5px;
 }
 </style>
