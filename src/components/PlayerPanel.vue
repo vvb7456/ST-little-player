@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { usePlayerStore, usePlaylistStore, useSettingsStore } from '@/stores/index';
-import type { PlayMode } from '@/types';
+import type { PlayMode, LyricLine } from '@/types';
 import Icon from './Icon.vue';
 import PlaylistView from './PlaylistView.vue';
 import SearchView from './SearchView.vue';
@@ -13,7 +13,6 @@ const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();
 const settingsStore = useSettingsStore();
 
-// 'cover' mode: large cover art display; 'lyric' mode: more lyric lines
 const viewMode = ref<'cover' | 'lyric'>('cover');
 const activeOverlay = ref<'list' | 'search' | null>(null);
 const coverError = ref(false);
@@ -37,22 +36,21 @@ const progressPercent = computed(() =>
   playerStore.duration > 0 ? (playerStore.currentTime / playerStore.duration) * 100 : 0,
 );
 
-const currentLyric = computed(() =>
-  playerStore.currentLyricIndex >= 0
-    ? playerStore.lyrics[playerStore.currentLyricIndex]?.text ?? null
-    : null,
-);
-
-const prevLyric = computed(() => {
+// Build 6-line lyric window centered on current line
+const lyricWindow = computed<{ line: LyricLine | null; isActive: boolean }[]>(() => {
+  const lyrics = playerStore.lyrics;
   const idx = playerStore.currentLyricIndex;
-  if (idx <= 0) return null;
-  return playerStore.lyrics[idx - 1]?.text ?? null;
-});
-
-const nextLyric = computed(() => {
-  const idx = playerStore.currentLyricIndex;
-  if (idx < 0) return null;
-  return playerStore.lyrics[idx + 1]?.text ?? null;
+  const window: { line: LyricLine | null; isActive: boolean }[] = [];
+  const half = 3; // 3 above + current + 2 below = 6 lines
+  for (let i = -half; i <= half - 1; i++) {
+    const lineIdx = idx + i;
+    if (lineIdx >= 0 && lineIdx < lyrics.length) {
+      window.push({ line: lyrics[lineIdx], isActive: lineIdx === idx });
+    } else {
+      window.push({ line: null, isActive: false });
+    }
+  }
+  return window;
 });
 
 function formatTime(s: number): string {
@@ -119,23 +117,9 @@ function closeOverlay(): void {
 
 <template>
   <div class="stmp-panel">
-    <!-- Top Bar (draggable handle) -->
+    <!-- Top bar: drag handle + collapse only -->
     <div class="stmp-topbar stmp-drag-handle">
-      <div class="stmp-cover-mini">
-        <img
-          v-if="coverUrl && !coverError"
-          :src="coverUrl"
-          alt="cover"
-          @error="onCoverError"
-        />
-        <Icon v-else name="music" :size="20" />
-      </div>
-      <div class="stmp-track-info">
-        <div class="stmp-track-name">{{ playerStore.currentTrack?.name || t('No Song') }}</div>
-        <div v-if="playerStore.currentTrack?.artist" class="stmp-track-artist">
-          {{ playerStore.currentTrack.artist }}
-        </div>
-      </div>
+      <div class="stmp-topbar-spacer" />
       <button
         class="stmp-icon-btn"
         :aria-label="t('Collapse panel')"
@@ -147,25 +131,44 @@ function closeOverlay(): void {
 
     <!-- Display area: cover mode or lyric mode -->
     <div class="stmp-display" @click="viewMode = viewMode === 'cover' ? 'lyric' : 'cover'">
-      <!-- Cover mode: large cover art -->
-      <div v-if="viewMode === 'cover'" class="stmp-cover-large">
-        <img
-          v-if="coverUrl && !coverError"
-          :src="coverUrl"
-          alt="cover"
-          @error="onCoverError"
-        />
-        <div v-else class="stmp-cover-placeholder">
-          <Icon name="music" :size="40" />
+      <!-- Cover mode: large cover + track name + artist -->
+      <div v-if="viewMode === 'cover'" class="stmp-cover-mode">
+        <div class="stmp-cover-large">
+          <img
+            v-if="coverUrl && !coverError"
+            :src="coverUrl"
+            alt="cover"
+            @error="onCoverError"
+          />
+          <div v-else class="stmp-cover-placeholder">
+            <Icon name="music" :size="48" />
+          </div>
+        </div>
+        <div class="stmp-track-name">{{ playerStore.currentTrack?.name || t('No Song') }}</div>
+        <div v-if="playerStore.currentTrack?.artist" class="stmp-track-artist">
+          {{ playerStore.currentTrack.artist }}
         </div>
       </div>
-      <!-- Lyric mode: 3 lines -->
-      <div v-else class="stmp-lyrics">
-        <div v-if="prevLyric" class="stmp-lyric-prev">{{ prevLyric }}</div>
-        <div v-if="currentLyric" class="stmp-lyric-current">{{ currentLyric }}</div>
-        <div v-if="nextLyric" class="stmp-lyric-next">{{ nextLyric }}</div>
-        <div v-if="!prevLyric && !currentLyric && !nextLyric" class="stmp-lyric-empty">
-          <Icon name="music" :size="18" />
+      <!-- Lyric mode: track name + artist fixed, 6-line scrolling lyrics -->
+      <div v-else class="stmp-lyric-mode">
+        <div class="stmp-lyric-header">
+          <div class="stmp-track-name">{{ playerStore.currentTrack?.name || t('No Song') }}</div>
+          <div v-if="playerStore.currentTrack?.artist" class="stmp-track-artist">
+            {{ playerStore.currentTrack.artist }}
+          </div>
+        </div>
+        <div class="stmp-lyric-window">
+          <div
+            v-for="(entry, i) in lyricWindow"
+            :key="i"
+            class="stmp-lyric-line"
+            :class="{
+              'stmp-lyric-active': entry.isActive,
+              'stmp-lyric-edge': i === 0 || i === lyricWindow.length - 1,
+            }"
+          >
+            {{ entry.line?.text || '' }}
+          </div>
         </div>
       </div>
     </div>
@@ -187,14 +190,27 @@ function closeOverlay(): void {
       </div>
     </div>
 
-    <!-- Controls: 7 buttons -->
+    <!-- Controls: search | playMode prev play next playlist | volume -->
     <div class="stmp-controls">
+      <!-- Search (leftmost) -->
+      <button
+        class="stmp-ctrl-btn stmp-ctrl-side"
+        :class="{ active: activeOverlay === 'search' }"
+        :aria-label="t('Search')"
+        @click.stop="toggleOverlay('search')"
+      >
+        <Icon name="search" :size="18" />
+      </button>
+
+      <!-- Left cluster -->
       <button class="stmp-ctrl-btn" :aria-label="t('Toggle play mode')" @click="cyclePlayMode">
         <Icon :name="playModeIcon[settingsStore.settings.playMode]" :size="18" />
       </button>
       <button class="stmp-ctrl-btn" :aria-label="t('Previous')" @click="playlistStore.prev()">
         <Icon name="prev" :size="18" />
       </button>
+
+      <!-- Center: play/pause -->
       <button
         class="stmp-ctrl-btn stmp-play-btn"
         :aria-label="playerStore.isPlaying ? t('Pause') : t('Play')"
@@ -202,13 +218,23 @@ function closeOverlay(): void {
       >
         <Icon :name="playerStore.isPlaying ? 'pause' : 'play'" :size="24" />
       </button>
+
+      <!-- Right cluster -->
       <button class="stmp-ctrl-btn" :aria-label="t('Next')" @click="playlistStore.next()">
         <Icon name="next" :size="18" />
       </button>
+      <button
+        class="stmp-ctrl-btn"
+        :class="{ active: activeOverlay === 'list' }"
+        :aria-label="t('Playlist')"
+        @click.stop="toggleOverlay('list')"
+      >
+        <Icon name="list-music" :size="18" />
+      </button>
 
-      <!-- Volume: icon always visible, slider hidden until hover -->
+      <!-- Volume (rightmost) -->
       <div
-        class="stmp-volume-container"
+        class="stmp-volume-container stmp-ctrl-side"
         @mouseenter="onVolumeEnter"
         @mouseleave="onVolumeLeave"
       >
@@ -231,26 +257,6 @@ function closeOverlay(): void {
           />
         </div>
       </div>
-
-      <!-- Search button -->
-      <button
-        class="stmp-ctrl-btn"
-        :class="{ active: activeOverlay === 'search' }"
-        :aria-label="t('Search')"
-        @click.stop="toggleOverlay('search')"
-      >
-        <Icon name="search" :size="18" />
-      </button>
-
-      <!-- Playlist button -->
-      <button
-        class="stmp-ctrl-btn"
-        :class="{ active: activeOverlay === 'list' }"
-        :aria-label="t('Playlist')"
-        @click.stop="toggleOverlay('list')"
-      >
-        <Icon name="list-music" :size="18" />
-      </button>
     </div>
 
     <!-- Overlay panel: slide up from bottom -->
@@ -275,59 +281,23 @@ function closeOverlay(): void {
 
 <style scoped>
 .stmp-panel {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
   width: 100%;
 }
 
+/* Top bar: just a drag handle strip with collapse button */
 .stmp-topbar {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-end;
+  min-height: 24px;
 }
 
-.stmp-cover-mini {
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  overflow: hidden;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.3);
-  color: var(--SmartThemeBodyColor, #ccc);
-  opacity: 0.6;
-}
-
-.stmp-cover-mini img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.stmp-track-info {
+.stmp-topbar-spacer {
   flex: 1;
-  overflow: hidden;
-}
-
-.stmp-track-name {
-  font-size: calc(var(--fontSize, 14px) * 0.9);
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--SmartThemeBodyColor, #fff);
-}
-
-.stmp-track-artist {
-  font-size: calc(var(--fontSize, 14px) * 0.75);
-  opacity: 0.55;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--SmartThemeBodyColor, #ccc);
 }
 
 .stmp-icon-btn {
@@ -335,7 +305,7 @@ function closeOverlay(): void {
   border: none;
   color: var(--SmartThemeBodyColor, #ccc);
   cursor: pointer;
-  padding: 4px;
+  padding: 2px 4px;
   border-radius: 8px;
   transition: background 0.15s;
   display: flex;
@@ -348,33 +318,32 @@ function closeOverlay(): void {
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* Display area: cover or lyrics */
+/* Display area */
 .stmp-display {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   cursor: pointer;
 }
 
-.stmp-cover-large {
-  width: 100%;
+/* ===== Cover mode ===== */
+.stmp-cover-mode {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   padding: 4px 0;
 }
 
 .stmp-cover-large img {
-  width: 120px;
-  height: 120px;
-  border-radius: 12px;
+  width: 180px;
+  height: 180px;
+  border-radius: 16px;
   object-fit: cover;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 .stmp-cover-placeholder {
-  width: 120px;
-  height: 120px;
-  border-radius: 12px;
+  width: 180px;
+  height: 180px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -383,39 +352,82 @@ function closeOverlay(): void {
   opacity: 0.3;
 }
 
-.stmp-lyrics {
+.stmp-track-name {
+  font-size: calc(var(--fontSize, 14px) * 1.0);
+  font-weight: 600;
   text-align: center;
-  padding: 4px 8px;
-  min-height: 60px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  color: var(--SmartThemeBodyColor, #fff);
+}
+
+.stmp-track-artist {
+  font-size: calc(var(--fontSize, 14px) * 0.8);
+  opacity: 0.55;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  color: var(--SmartThemeBodyColor, #ccc);
+}
+
+/* ===== Lyric mode ===== */
+.stmp-lyric-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stmp-lyric-header {
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.stmp-lyric-window {
+  position: relative;
+  height: calc(var(--fontSize, 14px) * 6.6);
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 20%,
+    #000 80%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    #000 20%,
+    #000 80%,
+    transparent 100%
+  );
 }
 
-.stmp-lyric-prev {
-  font-size: calc(var(--fontSize, 14px) * 0.75);
+.stmp-lyric-line {
+  font-size: calc(var(--fontSize, 14px) * 0.82);
+  text-align: center;
   opacity: 0.35;
   color: var(--SmartThemeBodyColor, #ccc);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity 0.3s ease;
 }
 
-.stmp-lyric-current {
-  font-size: calc(var(--fontSize, 14px) * 0.88);
-  color: var(--SmartThemeQuoteColor, #fff);
+.stmp-lyric-active {
+  opacity: 1;
   font-weight: 600;
+  color: var(--SmartThemeQuoteColor, #fff);
 }
 
-.stmp-lyric-next {
-  font-size: calc(var(--fontSize, 14px) * 0.75);
-  opacity: 0.35;
-  color: var(--SmartThemeBodyColor, #ccc);
-}
-
-.stmp-lyric-empty {
-  opacity: 0.3;
-  color: var(--SmartThemeBodyColor, #ccc);
-}
-
+/* Progress */
 .stmp-progress {
   display: flex;
   flex-direction: column;
@@ -460,13 +472,36 @@ function closeOverlay(): void {
   color: var(--SmartThemeBodyColor, #ccc);
 }
 
-/* Controls: 7 buttons */
+/* Controls: 3 groups — left side, center cluster, right side */
 .stmp-controls {
   display: flex;
   align-items: center;
-  justify-content: space-evenly;
   padding: 0 4px;
   height: 36px;
+  gap: 0;
+}
+
+.stmp-ctrl-side {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.stmp-ctrl-side:first-child {
+  justify-content: flex-start;
+}
+
+.stmp-ctrl-side:last-child {
+  justify-content: flex-end;
+}
+
+/* Center cluster: prev, playMode, play, next, playlist */
+.stmp-controls > .stmp-ctrl-btn:not(.stmp-ctrl-side) {
+  flex: 0 0 auto;
+}
+
+.stmp-controls .stmp-play-btn {
+  margin: 0 6px;
 }
 
 .stmp-ctrl-btn {
@@ -499,19 +534,12 @@ function closeOverlay(): void {
 }
 
 /* Volume container */
-.stmp-volume-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
 .stmp-volume-popup {
   position: absolute;
   bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%) scaleY(0);
-  transform-origin: bottom center;
+  right: 0;
+  transform: scaleY(0);
+  transform-origin: bottom right;
   transition: transform 0.2s ease, opacity 0.2s ease;
   opacity: 0;
   padding: 6px 4px;
@@ -523,7 +551,7 @@ function closeOverlay(): void {
 }
 
 .stmp-volume-popup.show {
-  transform: translateX(-50%) scaleY(1);
+  transform: scaleY(1);
   opacity: 1;
   pointer-events: auto;
 }

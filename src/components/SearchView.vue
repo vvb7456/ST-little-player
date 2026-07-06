@@ -115,6 +115,8 @@ function isPlaying(result: SearchResult): boolean {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
+  min-height: 0;
 }
 
 .stmp-search-bar {
