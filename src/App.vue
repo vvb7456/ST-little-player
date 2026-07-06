@@ -189,10 +189,11 @@ function restoreDragPosition(): void {
 }
 
 function onWidgetClick(e: MouseEvent): void {
-  // Dock mode: toggle expand on any click that's not on a button
-  if (isDock.value) {
+  // Dock mode: only toggle expand when collapsed (clicking to open).
+  // When expanded, only the collapse button (in PlayerPanel) closes it.
+  if (isDock.value && !isExpanded.value) {
     const target = e.target as HTMLElement;
-    if (target.closest('button, input, .stmp-tab, .stmp-result, .stmp-item')) return;
+    if (target.closest('button, input')) return;
     toggleExpand();
   }
 }

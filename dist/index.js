@@ -5718,8 +5718,8 @@ const ds = /* @__PURE__ */ Js("playlist", {
       S ? (i.value.style.left = S.x + "px", i.value.style.top = S.y + "px") : (i.value.style.right = "16px", i.value.style.top = "16px", i.value.style.left = "auto", i.value.style.bottom = "auto");
     }
     function B(S) {
-      if (r.value) {
-        if (S.target.closest("button, input, .stmp-tab, .stmp-result, .stmp-item")) return;
+      if (r.value && !n.value) {
+        if (S.target.closest("button, input")) return;
         fe();
       }
     }
@@ -5759,7 +5759,7 @@ const ds = /* @__PURE__ */ Js("playlist", {
       })) : (k(), ct(Yc, { key: 0 }))
     ], 34));
   }
-}), Xa = /* @__PURE__ */ xt(Ya, [["__scopeId", "data-v-66cfb1e2"]]), Za = { class: "stmp-settings" }, Qa = { class: "stmp-setting-group" }, eu = { class: "stmp-setting-row" }, tu = ["checked", "onChange"], su = ["onUpdate:modelValue"], nu = ["onUpdate:modelValue"], iu = ["onUpdate:modelValue"], ru = { class: "stmp-setting-group" }, ou = { class: "stmp-setting-label" }, lu = ["value"], cu = { class: "stmp-setting-group" }, au = ["value"], uu = ["value"], fu = { class: "stmp-setting-group" }, du = { class: "stmp-setting-label" }, hu = { class: "stmp-mode-toggle" }, pu = { class: "stmp-setting-group" }, gu = { class: "stmp-setting-row" }, mu = ["checked"], vu = { class: "stmp-setting-group" }, yu = { class: "stmp-rules" }, bu = ["onClick"], _u = { class: "stmp-rule-add" }, xu = /* @__PURE__ */ bt({
+}), Xa = /* @__PURE__ */ xt(Ya, [["__scopeId", "data-v-a7c34536"]]), Za = { class: "stmp-settings" }, Qa = { class: "stmp-setting-group" }, eu = { class: "stmp-setting-row" }, tu = ["checked", "onChange"], su = ["onUpdate:modelValue"], nu = ["onUpdate:modelValue"], iu = ["onUpdate:modelValue"], ru = { class: "stmp-setting-group" }, ou = { class: "stmp-setting-label" }, lu = ["value"], cu = { class: "stmp-setting-group" }, au = ["value"], uu = ["value"], fu = { class: "stmp-setting-group" }, du = { class: "stmp-setting-label" }, hu = { class: "stmp-mode-toggle" }, pu = { class: "stmp-setting-group" }, gu = { class: "stmp-setting-row" }, mu = ["checked"], vu = { class: "stmp-setting-group" }, yu = { class: "stmp-rules" }, bu = ["onClick"], _u = { class: "stmp-rule-add" }, xu = /* @__PURE__ */ bt({
   __name: "SettingsView",
   setup(e) {
     const t = ve(), s = /* @__PURE__ */ Me(""), n = [
