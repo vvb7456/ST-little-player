@@ -443,8 +443,8 @@ function toggleMute(): void {
   transform-origin: bottom center;
   transition: transform 0.2s ease, opacity 0.2s ease;
   opacity: 0;
-  padding: 8px 4px;
-  margin-bottom: 4px;
+  padding: 4px 2px;
+  margin-bottom: 2px;
   pointer-events: none;
 }
 

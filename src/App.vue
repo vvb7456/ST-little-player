@@ -150,13 +150,14 @@ function dockToInput(): void {
   const formRect = sendForm.getBoundingClientRect();
   const widgetH = widgetRef.value.offsetHeight || 38;
 
-  // Align left edge to #send_form's left edge
-  // Place above the form with a small gap
-  let top = formRect.top - widgetH - 4;
+  // No gap — dock sits flush against the input bar
+  let top = formRect.top - widgetH;
   // Clamp: never go above viewport
   if (top < 4) top = 4;
 
+  // Dock mode: match #send_form width and left edge exactly
   widgetRef.value.style.left = formRect.left + 'px';
+  widgetRef.value.style.width = formRect.width + 'px';
   widgetRef.value.style.top = top + 'px';
   widgetRef.value.style.right = 'auto';
   widgetRef.value.style.bottom = 'auto';
@@ -177,6 +178,15 @@ function restoreDragPosition(): void {
     widgetRef.value.style.top = '16px';
     widgetRef.value.style.left = 'auto';
     widgetRef.value.style.bottom = 'auto';
+  }
+}
+
+function onWidgetClick(e: MouseEvent): void {
+  // Dock mode: toggle expand on any click that's not on a button
+  if (isDock.value) {
+    const target = e.target as HTMLElement;
+    if (target.closest('button, input, .stmp-tab, .stmp-result, .stmp-item')) return;
+    toggleExpand();
   }
 }
 
@@ -245,6 +255,7 @@ onBeforeUnmount(() => {
       'stmp-dock': isDock,
     }"
     @pointerdown="startDrag"
+    @click="onWidgetClick"
   >
     <CollapsedBar v-if="!isExpanded" />
     <PlayerPanel v-else @collapse="toggleExpand" />
@@ -265,6 +276,23 @@ onBeforeUnmount(() => {
   touch-action: auto;
 }
 
+/* ===== Dock mode: flush with input bar, no floating look ===== */
+.stmp-dock {
+  border-radius: 10px 10px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: none;
+  box-shadow: none;
+  background: var(--SmartThemeBlurTintColor, #1a1a2e);
+  padding: 2px 8px;
+}
+
+/* Dock expanded: responsive width */
+.stmp-dock.stmp-expanded {
+  padding: 10px;
+}
+
+/* ===== Drag mode: floating glass widget ===== */
+
 /* Drag mode collapsed: draggable */
 .stmp-collapsed:not(.stmp-dock) {
   cursor: grab;
@@ -280,7 +308,7 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-.stmp-expanded {
+.stmp-expanded:not(.stmp-dock) {
   width: min(360px, calc(100vw - 16px));
   padding: 12px;
   cursor: default;

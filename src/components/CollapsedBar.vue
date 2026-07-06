@@ -11,6 +11,7 @@ const songName = computed(() => playerStore.currentTrack?.name || t('No Song'));
 
 <template>
   <div class="stmp-collapsed-bar">
+    <Icon name="music" :size="14" class="stmp-collapsed-icon" />
     <span class="stmp-collapsed-title">{{ songName }}</span>
     <button
       class="stmp-icon-btn"
@@ -27,15 +28,21 @@ const songName = computed(() => playerStore.currentTrack?.name || t('No Song'));
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px;
+  padding: 2px 8px;
   user-select: none;
-  max-width: min(200px, calc(100vw - 60px));
   overflow: hidden;
   touch-action: none;
 }
 
+.stmp-collapsed-icon {
+  opacity: 0.4;
+  flex-shrink: 0;
+  color: var(--SmartThemeBodyColor, #ccc);
+}
+
 .stmp-collapsed-title {
-  font-size: calc(var(--fontSize, 14px) * 0.9);
+  flex: 1;
+  font-size: calc(var(--fontSize, 14px) * 0.85);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -52,5 +59,14 @@ const songName = computed(() => playerStore.currentTrack?.name || t('No Song'));
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+}
+
+/* In drag mode (widget is narrow pill): constrain width */
+.stmp-collapsed-bar:has(.stmp-collapsed-icon) {
+  /* default */
+}
+
+.stmp-widget:not(.stmp-dock) .stmp-collapsed-bar {
+  max-width: min(200px, calc(100vw - 60px));
 }
 </style>
