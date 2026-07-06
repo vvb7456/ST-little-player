@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { usePlayerStore, usePlaylistStore } from '@/stores/index';
 import Icon from './Icon.vue';
 import { t } from '@/i18n';
@@ -28,6 +28,19 @@ const currentLyric = computed(() => {
   const idx = playerStore.currentLyricIndex;
   if (idx < 0 || idx >= playerStore.lyrics.length) return '';
   return playerStore.lyrics[idx].text;
+});
+
+const lyricScrollRef = ref<HTMLElement | null>(null);
+const lyricIsScrolling = ref(false);
+
+watch(currentLyric, async () => {
+  await nextTick();
+  const el = lyricScrollRef.value;
+  if (!el) {
+    lyricIsScrolling.value = false;
+    return;
+  }
+  lyricIsScrolling.value = el.scrollWidth > el.clientWidth;
 });
 
 function onCoverError(): void {
@@ -97,7 +110,13 @@ function onNext(e: Event): void {
     </button>
     <div class="stmp-mini-drag-right">
       <span class="stmp-mini-text stmp-mini-text-drag">{{ displayText }}</span>
-      <span class="stmp-mini-lyric">{{ currentLyric || '\u00A0' }}</span>
+      <div class="stmp-mini-lyric">
+        <span
+          ref="lyricScrollRef"
+          class="stmp-mini-lyric-scroll"
+          :class="{ scrolling: lyricIsScrolling }"
+        >{{ currentLyric || '\u00A0' }}</span>
+      </div>
     </div>
   </div>
 </template>
@@ -189,16 +208,16 @@ function onNext(e: Event): void {
   padding: 6px;
 }
 
-/* ===== Drag mini: cover + 2 rows (title + lyric) ===== */
+/* ===== Drag mini: cover + 2 rows (title + lyric), very compact ===== */
 .stmp-mini-drag {
-  padding: 4px;
-  gap: 8px;
+  padding: 3px;
+  gap: 6px;
 }
 
 .stmp-mini-cover-square {
-  width: 48px;
-  height: 48px;
-  border-radius: 6px;
+  width: 40px;
+  height: 40px;
+  border-radius: 5px;
   border: none;
   cursor: pointer;
   padding: 0;
@@ -215,7 +234,7 @@ function onNext(e: Event): void {
   color: #fff;
   opacity: 0;
   transition: opacity 0.2s;
-  border-radius: 6px;
+  border-radius: 5px;
 }
 
 .stmp-mini-cover-square:hover .stmp-mini-cover-overlay {
@@ -227,21 +246,37 @@ function onNext(e: Event): void {
   flex-direction: column;
   justify-content: center;
   min-width: 0;
-  gap: 2px;
+  gap: 1px;
   align-self: stretch;
+  overflow: hidden;
 }
 
 .stmp-mini-text-drag {
-  font-size: calc(var(--mainFontSize, 14px) * 0.8);
-  max-width: 120px;
+  font-size: calc(var(--mainFontSize, 14px) * 0.75);
+  max-width: 70px;
 }
 
+/* Lyric: horizontal scroll instead of ellipsis */
 .stmp-mini-lyric {
-  font-size: calc(var(--mainFontSize, 14px) * 0.7);
+  font-size: calc(var(--mainFontSize, 14px) * 0.65);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   color: var(--stmp-text-dim, #999);
-  max-width: 120px;
+  max-width: 70px;
+  overflow: hidden;
+  position: relative;
+}
+
+.stmp-mini-lyric-scroll {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.stmp-mini-lyric-scroll.scrolling {
+  animation: stmp-marquee 8s linear infinite;
+}
+
+@keyframes stmp-marquee {
+  0%, 10% { transform: translateX(0); }
+  90%, 100% { transform: translateX(calc(-100% + 70px)); }
 }
 </style>
