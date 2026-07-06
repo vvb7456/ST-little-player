@@ -5913,8 +5913,8 @@ const ws = /* @__PURE__ */ cn("playlist", {
       }
       const Z = m.value[_];
       if (!Z) return;
-      const me = R.clientHeight, se = Z.offsetTop, Y = Z.offsetHeight;
-      v.value = se - me / 2 + Y / 2;
+      const me = Z.offsetTop, se = Z.offsetHeight, Y = R.clientHeight;
+      v.value = me - Y / 2 + se / 2;
     }
     pt(() => t.currentLyricIndex, L), pt(() => t.lyrics, () => {
       m.value = [], L();
@@ -6161,7 +6161,7 @@ const ws = /* @__PURE__ */ cn("playlist", {
       })
     ]));
   }
-}), Uu = /* @__PURE__ */ $t(Fu, [["__scopeId", "data-v-82508f31"]]), ju = /* @__PURE__ */ Rt({
+}), Uu = /* @__PURE__ */ $t(Fu, [["__scopeId", "data-v-e0f75e39"]]), ju = /* @__PURE__ */ Rt({
   __name: "App",
   setup(e) {
     const t = we(), s = Lt(), n = /* @__PURE__ */ Ce(!1), i = /* @__PURE__ */ Ce(null);

@@ -55,10 +55,12 @@ async function updateLyricScroll(): Promise<void> {
   }
   const lineEl = lyricLineRefs.value[idx];
   if (!lineEl) return;
-  const winH = win.clientHeight;
+  // offsetTop is relative to offsetParent (the scroll container),
+  // unaffected by CSS transform — exactly what we need
   const lineTop = lineEl.offsetTop;
   const lineH = lineEl.offsetHeight;
-  // Center the active line in the window
+  const winH = win.clientHeight;
+  // Translate so that the line center is at the window center
   lyricScrollY.value = lineTop - winH / 2 + lineH / 2;
 }
 
@@ -430,8 +432,6 @@ function closeOverlay(): void {
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  display: flex;
-  align-items: center;
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0%,
@@ -454,7 +454,7 @@ function closeOverlay(): void {
   gap: 6px;
   width: 100%;
   transition: transform 0.4s ease;
-  padding: 40% 0;
+  padding: 50px 0;
 }
 
 .stmp-lyric-line {
