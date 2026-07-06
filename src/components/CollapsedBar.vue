@@ -61,12 +61,10 @@ const songName = computed(() => playerStore.currentTrack?.name || t('No Song'));
   flex-shrink: 0;
 }
 
-/* In drag mode (widget is narrow pill): constrain width */
-.stmp-collapsed-bar:has(.stmp-collapsed-icon) {
-  /* default */
-}
-
-.stmp-widget:not(.stmp-dock) .stmp-collapsed-bar {
-  max-width: min(200px, calc(100vw - 60px));
+/* Desktop: constrain title width so bar stays compact */
+@media (min-width: 769px) {
+  .stmp-collapsed-title {
+    max-width: 160px;
+  }
 }
 </style>

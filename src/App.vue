@@ -31,13 +31,8 @@ let boundOnDrag: ((e: PointerEvent) => void) | null = null;
 let boundStopDrag: (() => void) | null = null;
 
 function startDrag(e: PointerEvent): void {
-  // Dock mode: no drag, just toggle on click
-  if (isDock.value) {
-    const target = e.target as HTMLElement;
-    if (target.closest('button')) return;
-    toggleExpand();
-    return;
-  }
+  // Dock mode: no drag, click handler (onWidgetClick) handles toggle
+  if (isDock.value) return;
 
   const target = e.target as HTMLElement;
 
@@ -155,9 +150,21 @@ function dockToInput(): void {
   // Clamp: never go above viewport
   if (top < 4) top = 4;
 
-  // Dock mode: match #send_form width and left edge exactly
-  widgetRef.value.style.left = formRect.left + 'px';
-  widgetRef.value.style.width = formRect.width + 'px';
+  // Mobile: match #send_form full width
+  // Desktop collapsed: compact pill aligned to send_form left edge
+  // Desktop expanded: fixed max width aligned to send_form left edge
+  if (window.innerWidth <= 768) {
+    widgetRef.value.style.left = formRect.left + 'px';
+    widgetRef.value.style.width = formRect.width + 'px';
+  } else if (isExpanded.value) {
+    widgetRef.value.style.left = formRect.left + 'px';
+    widgetRef.value.style.width = '';
+  } else {
+    // Desktop collapsed: compact, no explicit width
+    widgetRef.value.style.left = formRect.left + 'px';
+    widgetRef.value.style.width = '';
+  }
+
   widgetRef.value.style.top = top + 'px';
   widgetRef.value.style.right = 'auto';
   widgetRef.value.style.bottom = 'auto';
@@ -286,9 +293,22 @@ onBeforeUnmount(() => {
   padding: 2px 8px;
 }
 
+/* Desktop dock collapsed: compact pill, not full width */
+@media (min-width: 769px) {
+  .stmp-dock.stmp-collapsed {
+    width: auto;
+  }
+}
+
 /* Dock expanded: responsive width */
 .stmp-dock.stmp-expanded {
   padding: 10px;
+}
+
+@media (min-width: 769px) {
+  .stmp-dock.stmp-expanded {
+    width: min(360px, calc(100vw - 16px));
+  }
 }
 
 /* ===== Drag mode: floating glass widget ===== */
