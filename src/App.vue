@@ -148,11 +148,17 @@ function clampToViewport(): void {
 
 function positionMobile(): void {
   if (!widgetRef.value || !isMobile.value) return;
-  // <html> has transform:translateZ(0) which breaks position:fixed.
-  // Use JS to set explicit top/left based on viewport.
+  // Place widget above ST's input bar (#send_form) to avoid overlap.
+  const sendForm = document.querySelector('#send_form');
+  let bottomAnchor = window.innerHeight;
+  if (sendForm) {
+    const rect = sendForm.getBoundingClientRect();
+    // Use the top of the input bar as the bottom anchor
+    bottomAnchor = rect.top;
+  }
   const h = widgetRef.value.offsetHeight || 38;
   widgetRef.value.style.left = '0px';
-  widgetRef.value.style.top = (window.innerHeight - h) + 'px';
+  widgetRef.value.style.top = (bottomAnchor - h) + 'px';
   widgetRef.value.style.right = 'auto';
   widgetRef.value.style.bottom = 'auto';
 }
