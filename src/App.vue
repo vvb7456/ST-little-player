@@ -343,6 +343,11 @@ onBeforeUnmount(() => {
   cursor: grabbing;
 }
 
+.stmp-widget *:focus {
+  outline: none;
+  box-shadow: none;
+}
+
 .stmp-widget *:focus-visible {
   outline: 2px solid var(--stmp-accent, #7e57c2);
   outline-offset: 2px;

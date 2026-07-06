@@ -133,6 +133,12 @@ function isPlaying(result: SearchResult): boolean {
 .stmp-search-input:focus {
   border-color: rgba(255, 255, 255, 0.15);
   outline: none;
+  box-shadow: none;
+}
+
+.stmp-search .stmp-search-input:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 .stmp-icon-btn {
