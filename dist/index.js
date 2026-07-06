@@ -5946,7 +5946,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
       ], 8, qc)
     ]));
   }
-}), su = /* @__PURE__ */ St(tu, [["__scopeId", "data-v-bb65882c"]]), nu = { class: "stmp-playlist" }, iu = { class: "stmp-upload-area" }, ru = ["aria-label"], ou = {
+}), su = /* @__PURE__ */ St(tu, [["__scopeId", "data-v-90ce7abd"]]), nu = { class: "stmp-playlist" }, iu = { class: "stmp-upload-area" }, ru = ["aria-label"], ou = {
   key: 0,
   class: "stmp-empty"
 }, lu = { class: "stmp-group-label" }, au = ["onClick"], cu = { class: "stmp-item-index" }, uu = { class: "stmp-item-info" }, fu = { class: "stmp-item-song" }, du = {

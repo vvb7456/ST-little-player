@@ -307,8 +307,6 @@ onMounted(() => {
   min-width: 0;
   overflow: hidden;
   position: relative;
-  display: flex;
-  align-items: center;
   height: calc(var(--mainFontSize, 14px) * 1.3);
 }
 
@@ -316,6 +314,10 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
   transition: transform 0.4s ease;
 }
 
