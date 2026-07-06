@@ -91,7 +91,8 @@ function checkLyricOverflow(): void {
   }
   const overflow = span.scrollWidth - container.clientWidth;
   if (overflow > 3 && currentLyricDuration.value > 0) {
-    lyricTransitionDuration.value = currentLyricDuration.value;
+    // Subtract 200ms offset so text finishes scrolling before the line ends
+    lyricTransitionDuration.value = Math.max(200, currentLyricDuration.value - 200);
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         lyricTranslateX.value = -overflow;
