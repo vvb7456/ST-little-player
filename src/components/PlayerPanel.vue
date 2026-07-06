@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { usePlayerStore, usePlaylistStore, useSettingsStore } from '@/stores/index';
 import type { PlayMode, LyricLine } from '@/types';
 import Icon from './Icon.vue';
@@ -36,21 +36,36 @@ const progressPercent = computed(() =>
   playerStore.duration > 0 ? (playerStore.currentTime / playerStore.duration) * 100 : 0,
 );
 
-// Build 6-line lyric window centered on current line
-const lyricWindow = computed<{ line: LyricLine | null; isActive: boolean }[]>(() => {
-  const lyrics = playerStore.lyrics;
+// Lyric scroll: render full list, translateY to center current line
+const lyricScrollY = ref(0);
+const lyricLineRefs = ref<HTMLElement[]>([]);
+const lyricWindowRef = ref<HTMLElement | null>(null);
+
+function setLyricRef(el: any, idx: number): void {
+  if (el) lyricLineRefs.value[idx] = el as HTMLElement;
+}
+
+async function updateLyricScroll(): Promise<void> {
+  await nextTick();
   const idx = playerStore.currentLyricIndex;
-  const window: { line: LyricLine | null; isActive: boolean }[] = [];
-  const half = 3; // 3 above + current + 2 below = 6 lines
-  for (let i = -half; i <= half - 1; i++) {
-    const lineIdx = idx + i;
-    if (lineIdx >= 0 && lineIdx < lyrics.length) {
-      window.push({ line: lyrics[lineIdx], isActive: lineIdx === idx });
-    } else {
-      window.push({ line: null, isActive: false });
-    }
+  const win = lyricWindowRef.value;
+  if (!win || idx < 0) {
+    lyricScrollY.value = 0;
+    return;
   }
-  return window;
+  const lineEl = lyricLineRefs.value[idx];
+  if (!lineEl) return;
+  const winH = win.clientHeight;
+  const lineTop = lineEl.offsetTop;
+  const lineH = lineEl.offsetHeight;
+  // Center the active line in the window
+  lyricScrollY.value = lineTop - winH / 2 + lineH / 2;
+}
+
+watch(() => playerStore.currentLyricIndex, updateLyricScroll);
+watch(() => playerStore.lyrics, () => {
+  lyricLineRefs.value = [];
+  updateLyricScroll();
 });
 
 function formatTime(s: number): string {
@@ -153,17 +168,23 @@ function closeOverlay(): void {
           <div class="stmp-track-name">{{ playerStore.currentTrack?.name || t('No Song') }}</div>
           <div class="stmp-track-artist">{{ playerStore.currentTrack?.artist || '\u00A0' }}</div>
         </div>
-        <div class="stmp-lyric-window">
+        <div ref="lyricWindowRef" class="stmp-lyric-window">
           <div
-            v-for="(entry, i) in lyricWindow"
-            :key="i"
-            class="stmp-lyric-line"
-            :class="{
-              'stmp-lyric-active': entry.isActive,
-              'stmp-lyric-edge': i === 0 || i === lyricWindow.length - 1,
-            }"
+            v-if="playerStore.lyrics.length === 0"
+            class="stmp-lyric-empty"
           >
-            {{ entry.line?.text || '' }}
+            <Icon name="music" :size="18" />
+          </div>
+          <div v-else class="stmp-lyric-scroll" :style="{ transform: `translateY(-${lyricScrollY}px)` }">
+            <div
+              v-for="(line, i) in playerStore.lyrics"
+              :key="i"
+              :ref="(el) => setLyricRef(el, i)"
+              class="stmp-lyric-line"
+              :class="{ 'stmp-lyric-active': i === playerStore.currentLyricIndex }"
+            >
+              {{ line.text }}
+            </div>
           </div>
         </div>
       </div>
@@ -405,9 +426,7 @@ function closeOverlay(): void {
   min-height: 0;
   overflow: hidden;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 6px;
+  align-items: center;
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0%,
@@ -422,6 +441,15 @@ function closeOverlay(): void {
     #000 85%,
     transparent 100%
   );
+}
+
+.stmp-lyric-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  transition: transform 0.4s ease;
+  padding: 40% 0;
 }
 
 .stmp-lyric-line {
