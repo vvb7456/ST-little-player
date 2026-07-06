@@ -145,17 +145,13 @@ function closeOverlay(): void {
           </div>
         </div>
         <div class="stmp-track-name">{{ playerStore.currentTrack?.name || t('No Song') }}</div>
-        <div v-if="playerStore.currentTrack?.artist" class="stmp-track-artist">
-          {{ playerStore.currentTrack.artist }}
-        </div>
+        <div class="stmp-track-artist">{{ playerStore.currentTrack?.artist || '\u00A0' }}</div>
       </div>
       <!-- Lyric mode: track name + artist fixed, 6-line scrolling lyrics -->
       <div class="stmp-lyric-mode" :class="{ hidden: viewMode !== 'lyric' }">
         <div class="stmp-lyric-header">
           <div class="stmp-track-name">{{ playerStore.currentTrack?.name || t('No Song') }}</div>
-          <div v-if="playerStore.currentTrack?.artist" class="stmp-track-artist">
-            {{ playerStore.currentTrack.artist }}
-          </div>
+          <div class="stmp-track-artist">{{ playerStore.currentTrack?.artist || '\u00A0' }}</div>
         </div>
         <div class="stmp-lyric-window">
           <div
