@@ -29,7 +29,6 @@ const songName = computed(() => playerStore.currentTrack?.name || t('No Song'));
   gap: 8px;
   padding: 6px 14px;
   user-select: none;
-  max-width: 220px;
   overflow: hidden;
   touch-action: none;
 }

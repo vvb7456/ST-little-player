@@ -146,10 +146,29 @@ function clampToViewport(): void {
   settingsStore.setPosition({ x, y });
 }
 
+function positionMobile(): void {
+  if (!widgetRef.value || !isMobile.value) return;
+  // <html> has transform:translateZ(0) which breaks position:fixed.
+  // Use JS to set explicit top/left based on viewport.
+  const h = widgetRef.value.offsetHeight || 38;
+  widgetRef.value.style.left = '0px';
+  widgetRef.value.style.top = (window.innerHeight - h) + 'px';
+  widgetRef.value.style.right = 'auto';
+  widgetRef.value.style.bottom = 'auto';
+}
+
 function toggleExpand(): void {
   isExpanded.value = !isExpanded.value;
   if (isExpanded.value) {
-    nextTick(() => clampToViewport());
+    nextTick(() => {
+      if (isMobile.value) {
+        positionMobile();
+      } else {
+        clampToViewport();
+      }
+    });
+  } else {
+    nextTick(() => positionMobile());
   }
 }
 
@@ -161,7 +180,13 @@ onMounted(() => {
     widgetRef.value.style.right = 'auto';
     widgetRef.value.style.bottom = 'auto';
   }
-  window.addEventListener('resize', updateMobile);
+  if (isMobile.value) {
+    nextTick(() => positionMobile());
+  }
+  window.addEventListener('resize', () => {
+    updateMobile();
+    if (isMobile.value) nextTick(() => positionMobile());
+  });
   window.addEventListener('keydown', onKeyDown);
 });
 
@@ -224,9 +249,6 @@ onBeforeUnmount(() => {
 
 .stmp-mobile {
   left: 0 !important;
-  right: 0 !important;
-  top: auto !important;
-  bottom: 0 !important;
   width: 100% !important;
   border-radius: 16px 16px 0 0;
   max-height: 70vh;
