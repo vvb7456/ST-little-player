@@ -58,6 +58,8 @@ const zhCN: Record<string, string> = {
   'Data imported': '数据已导入',
   'Import failed': '导入失败',
   'Invalid JSON': 'JSON 格式错误',
+  'Playback': '播放',
+  'AI Cue': 'AI 点歌',
 };
 
 let currentLang: string | null = null;
