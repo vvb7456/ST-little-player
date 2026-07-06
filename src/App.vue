@@ -285,7 +285,7 @@ onBeforeUnmount(() => {
 <style scoped>
 .stmp-widget {
   position: fixed;
-  z-index: 999999;
+  z-index: 21000;
   border-radius: 16px;
   background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1a1a2e) 75%, transparent);
   backdrop-filter: blur(10px);

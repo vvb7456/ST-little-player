@@ -6137,7 +6137,7 @@ const ws = /* @__PURE__ */ an("playlist", {
       })
     ]));
   }
-}), Fu = /* @__PURE__ */ Lt(Nu, [["__scopeId", "data-v-678418d3"]]), Uu = /* @__PURE__ */ Pt({
+}), Fu = /* @__PURE__ */ Lt(Nu, [["__scopeId", "data-v-d6429a2b"]]), Uu = /* @__PURE__ */ Pt({
   __name: "App",
   setup(e) {
     const t = Se(), s = Rt(), n = /* @__PURE__ */ Oe(!1), i = /* @__PURE__ */ Oe(null);
@@ -6236,7 +6236,7 @@ const ws = /* @__PURE__ */ an("playlist", {
       })) : (N(), Mt(Rc, { key: 0 }))
     ], 34));
   }
-}), ju = /* @__PURE__ */ Lt(Uu, [["__scopeId", "data-v-988b876a"]]), Vu = { class: "stmp-settings" }, Hu = { class: "stmp-setting-group" }, Bu = { class: "stmp-setting-label" }, Ku = { class: "stmp-setting-row" }, Wu = ["checked", "onChange"], zu = ["onUpdate:modelValue", "placeholder"], Ju = ["onUpdate:modelValue", "placeholder"], Gu = ["onUpdate:modelValue", "placeholder"], qu = { class: "stmp-setting-group" }, Yu = { class: "stmp-setting-label" }, Xu = ["value"], Zu = { class: "stmp-setting-group" }, Qu = { class: "stmp-setting-label" }, ef = ["value"], tf = ["value"], sf = { class: "stmp-setting-group" }, nf = { class: "stmp-setting-label" }, rf = { class: "stmp-mode-toggle" }, of = { class: "stmp-setting-group" }, lf = { class: "stmp-setting-row" }, af = ["checked"], cf = { class: "stmp-setting-group" }, uf = { class: "stmp-setting-label" }, ff = { class: "stmp-rules" }, df = ["onClick"], hf = { class: "stmp-rule-add" }, pf = ["placeholder"], gf = { class: "stmp-setting-group" }, mf = { class: "stmp-setting-label" }, vf = { class: "stmp-data-btns" }, yf = ["aria-label"], bf = ["aria-label"], _f = ["aria-label"], xf = /* @__PURE__ */ Pt({
+}), ju = /* @__PURE__ */ Lt(Uu, [["__scopeId", "data-v-dbbf789e"]]), Vu = { class: "stmp-settings" }, Hu = { class: "stmp-setting-group" }, Bu = { class: "stmp-setting-label" }, Ku = { class: "stmp-setting-row" }, Wu = ["checked", "onChange"], zu = ["onUpdate:modelValue", "placeholder"], Ju = ["onUpdate:modelValue", "placeholder"], Gu = ["onUpdate:modelValue", "placeholder"], qu = { class: "stmp-setting-group" }, Yu = { class: "stmp-setting-label" }, Xu = ["value"], Zu = { class: "stmp-setting-group" }, Qu = { class: "stmp-setting-label" }, ef = ["value"], tf = ["value"], sf = { class: "stmp-setting-group" }, nf = { class: "stmp-setting-label" }, rf = { class: "stmp-mode-toggle" }, of = { class: "stmp-setting-group" }, lf = { class: "stmp-setting-row" }, af = ["checked"], cf = { class: "stmp-setting-group" }, uf = { class: "stmp-setting-label" }, ff = { class: "stmp-rules" }, df = ["onClick"], hf = { class: "stmp-rule-add" }, pf = ["placeholder"], gf = { class: "stmp-setting-group" }, mf = { class: "stmp-setting-label" }, vf = { class: "stmp-data-btns" }, yf = ["aria-label"], bf = ["aria-label"], _f = ["aria-label"], xf = /* @__PURE__ */ Pt({
   __name: "SettingsView",
   setup(e) {
     const t = Se(), s = /* @__PURE__ */ Oe(""), n = [

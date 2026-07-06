@@ -510,6 +510,7 @@ function closeOverlay(): void {
 
 .stmp-volume-container.stmp-ctrl-side {
   justify-content: flex-end;
+  position: relative;
 }
 
 /* Center cluster: prev, playMode, play, next, playlist */
