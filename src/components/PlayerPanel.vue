@@ -338,11 +338,12 @@ function closeOverlay(): void {
   background: var(--stmp-hover);
 }
 
-/* Display area: grid stack so both modes share the same cell,
-   container height = max(cover, lyric) which is always cover */
+/* Display area: grid stack — cover mode sets the height,
+   lyric mode absolutely positioned so it doesn't stretch the grid */
 .stmp-display {
   cursor: pointer;
   display: grid;
+  position: relative;
 }
 
 .stmp-display > * {
@@ -406,13 +407,17 @@ function closeOverlay(): void {
   color: var(--stmp-text-dim);
 }
 
-/* ===== Lyric mode: fills same height as cover mode ===== */
+/* ===== Lyric mode: absolutely positioned to not affect grid height ===== */
 .stmp-lyric-mode {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  height: 100%;
-  min-height: 0;
+  overflow: hidden;
 }
 
 .stmp-lyric-header {
