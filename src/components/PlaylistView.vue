@@ -102,8 +102,9 @@ function remove(index: number): void {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 240px;
   overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 .stmp-upload-area {

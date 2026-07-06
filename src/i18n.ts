@@ -27,6 +27,8 @@ const zhCN: Record<string, string> = {
   'Mute / Unmute': '静音/取消静音',
   'Collapse panel': '收起面板',
   'Expand panel': '展开面板',
+  'Playlist': '播放列表',
+  'Close': '关闭',
   'Added': '已添加',
   'Add to list': '加入列表',
   'Cannot play': '无法播放',

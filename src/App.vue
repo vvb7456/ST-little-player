@@ -38,7 +38,7 @@ function startDrag(e: PointerEvent): void {
   const target = e.target as HTMLElement;
 
   // Never drag from these interactive elements
-  if (target.closest('input, .stmp-tab, .stmp-result, .stmp-item, .stmp-upload-btn, .stmp-search-input, .stmp-controls, .stmp-lyrics, .stmp-lyrics-toggle, .stmp-tabs, .stmp-tab-content')) return;
+  if (target.closest('input, .stmp-result, .stmp-item, .stmp-upload-btn, .stmp-search-input, .stmp-controls, .stmp-lyrics, .stmp-overlay, .stmp-display, .stmp-overlay-close')) return;
 
   // In expanded mode: only drag from topbar handle
   if (isExpanded.value) {

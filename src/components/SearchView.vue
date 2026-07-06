@@ -210,7 +210,8 @@ function isPlaying(result: SearchResult): boolean {
   flex-direction: column;
   gap: 2px;
   overflow-y: auto;
-  max-height: 200px;
+  flex: 1;
+  min-height: 0;
 }
 
 .stmp-result {

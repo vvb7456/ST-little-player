@@ -112,6 +112,15 @@ defineProps<{ name: string; size?: number }>();
       <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
       <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
     </template>
+    <!-- list-music (playlist) -->
+    <template v-else-if="name === 'list-music'">
+      <path d="M3 12h11" />
+      <path d="M3 6h11" />
+      <path d="M3 18h7" />
+      <path d="M16 8v13" />
+      <circle cx="14" cy="21" r="2" />
+      <path d="M16 8l5-2v3" />
+    </template>
   </svg>
 </template>
 

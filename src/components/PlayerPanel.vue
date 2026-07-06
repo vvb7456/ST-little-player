@@ -13,8 +13,9 @@ const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();
 const settingsStore = useSettingsStore();
 
-const activeTab = ref<'list' | 'search'>('list');
-const showLyrics = ref(true);
+// 'cover' mode: large cover art display; 'lyric' mode: more lyric lines
+const viewMode = ref<'cover' | 'lyric'>('cover');
+const activeOverlay = ref<'list' | 'search' | null>(null);
 const coverError = ref(false);
 const showVolumeSlider = ref(false);
 let volumeHoverTimer: ReturnType<typeof setTimeout> | null = null;
@@ -41,6 +42,12 @@ const currentLyric = computed(() =>
     ? playerStore.lyrics[playerStore.currentLyricIndex]?.text ?? null
     : null,
 );
+
+const prevLyric = computed(() => {
+  const idx = playerStore.currentLyricIndex;
+  if (idx <= 0) return null;
+  return playerStore.lyrics[idx - 1]?.text ?? null;
+});
 
 const nextLyric = computed(() => {
   const idx = playerStore.currentLyricIndex;
@@ -96,20 +103,32 @@ function toggleMute(): void {
     playerStore.setVolume(65);
   }
 }
+
+function toggleOverlay(which: 'list' | 'search'): void {
+  if (activeOverlay.value === which) {
+    activeOverlay.value = null;
+  } else {
+    activeOverlay.value = which;
+  }
+}
+
+function closeOverlay(): void {
+  activeOverlay.value = null;
+}
 </script>
 
 <template>
   <div class="stmp-panel">
     <!-- Top Bar (draggable handle) -->
     <div class="stmp-topbar stmp-drag-handle">
-      <div class="stmp-cover">
+      <div class="stmp-cover-mini">
         <img
           v-if="coverUrl && !coverError"
           :src="coverUrl"
           alt="cover"
           @error="onCoverError"
         />
-        <Icon v-else name="music" :size="24" />
+        <Icon v-else name="music" :size="20" />
       </div>
       <div class="stmp-track-info">
         <div class="stmp-track-name">{{ playerStore.currentTrack?.name || t('No Song') }}</div>
@@ -126,16 +145,29 @@ function toggleMute(): void {
       </button>
     </div>
 
-    <!-- Lyrics -->
-    <div v-if="showLyrics" class="stmp-lyrics" @click="showLyrics = false">
-      <div v-if="currentLyric" class="stmp-lyric-current">{{ currentLyric }}</div>
-      <div v-if="nextLyric" class="stmp-lyric-next">{{ nextLyric }}</div>
-      <div v-if="!currentLyric && !nextLyric" class="stmp-lyric-empty">
-        <Icon name="music" :size="18" />
+    <!-- Display area: cover mode or lyric mode -->
+    <div class="stmp-display" @click="viewMode = viewMode === 'cover' ? 'lyric' : 'cover'">
+      <!-- Cover mode: large cover art -->
+      <div v-if="viewMode === 'cover'" class="stmp-cover-large">
+        <img
+          v-if="coverUrl && !coverError"
+          :src="coverUrl"
+          alt="cover"
+          @error="onCoverError"
+        />
+        <div v-else class="stmp-cover-placeholder">
+          <Icon name="music" :size="40" />
+        </div>
       </div>
-    </div>
-    <div v-else class="stmp-lyrics-toggle" @click="showLyrics = true">
-      <Icon name="chevron-up" :size="14" /> {{ t('show lyrics') }}
+      <!-- Lyric mode: 3 lines -->
+      <div v-else class="stmp-lyrics">
+        <div v-if="prevLyric" class="stmp-lyric-prev">{{ prevLyric }}</div>
+        <div v-if="currentLyric" class="stmp-lyric-current">{{ currentLyric }}</div>
+        <div v-if="nextLyric" class="stmp-lyric-next">{{ nextLyric }}</div>
+        <div v-if="!prevLyric && !currentLyric && !nextLyric" class="stmp-lyric-empty">
+          <Icon name="music" :size="18" />
+        </div>
+      </div>
     </div>
 
     <!-- Progress -->
@@ -155,7 +187,7 @@ function toggleMute(): void {
       </div>
     </div>
 
-    <!-- Controls: 5 buttons equal spacing -->
+    <!-- Controls: 7 buttons -->
     <div class="stmp-controls">
       <button class="stmp-ctrl-btn" :aria-label="t('Toggle play mode')" @click="cyclePlayMode">
         <Icon :name="playModeIcon[settingsStore.settings.playMode]" :size="18" />
@@ -199,31 +231,45 @@ function toggleMute(): void {
           />
         </div>
       </div>
+
+      <!-- Search button -->
+      <button
+        class="stmp-ctrl-btn"
+        :class="{ active: activeOverlay === 'search' }"
+        :aria-label="t('Search')"
+        @click.stop="toggleOverlay('search')"
+      >
+        <Icon name="search" :size="18" />
+      </button>
+
+      <!-- Playlist button -->
+      <button
+        class="stmp-ctrl-btn"
+        :class="{ active: activeOverlay === 'list' }"
+        :aria-label="t('Playlist')"
+        @click.stop="toggleOverlay('list')"
+      >
+        <Icon name="list-music" :size="18" />
+      </button>
     </div>
 
-    <!-- Tabs -->
-    <div class="stmp-tabs">
-      <button
-        class="stmp-tab"
-        :class="{ active: activeTab === 'list' }"
-        @click="activeTab = 'list'"
-      >
-        {{ t('List') }}
-      </button>
-      <button
-        class="stmp-tab"
-        :class="{ active: activeTab === 'search' }"
-        @click="activeTab = 'search'"
-      >
-        {{ t('Search') }}
-      </button>
-    </div>
-
-    <!-- Tab Content -->
-    <div class="stmp-tab-content">
-      <PlaylistView v-if="activeTab === 'list'" />
-      <SearchView v-else-if="activeTab === 'search'" />
-    </div>
+    <!-- Overlay panel: slide up from bottom -->
+    <Transition name="stmp-overlay">
+      <div v-if="activeOverlay" class="stmp-overlay">
+        <div class="stmp-overlay-header">
+          <span class="stmp-overlay-title">
+            {{ activeOverlay === 'list' ? t('Playlist') : t('Search') }}
+          </span>
+          <button class="stmp-overlay-close" :aria-label="t('Close')" @click.stop="closeOverlay">
+            <Icon name="chevron-down" :size="16" />
+          </button>
+        </div>
+        <div class="stmp-overlay-body">
+          <PlaylistView v-if="activeOverlay === 'list'" />
+          <SearchView v-else />
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -231,22 +277,20 @@ function toggleMute(): void {
 .stmp-panel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
 }
 
 .stmp-topbar {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-/* Drag handle cursor is set by App.vue based on dock/drag mode */
-
-.stmp-cover {
-  width: 48px;
-  height: 48px;
-  border-radius: 8px;
+.stmp-cover-mini {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
   overflow: hidden;
   flex-shrink: 0;
   display: flex;
@@ -254,10 +298,10 @@ function toggleMute(): void {
   justify-content: center;
   background: rgba(0, 0, 0, 0.3);
   color: var(--SmartThemeBodyColor, #ccc);
-  opacity: 0.5;
+  opacity: 0.6;
 }
 
-.stmp-cover img {
+.stmp-cover-mini img {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -269,7 +313,7 @@ function toggleMute(): void {
 }
 
 .stmp-track-name {
-  font-size: calc(var(--fontSize, 14px) * 0.95);
+  font-size: calc(var(--fontSize, 14px) * 0.9);
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -278,8 +322,8 @@ function toggleMute(): void {
 }
 
 .stmp-track-artist {
-  font-size: calc(var(--fontSize, 14px) * 0.78);
-  opacity: 0.6;
+  font-size: calc(var(--fontSize, 14px) * 0.75);
+  opacity: 0.55;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -304,11 +348,55 @@ function toggleMute(): void {
   background: rgba(255, 255, 255, 0.1);
 }
 
+/* Display area: cover or lyrics */
+.stmp-display {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.stmp-cover-large {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 4px 0;
+}
+
+.stmp-cover-large img {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  object-fit: cover;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+.stmp-cover-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--SmartThemeBodyColor, #ccc);
+  opacity: 0.3;
+}
+
 .stmp-lyrics {
   text-align: center;
   padding: 4px 8px;
-  cursor: pointer;
-  min-height: 36px;
+  min-height: 60px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+}
+
+.stmp-lyric-prev {
+  font-size: calc(var(--fontSize, 14px) * 0.75);
+  opacity: 0.35;
+  color: var(--SmartThemeBodyColor, #ccc);
 }
 
 .stmp-lyric-current {
@@ -318,28 +406,14 @@ function toggleMute(): void {
 }
 
 .stmp-lyric-next {
-  font-size: calc(var(--fontSize, 14px) * 0.78);
-  opacity: 0.4;
-  margin-top: 2px;
+  font-size: calc(var(--fontSize, 14px) * 0.75);
+  opacity: 0.35;
   color: var(--SmartThemeBodyColor, #ccc);
 }
 
 .stmp-lyric-empty {
   opacity: 0.3;
   color: var(--SmartThemeBodyColor, #ccc);
-}
-
-.stmp-lyrics-toggle {
-  text-align: center;
-  font-size: calc(var(--fontSize, 14px) * 0.75);
-  opacity: 0.4;
-  cursor: pointer;
-  padding: 2px;
-  color: var(--SmartThemeBodyColor, #ccc);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
 }
 
 .stmp-progress {
@@ -386,14 +460,13 @@ function toggleMute(): void {
   color: var(--SmartThemeBodyColor, #ccc);
 }
 
-/* Controls: 5 buttons equal spacing with left/right padding */
+/* Controls: 7 buttons */
 .stmp-controls {
   display: flex;
   align-items: center;
   justify-content: space-evenly;
-  padding: 0 12px;
-  height: 40px;
-  position: relative;
+  padding: 0 4px;
+  height: 36px;
 }
 
 .stmp-ctrl-btn {
@@ -401,19 +474,24 @@ function toggleMute(): void {
   border: none;
   color: var(--SmartThemeBodyColor, #ccc);
   cursor: pointer;
-  padding: 6px;
+  padding: 5px;
   border-radius: 8px;
-  transition: background 0.15s;
+  transition: background 0.15s, opacity 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  opacity: 0.8;
+  opacity: 0.7;
 }
 
 .stmp-ctrl-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   opacity: 1;
+}
+
+.stmp-ctrl-btn.active {
+  opacity: 1;
+  color: var(--SmartThemeQuoteColor, #fff);
 }
 
 .stmp-play-btn {
@@ -450,7 +528,6 @@ function toggleMute(): void {
   pointer-events: auto;
 }
 
-/* Custom vertical volume slider */
 .stmp-volume-vertical {
   -webkit-appearance: none;
   appearance: none;
@@ -497,31 +574,70 @@ function toggleMute(): void {
   cursor: pointer;
 }
 
-.stmp-tabs {
+/* Overlay panel */
+.stmp-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1a1a2e) 92%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 16px;
   display: flex;
-  gap: 2px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-direction: column;
+  padding: 10px;
+  gap: 8px;
+  z-index: 10;
 }
 
-.stmp-tab {
-  flex: 1;
+.stmp-overlay-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.stmp-overlay-title {
+  font-size: calc(var(--fontSize, 14px) * 0.9);
+  font-weight: 600;
+  color: var(--SmartThemeBodyColor, #fff);
+}
+
+.stmp-overlay-close {
   background: none;
   border: none;
   color: var(--SmartThemeBodyColor, #ccc);
   cursor: pointer;
-  padding: 6px 4px;
-  font-size: calc(var(--fontSize, 14px) * 0.82);
-  opacity: 0.6;
-  border-bottom: 2px solid transparent;
-  transition: all 0.15s;
+  padding: 4px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.stmp-tab.active {
-  opacity: 1;
-  border-bottom-color: var(--SmartThemeQuoteColor, #fff);
+.stmp-overlay-close:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.stmp-tab-content {
-  min-height: 100px;
+.stmp-overlay-body {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Overlay slide-up transition */
+.stmp-overlay-enter-active,
+.stmp-overlay-leave-active {
+  transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+.stmp-overlay-enter-from,
+.stmp-overlay-leave-to {
+  transform: translateY(100%);
+  opacity: 0;
 }
 </style>
