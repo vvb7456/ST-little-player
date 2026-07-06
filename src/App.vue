@@ -9,6 +9,7 @@ const playerStore = usePlayerStore();
 
 const isExpanded = ref(false);
 const widgetRef = ref<HTMLElement | null>(null);
+let resizeObs: ResizeObserver | null = null;
 
 const isDock = computed(() => settingsStore.settings.widgetMode === 'dock');
 
@@ -145,8 +146,12 @@ function dockToInput(): void {
   const formRect = sendForm.getBoundingClientRect();
   const widgetH = widgetRef.value.offsetHeight || 38;
 
+  // Constrain widget to available space above input bar
+  const maxH = Math.max(80, formRect.top - 8);
+  widgetRef.value.style.maxHeight = maxH + 'px';
+
   // No gap — dock sits flush against the input bar
-  let top = formRect.top - widgetH;
+  let top = formRect.top - Math.min(widgetH, maxH);
   // Clamp: never go above viewport
   if (top < 4) top = 4;
 
@@ -226,6 +231,14 @@ onMounted(() => {
     }
   });
 
+  // Re-position dock when widget size changes (e.g. search results load)
+  if (widgetRef.value && typeof ResizeObserver !== 'undefined') {
+    resizeObs = new ResizeObserver(() => {
+      if (isDock.value) dockToInput();
+    });
+    resizeObs.observe(widgetRef.value);
+  }
+
   // Reposition on resize (both modes need it)
   window.addEventListener('resize', onResize);
   window.addEventListener('keydown', onKeyDown);
@@ -243,6 +256,10 @@ function onResize(): void {
 
 onBeforeUnmount(() => {
   stopDrag();
+  if (resizeObs) {
+    resizeObs.disconnect();
+    resizeObs = null;
+  }
   window.removeEventListener('resize', onResize);
   window.removeEventListener('keydown', onKeyDown);
 });
@@ -299,6 +316,9 @@ onBeforeUnmount(() => {
 /* Dock expanded: responsive width */
 .stmp-dock.stmp-expanded {
   padding: 10px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 @media (min-width: 769px) {
@@ -327,6 +347,10 @@ onBeforeUnmount(() => {
 /* Expanded: default cursor, only drag handle grabs (drag mode only) */
 .stmp-expanded {
   cursor: default;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .stmp-expanded:not(.stmp-dock) {
