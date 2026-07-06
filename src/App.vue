@@ -229,6 +229,16 @@ function toggleExpand(): void {
 
 // Reposition when mode switches
 watch(() => settingsStore.settings.widgetMode, (mode) => {
+  // Reset isExpanded and clear inline styles from previous mode
+  isExpanded.value = false;
+  if (widgetRef.value) {
+    widgetRef.value.style.width = '';
+    widgetRef.value.style.left = '';
+    widgetRef.value.style.top = '';
+    widgetRef.value.style.right = '';
+    widgetRef.value.style.bottom = '';
+    widgetRef.value.style.maxHeight = '';
+  }
   nextTick(() => {
     if (mode === 'dock') {
       dockToInput();
@@ -236,6 +246,13 @@ watch(() => settingsStore.settings.widgetMode, (mode) => {
       restoreDragPosition();
     }
   });
+});
+
+// Reposition when dock alignment changes
+watch(() => settingsStore.settings.dockAlign, () => {
+  if (isDock.value) {
+    nextTick(() => dockToInput());
+  }
 });
 
 onMounted(() => {

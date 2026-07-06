@@ -16,16 +16,15 @@ const coverError = ref(false);
 
 const coverUrl = computed(() => playerStore.currentTrack?.cover || '');
 
+const hasTrack = computed(() => !!playerStore.currentTrack);
+
 const displayText = computed(() => {
   const track = playerStore.currentTrack;
-  if (!track) return t('No Song');
+  if (!track) return '';
   const name = track.name;
   const artist = track.artist || '';
   return artist ? `${name} - ${artist}` : name;
 });
-
-// Dock mode: show current lyric if available, fall back to song name
-const dockText = computed(() => currentLyric.value || displayText.value);
 
 const currentLyric = computed(() => {
   const idx = playerStore.currentLyricIndex;
@@ -33,28 +32,80 @@ const currentLyric = computed(() => {
   return playerStore.lyrics[idx].text;
 });
 
+// Duration (ms) the current lyric line stays on screen
+const currentLyricDuration = computed(() => {
+  const idx = playerStore.currentLyricIndex;
+  if (idx < 0 || idx >= playerStore.lyrics.length) return 0;
+  const line = playerStore.lyrics[idx];
+  if (line.next) {
+    return Math.max(500, (line.next.time - line.time) * 1000);
+  }
+  return 5000;
+});
+
+// ===== Dock mini lyric: render full list, translateY smooth scroll =====
+// Same logic as full-size lyrics — render all lines, translateY to center
+// current line. Container shows only 1 line height (overflow hidden).
+const dockScrollY = ref(0);
+const dockLineRefs = ref<HTMLElement[]>([]);
+const dockWindowRef = ref<HTMLElement | null>(null);
+
+function setDockLyricRef(el: any, idx: number): void {
+  if (el) dockLineRefs.value[idx] = el as HTMLElement;
+}
+
+async function updateDockScroll(): Promise<void> {
+  await nextTick();
+  const idx = playerStore.currentLyricIndex;
+  const win = dockWindowRef.value;
+  if (!win || idx < 0) {
+    dockScrollY.value = 0;
+    return;
+  }
+  const lineEl = dockLineRefs.value[idx];
+  if (!lineEl) return;
+  const lineTop = lineEl.offsetTop;
+  const lineH = lineEl.offsetHeight;
+  const winH = win.clientHeight;
+  dockScrollY.value = lineTop - winH / 2 + lineH / 2;
+}
+
+watch(() => playerStore.currentLyricIndex, updateDockScroll);
+watch(() => playerStore.lyrics, () => {
+  dockLineRefs.value = [];
+  updateDockScroll();
+});
+
+// ===== Drag mode marquee: forward-only scroll, speed from lyric duration =====
 const lyricScrollRef = ref<HTMLElement | null>(null);
 const lyricContainerRef = ref<HTMLElement | null>(null);
-const lyricIsScrolling = ref(false);
+const lyricTranslateX = ref(0);
+const lyricTransitionDuration = ref(0);
 
 function checkLyricOverflow(): void {
   const span = lyricScrollRef.value;
   const container = lyricContainerRef.value;
   if (!span || !container) {
-    lyricIsScrolling.value = false;
+    lyricTranslateX.value = 0;
     return;
   }
-  // Force reflow to get accurate measurements
   const overflow = span.scrollWidth - container.clientWidth;
-  lyricIsScrolling.value = overflow > 3;
+  if (overflow > 3 && currentLyricDuration.value > 0) {
+    lyricTransitionDuration.value = currentLyricDuration.value;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        lyricTranslateX.value = -overflow;
+      });
+    });
+  } else {
+    lyricTranslateX.value = 0;
+  }
 }
 
 watch(currentLyric, () => {
+  lyricTransitionDuration.value = 0;
+  lyricTranslateX.value = 0;
   nextTick(() => requestAnimationFrame(checkLyricOverflow));
-});
-
-onMounted(() => {
-  requestAnimationFrame(checkLyricOverflow);
 });
 
 function onCoverError(): void {
@@ -74,6 +125,11 @@ function onNext(e: Event): void {
   e.stopPropagation();
   void playlistStore.next();
 }
+
+onMounted(() => {
+  updateDockScroll();
+  requestAnimationFrame(checkLyricOverflow);
+});
 </script>
 
 <template>
@@ -85,7 +141,21 @@ function onNext(e: Event): void {
     <div class="stmp-mini-cover stmp-mini-cover-placeholder" v-else>
       <Icon name="music" :size="14" />
     </div>
-    <span class="stmp-mini-text">{{ dockText }}</span>
+    <!-- Lyric window: render full list, translateY scroll, show 1 line -->
+    <div ref="dockWindowRef" class="stmp-mini-dock-text">
+      <div v-if="playerStore.lyrics.length > 0" class="stmp-mini-dock-scroll"
+        :style="{ transform: `translateY(-${dockScrollY}px)` }"
+      >
+        <span
+          v-for="(line, i) in playerStore.lyrics"
+          :key="i"
+          :ref="(el) => setDockLyricRef(el, i)"
+          class="stmp-mini-dock-line"
+          :class="{ 'stmp-mini-dock-line-active': i === playerStore.currentLyricIndex }"
+        >{{ line.text }}</span>
+      </div>
+      <span v-else class="stmp-mini-text stmp-mini-dock-fallback">{{ displayText }}</span>
+    </div>
     <div class="stmp-mini-controls">
       <button class="stmp-mini-btn" :aria-label="playerStore.isPlaying ? t('Pause') : t('Play')" @click="onPlay">
         <Icon :name="playerStore.isPlaying ? 'pause' : 'play'" :size="14" />
@@ -104,7 +174,20 @@ function onNext(e: Event): void {
     <div class="stmp-mini-cover stmp-mini-cover-placeholder" v-else>
       <Icon name="music" :size="14" />
     </div>
-    <span class="stmp-mini-text">{{ dockText }}</span>
+    <div ref="dockWindowRef2" class="stmp-mini-dock-text">
+      <div v-if="playerStore.lyrics.length > 0" class="stmp-mini-dock-scroll"
+        :style="{ transform: `translateY(-${dockScrollY}px)` }"
+      >
+        <span
+          v-for="(line, i) in playerStore.lyrics"
+          :key="i"
+          :ref="(el) => setDockLyricRef(el, i)"
+          class="stmp-mini-dock-line"
+          :class="{ 'stmp-mini-dock-line-active': i === playerStore.currentLyricIndex }"
+        >{{ line.text }}</span>
+      </div>
+      <span v-else class="stmp-mini-text stmp-mini-dock-fallback">{{ displayText }}</span>
+    </div>
     <div class="stmp-mini-controls">
       <button class="stmp-mini-btn" :aria-label="playerStore.isPlaying ? t('Pause') : t('Play')" @click="onPlay">
         <Icon :name="playerStore.isPlaying ? 'pause' : 'play'" :size="16" />
@@ -115,7 +198,18 @@ function onNext(e: Event): void {
     </div>
   </div>
 
-  <!-- ===== Drag mini (desktop & mobile unified): cover + 2 rows ===== -->
+  <!-- ===== Drag mini (desktop & mobile unified) ===== -->
+  <!-- Idle (no track): cover-only square -->
+  <div v-else-if="!hasTrack" class="stmp-mini stmp-mini-drag stmp-mini-drag-idle">
+    <button
+      class="stmp-mini-cover stmp-mini-cover-square"
+      :aria-label="t('Play')"
+      @click="onPlay"
+    >
+      <Icon name="music" :size="20" />
+    </button>
+  </div>
+  <!-- Playing: cover + 2 rows (title + lyric) -->
   <div v-else class="stmp-mini stmp-mini-drag">
     <button
       class="stmp-mini-cover stmp-mini-cover-square"
@@ -134,7 +228,10 @@ function onNext(e: Event): void {
         <span
           ref="lyricScrollRef"
           class="stmp-mini-lyric-scroll"
-          :class="{ scrolling: lyricIsScrolling }"
+          :style="{
+            transform: `translateX(${lyricTranslateX}px)`,
+            transition: lyricTransitionDuration > 0 ? `transform ${lyricTransitionDuration}ms linear` : 'none',
+          }"
         >{{ currentLyric || '\u00A0' }}</span>
       </div>
     </div>
@@ -175,13 +272,9 @@ function onNext(e: Event): void {
 }
 
 .stmp-mini-text {
-  flex: 1;
   font-size: calc(var(--mainFontSize, 14px) * 0.82);
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   color: var(--stmp-text, #ccc);
-  min-width: 0;
 }
 
 .stmp-mini-controls {
@@ -208,6 +301,50 @@ function onNext(e: Event): void {
   background: var(--stmp-hover, rgba(255,255,255,0.08));
 }
 
+/* ===== Dock mini lyric: full list, translateY smooth scroll ===== */
+.stmp-mini-dock-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: calc(var(--mainFontSize, 14px) * 1.3);
+}
+
+.stmp-mini-dock-scroll {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  transition: transform 0.4s ease;
+}
+
+.stmp-mini-dock-line {
+  font-size: calc(var(--mainFontSize, 14px) * 0.82);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--stmp-text, #ccc);
+  opacity: 0.4;
+  text-align: center;
+  height: calc(var(--mainFontSize, 14px) * 1.3);
+  line-height: calc(var(--mainFontSize, 14px) * 1.3);
+  transition: opacity 0.3s ease;
+}
+
+.stmp-mini-dock-line-active {
+  opacity: 1;
+}
+
+.stmp-mini-dock-fallback {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  width: 100%;
+}
+
 /* ===== Desktop Dock mini ===== */
 .stmp-mini-dock-desktop .stmp-mini-cover {
   width: 28px;
@@ -225,7 +362,7 @@ function onNext(e: Event): void {
   height: 28px;
 }
 
-.stmp-mini-dock-mobile .stmp-mini-text {
+.stmp-mini-dock-mobile .stmp-mini-dock-line {
   font-size: calc(var(--mainFontSize, 14px) * 0.88);
 }
 
@@ -237,6 +374,12 @@ function onNext(e: Event): void {
 .stmp-mini-drag {
   padding: 3px;
   gap: 6px;
+}
+
+/* Idle: cover-only square, no right content */
+.stmp-mini-drag-idle {
+  padding: 3px;
+  gap: 0;
 }
 
 .stmp-mini-cover-square {
@@ -279,9 +422,11 @@ function onNext(e: Event): void {
 .stmp-mini-text-drag {
   font-size: calc(var(--mainFontSize, 14px) * 0.75);
   max-width: 70px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Lyric: horizontal scroll instead of ellipsis */
+/* Lyric: forward-only horizontal scroll */
 .stmp-mini-lyric {
   font-size: calc(var(--mainFontSize, 14px) * 0.65);
   white-space: nowrap;
@@ -294,15 +439,5 @@ function onNext(e: Event): void {
 .stmp-mini-lyric-scroll {
   display: inline-block;
   white-space: nowrap;
-}
-
-.stmp-mini-lyric-scroll.scrolling {
-  animation: stmp-marquee 10s linear infinite;
-}
-
-@keyframes stmp-marquee {
-  0%, 5% { transform: translateX(0); }
-  45%, 55% { transform: translateX(calc(-100% + 70px)); }
-  95%, 100% { transform: translateX(0); }
 }
 </style>
