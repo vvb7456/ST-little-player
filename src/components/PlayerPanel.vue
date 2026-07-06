@@ -129,10 +129,10 @@ function closeOverlay(): void {
       </button>
     </div>
 
-    <!-- Display area: cover mode or lyric mode -->
+    <!-- Display area: cover mode and lyric mode stacked in grid -->
     <div class="stmp-display" @click="viewMode = viewMode === 'cover' ? 'lyric' : 'cover'">
       <!-- Cover mode: large cover + track name + artist -->
-      <div v-if="viewMode === 'cover'" class="stmp-cover-mode">
+      <div class="stmp-cover-mode" :class="{ hidden: viewMode !== 'cover' }">
         <div class="stmp-cover-large">
           <img
             v-if="coverUrl && !coverError"
@@ -150,7 +150,7 @@ function closeOverlay(): void {
         </div>
       </div>
       <!-- Lyric mode: track name + artist fixed, 6-line scrolling lyrics -->
-      <div v-else class="stmp-lyric-mode">
+      <div class="stmp-lyric-mode" :class="{ hidden: viewMode !== 'lyric' }">
         <div class="stmp-lyric-header">
           <div class="stmp-track-name">{{ playerStore.currentTrack?.name || t('No Song') }}</div>
           <div v-if="playerStore.currentTrack?.artist" class="stmp-track-artist">
@@ -193,14 +193,16 @@ function closeOverlay(): void {
     <!-- Controls: search | playMode prev play next playlist | volume -->
     <div class="stmp-controls">
       <!-- Search (leftmost) -->
-      <button
-        class="stmp-ctrl-btn stmp-ctrl-side"
-        :class="{ active: activeOverlay === 'search' }"
-        :aria-label="t('Search')"
-        @click.stop="toggleOverlay('search')"
-      >
-        <Icon name="search" :size="18" />
-      </button>
+      <div class="stmp-ctrl-side stmp-search-side">
+        <button
+          class="stmp-ctrl-btn"
+          :class="{ active: activeOverlay === 'search' }"
+          :aria-label="t('Search')"
+          @click.stop="toggleOverlay('search')"
+        >
+          <Icon name="search" :size="18" />
+        </button>
+      </div>
 
       <!-- Left cluster -->
       <button class="stmp-ctrl-btn" :aria-label="t('Toggle play mode')" @click="cyclePlayMode">
@@ -318,9 +320,20 @@ function closeOverlay(): void {
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* Display area */
+/* Display area: grid stack so both modes share the same cell,
+   container height = max(cover, lyric) which is always cover */
 .stmp-display {
   cursor: pointer;
+  display: grid;
+}
+
+.stmp-display > * {
+  grid-area: 1 / 1;
+}
+
+.stmp-display > .hidden {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* ===== Cover mode ===== */
@@ -328,7 +341,8 @@ function closeOverlay(): void {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 10px;
   padding: 4px 0;
 }
 
@@ -374,11 +388,13 @@ function closeOverlay(): void {
   color: var(--SmartThemeBodyColor, #ccc);
 }
 
-/* ===== Lyric mode ===== */
+/* ===== Lyric mode: fills same height as cover mode ===== */
 .stmp-lyric-mode {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
+  height: 100%;
+  min-height: 0;
 }
 
 .stmp-lyric-header {
@@ -388,24 +404,25 @@ function closeOverlay(): void {
 
 .stmp-lyric-window {
   position: relative;
-  height: calc(var(--fontSize, 14px) * 6.6);
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 2px;
+  gap: 6px;
   -webkit-mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    #000 20%,
-    #000 80%,
+    #000 15%,
+    #000 85%,
     transparent 100%
   );
   mask-image: linear-gradient(
     to bottom,
     transparent 0%,
-    #000 20%,
-    #000 80%,
+    #000 15%,
+    #000 85%,
     transparent 100%
   );
 }
@@ -487,11 +504,11 @@ function closeOverlay(): void {
   align-items: center;
 }
 
-.stmp-ctrl-side:first-child {
+.stmp-search-side {
   justify-content: flex-start;
 }
 
-.stmp-ctrl-side:last-child {
+.stmp-volume-container.stmp-ctrl-side {
   justify-content: flex-end;
 }
 
