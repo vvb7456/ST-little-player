@@ -443,9 +443,12 @@ function toggleMute(): void {
   transform-origin: bottom center;
   transition: transform 0.2s ease, opacity 0.2s ease;
   opacity: 0;
-  padding: 4px 2px;
-  margin-bottom: 2px;
+  padding: 6px 4px;
+  margin-bottom: 4px;
   pointer-events: none;
+  background: rgba(0, 0, 0, 0.55);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .stmp-volume-popup.show {

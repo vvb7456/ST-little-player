@@ -5665,7 +5665,7 @@ const ds = /* @__PURE__ */ Js("playlist", {
       ])
     ]));
   }
-}), qa = /* @__PURE__ */ xt(Ga, [["__scopeId", "data-v-d1e05bb6"]]), Ya = /* @__PURE__ */ bt({
+}), qa = /* @__PURE__ */ xt(Ga, [["__scopeId", "data-v-f643d2fd"]]), Ya = /* @__PURE__ */ bt({
   __name: "App",
   setup(e) {
     const t = ve(), s = _t(), n = /* @__PURE__ */ Me(!1), i = /* @__PURE__ */ Me(null), r = tt(() => t.settings.widgetMode === "dock"), o = (S) => {
