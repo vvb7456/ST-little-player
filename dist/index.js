@@ -5883,10 +5883,10 @@ const ws = /* @__PURE__ */ an("playlist", {
 }, gu = { class: "stmp-lyric-header" }, mu = { class: "stmp-track-name" }, vu = {
   key: 0,
   class: "stmp-track-artist"
-}, yu = { class: "stmp-lyric-window" }, bu = { class: "stmp-progress" }, _u = ["value"], xu = { class: "stmp-time" }, Su = { class: "stmp-controls" }, wu = { class: "stmp-ctrl-side stmp-search-side" }, Cu = ["aria-label"], Iu = ["aria-label"], Eu = ["aria-label"], Tu = ["aria-label"], Au = ["aria-label"], Mu = ["aria-label"], Pu = ["aria-label"], Ru = ["value"], Lu = {
+}, yu = { class: "stmp-lyric-window" }, bu = { class: "stmp-progress" }, _u = ["value"], xu = { class: "stmp-time" }, Su = { class: "stmp-controls" }, wu = { class: "stmp-ctrl-side stmp-search-side" }, Cu = ["aria-label"], Iu = ["aria-label"], Eu = ["aria-label"], Tu = ["aria-label"], Au = ["aria-label"], Mu = ["aria-label"], Pu = { class: "stmp-ctrl-side stmp-volume-side" }, Ru = ["aria-label"], Lu = ["value"], $u = {
   key: 0,
   class: "stmp-overlay"
-}, $u = { class: "stmp-overlay-header" }, ku = { class: "stmp-overlay-title" }, Ou = ["aria-label"], Du = { class: "stmp-overlay-body" }, Nu = /* @__PURE__ */ Pt({
+}, ku = { class: "stmp-overlay-header" }, Ou = { class: "stmp-overlay-title" }, Du = ["aria-label"], Nu = { class: "stmp-overlay-body" }, Fu = /* @__PURE__ */ Pt({
   __name: "PlayerPanel",
   emits: ["collapse"],
   setup(e) {
@@ -6082,42 +6082,43 @@ const ws = /* @__PURE__ */ an("playlist", {
             size: 18
           })
         ], 10, Mu),
-        p[8] || (p[8] = m("div", { class: "stmp-ctrl-side-end" }, null, -1)),
-        m("div", {
-          class: "stmp-volume-container",
-          onMouseenter: q,
-          onMouseleave: P
-        }, [
-          m("button", {
-            class: "stmp-ctrl-btn",
-            "aria-label": I(O)("Mute / Unmute"),
-            onClick: z
-          }, [
-            ne(be, {
-              name: I(t).volume === 0 ? "volume-mute" : "volume",
-              size: 18
-            }, null, 8, ["name"])
-          ], 8, Pu),
+        m("div", Pu, [
           m("div", {
-            class: we(["stmp-volume-popup", { show: l.value }])
+            class: "stmp-volume-container",
+            onMouseenter: q,
+            onMouseleave: P
           }, [
-            m("input", {
-              type: "range",
-              min: "0",
-              max: "100",
-              value: I(t).volume,
-              class: "stmp-volume-vertical",
-              orient: "vertical",
-              onInput: U
-            }, null, 40, Ru)
-          ], 2)
-        ], 32)
+            m("button", {
+              class: "stmp-ctrl-btn",
+              "aria-label": I(O)("Mute / Unmute"),
+              onClick: z
+            }, [
+              ne(be, {
+                name: I(t).volume === 0 ? "volume-mute" : "volume",
+                size: 18
+              }, null, 8, ["name"])
+            ], 8, Ru),
+            m("div", {
+              class: we(["stmp-volume-popup", { show: l.value }])
+            }, [
+              m("input", {
+                type: "range",
+                min: "0",
+                max: "100",
+                value: I(t).volume,
+                class: "stmp-volume-vertical",
+                orient: "vertical",
+                onInput: U
+              }, null, 40, Lu)
+            ], 2)
+          ], 32)
+        ])
       ]),
       ne(Ea, { name: "stmp-overlay" }, {
         default: Rr(() => [
-          r.value ? (N(), V("div", Lu, [
-            m("div", $u, [
-              m("span", ku, Y(r.value === "list" ? I(O)("Playlist") : I(O)("Search")), 1),
+          r.value ? (N(), V("div", $u, [
+            m("div", ku, [
+              m("span", Ou, Y(r.value === "list" ? I(O)("Playlist") : I(O)("Search")), 1),
               m("button", {
                 class: "stmp-overlay-close",
                 "aria-label": I(O)("Close"),
@@ -6127,9 +6128,9 @@ const ws = /* @__PURE__ */ an("playlist", {
                   name: "chevron-down",
                   size: 16
                 })
-              ], 8, Ou)
+              ], 8, Du)
             ]),
-            m("div", Du, [
+            m("div", Nu, [
               r.value === "list" ? (N(), Mt(Kc, { key: 0 })) : (N(), Mt(ou, { key: 1 }))
             ])
           ])) : Re("", !0)
@@ -6138,7 +6139,7 @@ const ws = /* @__PURE__ */ an("playlist", {
       })
     ]));
   }
-}), Fu = /* @__PURE__ */ Lt(Nu, [["__scopeId", "data-v-e670965a"]]), Uu = /* @__PURE__ */ Pt({
+}), Uu = /* @__PURE__ */ Lt(Fu, [["__scopeId", "data-v-bfd1ce75"]]), ju = /* @__PURE__ */ Pt({
   __name: "App",
   setup(e) {
     const t = Se(), s = Rt(), n = /* @__PURE__ */ Oe(!1), i = /* @__PURE__ */ Oe(null);
@@ -6231,13 +6232,13 @@ const ws = /* @__PURE__ */ an("playlist", {
       onPointerdown: k,
       onClick: ae
     }, [
-      n.value ? (N(), Mt(Fu, {
+      n.value ? (N(), Mt(Uu, {
         key: 1,
         onCollapse: re
       })) : (N(), Mt(Rc, { key: 0 }))
     ], 34));
   }
-}), ju = /* @__PURE__ */ Lt(Uu, [["__scopeId", "data-v-b49f2726"]]), Vu = { class: "stmp-settings" }, Hu = { class: "stmp-setting-group" }, Bu = { class: "stmp-setting-label" }, Ku = { class: "stmp-setting-row" }, Wu = ["checked", "onChange"], zu = ["onUpdate:modelValue", "placeholder"], Ju = ["onUpdate:modelValue", "placeholder"], Gu = ["onUpdate:modelValue", "placeholder"], qu = { class: "stmp-setting-group" }, Yu = { class: "stmp-setting-label" }, Xu = ["value"], Zu = { class: "stmp-setting-group" }, Qu = { class: "stmp-setting-label" }, ef = ["value"], tf = ["value"], sf = { class: "stmp-setting-group" }, nf = { class: "stmp-setting-label" }, rf = { class: "stmp-mode-toggle" }, of = { class: "stmp-setting-group" }, lf = { class: "stmp-setting-row" }, af = ["checked"], cf = { class: "stmp-setting-group" }, uf = { class: "stmp-setting-label" }, ff = { class: "stmp-rules" }, df = ["onClick"], hf = { class: "stmp-rule-add" }, pf = ["placeholder"], gf = { class: "stmp-setting-group" }, mf = { class: "stmp-setting-label" }, vf = { class: "stmp-data-btns" }, yf = ["aria-label"], bf = ["aria-label"], _f = ["aria-label"], xf = /* @__PURE__ */ Pt({
+}), Vu = /* @__PURE__ */ Lt(ju, [["__scopeId", "data-v-b49f2726"]]), Hu = { class: "stmp-settings" }, Bu = { class: "stmp-setting-group" }, Ku = { class: "stmp-setting-label" }, Wu = { class: "stmp-setting-row" }, zu = ["checked", "onChange"], Ju = ["onUpdate:modelValue", "placeholder"], Gu = ["onUpdate:modelValue", "placeholder"], qu = ["onUpdate:modelValue", "placeholder"], Yu = { class: "stmp-setting-group" }, Xu = { class: "stmp-setting-label" }, Zu = ["value"], Qu = { class: "stmp-setting-group" }, ef = { class: "stmp-setting-label" }, tf = ["value"], sf = ["value"], nf = { class: "stmp-setting-group" }, rf = { class: "stmp-setting-label" }, of = { class: "stmp-mode-toggle" }, lf = { class: "stmp-setting-group" }, af = { class: "stmp-setting-row" }, cf = ["checked"], uf = { class: "stmp-setting-group" }, ff = { class: "stmp-setting-label" }, df = { class: "stmp-rules" }, hf = ["onClick"], pf = { class: "stmp-rule-add" }, gf = ["placeholder"], mf = { class: "stmp-setting-group" }, vf = { class: "stmp-setting-label" }, yf = { class: "stmp-data-btns" }, bf = ["aria-label"], _f = ["aria-label"], xf = ["aria-label"], Sf = /* @__PURE__ */ Pt({
   __name: "SettingsView",
   setup(e) {
     const t = Se(), s = /* @__PURE__ */ Oe(""), n = [
@@ -6304,20 +6305,20 @@ const ws = /* @__PURE__ */ an("playlist", {
       const b = t.settings.providers.find((k) => k.id === C);
       b && (b.enabled = !b.enabled, t.save());
     }
-    return (C, b) => (N(), V("div", Vu, [
-      m("div", Hu, [
-        m("div", Bu, Y(I(O)("Providers")), 1),
+    return (C, b) => (N(), V("div", Hu, [
+      m("div", Bu, [
+        m("div", Ku, Y(I(O)("Providers")), 1),
         (N(!0), V(ee, null, Tt(I(t).settings.providers, (k) => (N(), V("div", {
           key: k.id,
           class: "stmp-provider-config"
         }, [
-          m("label", Ku, [
+          m("label", Wu, [
             m("span", null, Y(i[k.id] || k.id), 1),
             m("input", {
               type: "checkbox",
               checked: k.enabled,
               onChange: (F) => v(k.id)
-            }, null, 40, Wu)
+            }, null, 40, zu)
           ]),
           k.id === "netease" ? Zt((N(), V("input", {
             key: 0,
@@ -6325,7 +6326,7 @@ const ws = /* @__PURE__ */ an("playlist", {
             "onUpdate:modelValue": (F) => k.config.baseURL = F,
             placeholder: I(O)("API baseURL"),
             onChange: b[0] || (b[0] = (F) => I(t).save())
-          }, null, 40, zu)), [
+          }, null, 40, Ju)), [
             [ts, k.config.baseURL]
           ]) : Re("", !0),
           k.id === "custom" ? (N(), V(ee, { key: 1 }, [
@@ -6334,7 +6335,7 @@ const ws = /* @__PURE__ */ an("playlist", {
               "onUpdate:modelValue": (F) => k.config.searchURL = F,
               placeholder: I(O)("Search URL"),
               onChange: b[1] || (b[1] = (F) => I(t).save())
-            }, null, 40, Ju), [
+            }, null, 40, Gu), [
               [ts, k.config.searchURL]
             ]),
             Zt(m("input", {
@@ -6342,14 +6343,14 @@ const ws = /* @__PURE__ */ an("playlist", {
               "onUpdate:modelValue": (F) => k.config.resolveURL = F,
               placeholder: I(O)("Resolve URL"),
               onChange: b[2] || (b[2] = (F) => I(t).save())
-            }, null, 40, Gu), [
+            }, null, 40, qu), [
               [ts, k.config.resolveURL]
             ])
           ], 64)) : Re("", !0)
         ]))), 128))
       ]),
-      m("div", qu, [
-        m("div", Yu, Y(I(O)("Default Volume")) + ": " + Y(I(t).settings.volume), 1),
+      m("div", Yu, [
+        m("div", Xu, Y(I(O)("Default Volume")) + ": " + Y(I(t).settings.volume), 1),
         m("input", {
           type: "range",
           min: "0",
@@ -6357,10 +6358,10 @@ const ws = /* @__PURE__ */ an("playlist", {
           value: I(t).settings.volume,
           class: "stmp-range",
           onInput: l
-        }, null, 40, Xu)
+        }, null, 40, Zu)
       ]),
-      m("div", Zu, [
-        m("div", Qu, Y(I(O)("Default Play Mode")), 1),
+      m("div", Qu, [
+        m("div", ef, Y(I(O)("Default Play Mode")), 1),
         m("select", {
           class: "stmp-select",
           value: I(t).settings.playMode,
@@ -6369,12 +6370,12 @@ const ws = /* @__PURE__ */ an("playlist", {
           (N(), V(ee, null, Tt(n, (k) => m("option", {
             key: k.value,
             value: k.value
-          }, Y(k.label), 9, tf)), 64))
-        ], 40, ef)
+          }, Y(k.label), 9, sf)), 64))
+        ], 40, tf)
       ]),
-      m("div", sf, [
-        m("div", nf, Y(I(O)("Widget Mode")), 1),
-        m("div", rf, [
+      m("div", nf, [
+        m("div", rf, Y(I(O)("Widget Mode")), 1),
+        m("div", of, [
           m("button", {
             class: we(["stmp-mode-btn", { active: I(t).settings.widgetMode === "dock" }]),
             onClick: b[3] || (b[3] = (k) => I(t).setWidgetMode("dock"))
@@ -6385,19 +6386,19 @@ const ws = /* @__PURE__ */ an("playlist", {
           }, Y(I(O)("Drag")), 3)
         ])
       ]),
-      m("div", of, [
-        m("div", lf, [
+      m("div", lf, [
+        m("div", af, [
           m("span", null, Y(I(O)("Auto-play on new cue")), 1),
           m("input", {
             type: "checkbox",
             checked: I(t).settings.autoPlayOnNewCue,
             onChange: d
-          }, null, 40, af)
+          }, null, 40, cf)
         ])
       ]),
-      m("div", cf, [
-        m("div", uf, Y(I(O)("Custom Cue Rules (Regex)")), 1),
-        m("div", ff, [
+      m("div", uf, [
+        m("div", ff, Y(I(O)("Custom Cue Rules (Regex)")), 1),
+        m("div", df, [
           (N(!0), V(ee, null, Tt(I(t).settings.customCueRules, (k, F) => (N(), V("div", {
             key: F,
             class: "stmp-rule"
@@ -6406,16 +6407,16 @@ const ws = /* @__PURE__ */ an("playlist", {
             m("button", {
               class: "stmp-rule-del",
               onClick: (U) => o(F)
-            }, "✕", 8, df)
+            }, "✕", 8, hf)
           ]))), 128))
         ]),
-        m("div", hf, [
+        m("div", pf, [
           Zt(m("input", {
             "onUpdate:modelValue": b[5] || (b[5] = (k) => s.value = k),
             class: "stmp-rule-input",
             placeholder: I(O)("Add regex rule..."),
             onKeydown: ho(r, ["enter"])
-          }, null, 40, pf), [
+          }, null, 40, gf), [
             [ts, s.value]
           ]),
           m("button", {
@@ -6424,30 +6425,30 @@ const ws = /* @__PURE__ */ an("playlist", {
           }, "+")
         ])
       ]),
-      m("div", gf, [
-        m("div", mf, Y(I(O)("Data")), 1),
-        m("div", vf, [
+      m("div", mf, [
+        m("div", vf, Y(I(O)("Data")), 1),
+        m("div", yf, [
           m("button", {
             class: "stmp-data-btn",
             "aria-label": I(O)("Clear cache"),
             onClick: u
-          }, Y(I(O)("Clear cache")), 9, yf),
+          }, Y(I(O)("Clear cache")), 9, bf),
           m("button", {
             class: "stmp-data-btn",
             "aria-label": I(O)("Export data"),
             onClick: h
-          }, Y(I(O)("Export data")), 9, bf),
+          }, Y(I(O)("Export data")), 9, _f),
           m("button", {
             class: "stmp-data-btn",
             "aria-label": I(O)("Import data"),
             onClick: y
-          }, Y(I(O)("Import data")), 9, _f)
+          }, Y(I(O)("Import data")), 9, xf)
         ])
       ])
     ]));
   }
-}), Sf = /* @__PURE__ */ Lt(xf, [["__scopeId", "data-v-2c96815c"]]);
-class wf {
+}), wf = /* @__PURE__ */ Lt(Sf, [["__scopeId", "data-v-2c96815c"]]);
+class Cf {
   constructor() {
     this.listeners = /* @__PURE__ */ new Map(), this.registered = [];
   }
@@ -6509,10 +6510,10 @@ function Rs(e) {
   const t = typeof e == "number" ? e : parseInt(String(e), 10);
   return Number.isFinite(t) ? t : void 0;
 }
-function Cf() {
-  return new wf();
+function If() {
+  return new Cf();
 }
-const If = [
+const Ef = [
   /<bgm>当前bgm[:：](.+?) - (.+?)<\/bgm>/g,
   /<bgm>当前bgm[:：](.+?)<\/bgm>/g,
   /<bgm>(.+?) - (.+?)<\/bgm>/g,
@@ -6540,7 +6541,7 @@ function Xi(e, t = []) {
   const s = /* @__PURE__ */ new Map(), n = (i) => {
     s.has(i.index) || s.set(i.index, i);
   };
-  for (const i of If)
+  for (const i of Ef)
     for (const r of Yi(i, e)) n(r);
   for (const i of t)
     try {
@@ -6550,7 +6551,7 @@ function Xi(e, t = []) {
     }
   return [...s.values()].sort((i, r) => i.index - r.index).map((i) => i.cue);
 }
-class Ef {
+class Tf {
   constructor(t) {
     this.cursors = /* @__PURE__ */ new Map(), this.getChatMessage = t;
   }
@@ -6593,7 +6594,7 @@ class Ef {
   }
 }
 let Bt = null, nt = null, fs = null, ds = null, Kt = null, Ws = null;
-const Tf = `
+const Af = `
 <div class="inline-drawer">
   <div class="inline-drawer-toggle inline-drawer-header">
     <b data-i18n="悬浮音乐播放器">悬浮音乐播放器</b>
@@ -6604,17 +6605,17 @@ const Tf = `
   </div>
 </div>
 `;
-function Af() {
-  const e = $("#extensions_settings2");
-  if (!e || !e.length || (e.append(Tf), ds = e.children(".inline-drawer").last()[0] ?? null, !ds)) return;
-  const t = ds.querySelector("#stmp-settings-mount");
-  t && Ws && (Kt = po(Sf), Kt.use(Ws), Kt.mount(t));
-}
 function Mf() {
+  const e = $("#extensions_settings2");
+  if (!e || !e.length || (e.append(Af), ds = e.children(".inline-drawer").last()[0] ?? null, !ds)) return;
+  const t = ds.querySelector("#stmp-settings-mount");
+  t && Ws && (Kt = po(wf), Kt.use(Ws), Kt.mount(t));
+}
+function Pf() {
   Kt && (Kt.unmount(), Kt = null), ds?.remove(), ds = null;
 }
-function Pf(e, t, s) {
-  nt = Cf(), nt.on("chat-changed", () => {
+function Rf(e, t, s) {
+  nt = If(), nt.on("chat-changed", () => {
     const n = SillyTavern.getContext(), i = n.chatId ?? String(Date.now());
     if (t.setChatId(i), t.getCursor() < 0 && n.chat.length > 0) {
       const r = e.scanIncremental(
@@ -6645,7 +6646,7 @@ function Pf(e, t, s) {
     n.messageId !== void 0 && t.handleMessageUpdate(n.messageId);
   }), nt.start();
 }
-function Rf(e, t, s) {
+function Lf(e, t, s) {
   const n = SillyTavern.getContext();
   if (n.chatId && n.chat.length > 0 && (t.setChatId(n.chatId), t.getCursor() < 0)) {
     const i = e.scanIncremental(
@@ -6657,21 +6658,21 @@ function Rf(e, t, s) {
     t.handleNewCues(i), t.setCursor(n.chat.length - 1);
   }
 }
-async function kf() {
+async function Of() {
   try {
     const e = document.createElement("div");
     e.id = "st-music-player-root", document.documentElement.appendChild(e);
     const t = nc();
-    Ws = t, Bt = po(ju), Bt.use(t), Bt.mount(e);
+    Ws = t, Bt = po(Vu), Bt.use(t), Bt.mount(e);
     const s = Se(), n = hc();
     s.init(n);
     const i = Rt();
     i.init(), i.setVolume(s.settings.volume);
-    const r = new Ef((a) => SillyTavern.getContext().chat[a]?.mes), o = ws();
-    o.init(r), Af();
+    const r = new Tf((a) => SillyTavern.getContext().chat[a]?.mes), o = ws();
+    o.init(r), Mf();
     const l = SillyTavern.getContext();
     fs = () => {
-      Pf(r, o, s), Rf(r, o, s);
+      Rf(r, o, s), Lf(r, o, s);
     }, l.eventSource.on(l.event_types.APP_READY, fs), console.log("[ST-Music-Player] 播放器加载完成");
   } catch (e) {
     console.error("[ST-Music-Player] init failed:", e);
@@ -6694,12 +6695,12 @@ function _o() {
     Bt.unmount(), Bt = null;
   }
   const e = document.getElementById("st-music-player-root");
-  e && e.remove(), Mf(), Ws = null;
+  e && e.remove(), Pf(), Ws = null;
 }
-function Of() {
+function Df() {
   _o();
 }
-async function Lf() {
+async function $f() {
   try {
     const e = SillyTavern.getContext();
     delete e.extensionSettings[Ft], e.saveSettingsDebounced();
@@ -6718,13 +6719,13 @@ async function Lf() {
     console.error("[ST-Music-Player] clean: failed to clear localforage:", e);
   }
 }
-async function Df() {
-  await Lf(), _o();
+async function Nf() {
+  await $f(), _o();
 }
 export {
-  Lf as clean,
-  Df as delete,
+  $f as clean,
+  Nf as delete,
   _o as destroy,
-  Of as disable,
-  kf as init
+  Df as disable,
+  Of as init
 };

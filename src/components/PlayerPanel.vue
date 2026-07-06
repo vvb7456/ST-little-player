@@ -235,29 +235,30 @@ function closeOverlay(): void {
       </button>
 
       <!-- Volume (rightmost) -->
-      <div class="stmp-ctrl-side-end" />
-      <div
-        class="stmp-volume-container"
-        @mouseenter="onVolumeEnter"
-        @mouseleave="onVolumeLeave"
-      >
-        <button
-          class="stmp-ctrl-btn"
-          :aria-label="t('Mute / Unmute')"
-          @click="toggleMute"
+      <div class="stmp-ctrl-side stmp-volume-side">
+        <div
+          class="stmp-volume-container"
+          @mouseenter="onVolumeEnter"
+          @mouseleave="onVolumeLeave"
         >
-          <Icon :name="playerStore.volume === 0 ? 'volume-mute' : 'volume'" :size="18" />
-        </button>
-        <div class="stmp-volume-popup" :class="{ show: showVolumeSlider }">
-          <input
-            type="range"
-            min="0"
-            max="100"
-            :value="playerStore.volume"
-            class="stmp-volume-vertical"
-            orient="vertical"
-            @input="onVolume"
-          />
+          <button
+            class="stmp-ctrl-btn"
+            :aria-label="t('Mute / Unmute')"
+            @click="toggleMute"
+          >
+            <Icon :name="playerStore.volume === 0 ? 'volume-mute' : 'volume'" :size="18" />
+          </button>
+          <div class="stmp-volume-popup" :class="{ show: showVolumeSlider }">
+            <input
+              type="range"
+              min="0"
+              max="100"
+              :value="playerStore.volume"
+              class="stmp-volume-vertical"
+              orient="vertical"
+              @input="onVolume"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -509,8 +510,8 @@ function closeOverlay(): void {
   justify-content: flex-start;
 }
 
-.stmp-ctrl-side-end {
-  flex: 1;
+.stmp-volume-side {
+  justify-content: flex-end;
 }
 
 .stmp-volume-container {
