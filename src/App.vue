@@ -307,13 +307,12 @@ onBeforeUnmount(() => {
   touch-action: auto;
 }
 
-/* ===== Dock mode: glass, accent-tinted to match #send_form ===== */
+/* ===== Dock mode: same glass as base, no shadow/bottom border ===== */
 .stmp-dock {
   border-radius: 10px 10px 0 0;
   border: 1px solid var(--stmp-border);
   border-bottom: none;
   box-shadow: none;
-  background: color-mix(in srgb, var(--stmp-accent) 15%, var(--stmp-bg) 80%);
   padding: 2px 8px;
 }
 
