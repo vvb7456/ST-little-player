@@ -454,7 +454,10 @@ function closeOverlay(): void {
   gap: 6px;
   width: 100%;
   transition: transform 0.4s ease;
-  padding: 50px 0;
+  /* Enough padding so first and last lyric lines can be centered.
+     Scales with font size for responsive layouts. */
+  padding-block: calc(var(--mainFontSize, 14px) * 10);
+  box-sizing: border-box;
 }
 
 .stmp-lyric-line {

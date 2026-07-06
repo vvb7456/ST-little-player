@@ -6161,7 +6161,7 @@ const ws = /* @__PURE__ */ cn("playlist", {
       })
     ]));
   }
-}), Uu = /* @__PURE__ */ $t(Fu, [["__scopeId", "data-v-e0f75e39"]]), ju = /* @__PURE__ */ Rt({
+}), Uu = /* @__PURE__ */ $t(Fu, [["__scopeId", "data-v-518661ad"]]), ju = /* @__PURE__ */ Rt({
   __name: "App",
   setup(e) {
     const t = we(), s = Lt(), n = /* @__PURE__ */ Ce(!1), i = /* @__PURE__ */ Ce(null);
