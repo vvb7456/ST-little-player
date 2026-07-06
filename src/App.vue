@@ -13,6 +13,7 @@ let resizeObs: ResizeObserver | null = null;
 
 const isDock = computed(() => settingsStore.settings.widgetMode === 'dock');
 const isHidden = computed(() => settingsStore.settings.widgetMode === 'hidden');
+const isMobile = ref(window.innerWidth <= 768);
 
 const onKeyDown = (e: KeyboardEvent): void => {
   if (e.key === 'Escape') isExpanded.value = false;
@@ -260,6 +261,7 @@ onMounted(() => {
 });
 
 function onResize(): void {
+  isMobile.value = window.innerWidth <= 768;
   if (isDock.value) {
     nextTick(() => dockToInput());
   } else {
@@ -292,7 +294,7 @@ onBeforeUnmount(() => {
     @pointerdown="startDrag"
     @click="onWidgetClick"
   >
-    <CollapsedBar v-if="!isExpanded" />
+    <CollapsedBar v-if="!isExpanded" :is-dock="isDock" :is-mobile="isMobile" />
     <PlayerPanel v-else @collapse="toggleExpand" />
   </div>
 </template>
@@ -333,10 +335,10 @@ onBeforeUnmount(() => {
   padding: 2px 8px;
 }
 
-/* Desktop dock collapsed: compact pill, not full width */
+/* Desktop dock collapsed: match expanded width, single row */
 @media (min-width: 769px) {
   .stmp-dock.stmp-collapsed {
-    width: auto;
+    width: min(360px, calc(100vw - 16px));
   }
 }
 
@@ -353,10 +355,11 @@ onBeforeUnmount(() => {
 
 /* ===== Drag mode: floating glass widget ===== */
 
-/* Drag mode collapsed: draggable */
+/* Drag mode collapsed: draggable, auto-size compact card */
 .stmp-collapsed:not(.stmp-dock) {
   cursor: grab;
   touch-action: none;
+  width: auto;
 }
 
 .stmp-collapsed:not(.stmp-dock):active {
@@ -378,13 +381,8 @@ onBeforeUnmount(() => {
   padding: 12px;
 }
 
-/* Mobile drag mode: compact width, not full screen */
+/* Mobile drag mode: same compact card as desktop */
 @media (max-width: 768px) {
-  .stmp-collapsed:not(.stmp-dock) {
-    width: auto;
-    max-width: calc(100vw - 32px);
-  }
-
   .stmp-expanded:not(.stmp-dock) {
     width: min(300px, calc(100vw - 32px));
   }
