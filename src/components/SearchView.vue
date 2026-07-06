@@ -127,16 +127,16 @@ function isPlaying(result: SearchResult): boolean {
 .stmp-search-input {
   flex: 1;
   padding: 6px 10px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--stmp-border);
   border-radius: 8px;
-  background: rgba(0, 0, 0, 0.2);
-  color: var(--SmartThemeBodyColor, #fff);
+  background: color-mix(in srgb, var(--stmp-bg) 75%, transparent);
+  color: var(--stmp-text);
   font-size: calc(var(--fontSize, 14px) * 0.85);
   outline: none;
 }
 
 .stmp-search-input:focus {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: var(--stmp-border);
   outline: none;
   box-shadow: none;
 }
@@ -148,9 +148,9 @@ function isPlaying(result: SearchResult): boolean {
 
 .stmp-icon-btn {
   background: none;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--stmp-border);
   border-radius: 8px;
-  color: var(--SmartThemeBodyColor, #fff);
+  color: var(--stmp-text);
   cursor: pointer;
   padding: 4px 8px;
   display: flex;
@@ -166,7 +166,7 @@ function isPlaying(result: SearchResult): boolean {
 }
 
 .stmp-icon-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--stmp-hover);
 }
 
 .stmp-spin {
@@ -203,7 +203,7 @@ function isPlaying(result: SearchResult): boolean {
   text-align: center;
   padding: 20px 0;
   opacity: 0.6;
-  color: var(--SmartThemeBodyColor, #ccc);
+  color: var(--stmp-text-dim);
   font-size: calc(var(--fontSize, 14px) * 0.85);
 }
 
@@ -226,17 +226,17 @@ function isPlaying(result: SearchResult): boolean {
 }
 
 .stmp-result:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--stmp-hover);
 }
 
 .stmp-result-playing {
-  background: var(--SmartThemeQuoteColor, rgba(126, 87, 194, 0.15));
+  background: color-mix(in srgb, var(--stmp-accent) 15%, transparent);
   animation: stmp-flash 0.6s ease;
 }
 
 @keyframes stmp-flash {
-  0% { background: var(--SmartThemeQuoteColor, rgba(126, 87, 194, 0.4)); }
-  100% { background: var(--SmartThemeQuoteColor, rgba(126, 87, 194, 0.15)); }
+  0% { background: color-mix(in srgb, var(--stmp-accent) 40%, transparent); }
+  100% { background: color-mix(in srgb, var(--stmp-accent) 15%, transparent); }
 }
 
 .stmp-result-info {
@@ -252,7 +252,7 @@ function isPlaying(result: SearchResult): boolean {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--SmartThemeBodyColor, #fff);
+  color: var(--stmp-text);
 }
 
 .stmp-result-artist {
@@ -261,7 +261,7 @@ function isPlaying(result: SearchResult): boolean {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--SmartThemeBodyColor, #ccc);
+  color: var(--stmp-text-dim);
 }
 
 .stmp-result-add {
@@ -272,11 +272,11 @@ function isPlaying(result: SearchResult): boolean {
 
 .stmp-result-add:hover {
   opacity: 1;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--stmp-hover);
 }
 
 .stmp-result-add.added {
-  color: #4caf50;
+  color: var(--active, #4caf50);
   opacity: 1;
 }
 </style>

@@ -283,26 +283,37 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+/* ===== ST theme variable aliases (inherited by all child components) ===== */
 .stmp-widget {
+  --stmp-accent: var(--SmartThemeQuoteColor, #7e57c2);
+  --stmp-text: var(--SmartThemeBodyColor, #ccc);
+  --stmp-text-dim: var(--SmartThemeEmColor, #999);
+  --stmp-bg: var(--SmartThemeBlurTintColor, #1a1a2e);
+  --stmp-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.08));
+  --stmp-blur: blur(var(--SmartThemeBlurStrength, 10px));
+  --stmp-hover: color-mix(in srgb, var(--SmartThemeBodyColor, #ccc) 8%, transparent);
+  --stmp-track: color-mix(in srgb, var(--SmartThemeBodyColor, #ccc) 15%, transparent);
+  --stmp-shadow: 0 4px 24px var(--SmartThemeShadowColor, rgba(0, 0, 0, 0.4));
+
   position: fixed;
   z-index: 21000;
   border-radius: 16px;
   background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1a1a2e) 75%, transparent);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: var(--stmp-blur);
+  -webkit-backdrop-filter: var(--stmp-blur);
+  box-shadow: var(--stmp-shadow);
+  border: 1px solid var(--stmp-border);
   padding: 4px;
   touch-action: auto;
 }
 
-/* ===== Dock mode: flush with input bar, no floating look ===== */
+/* ===== Dock mode: glass, accent-tinted to match #send_form ===== */
 .stmp-dock {
   border-radius: 10px 10px 0 0;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--stmp-border);
   border-bottom: none;
   box-shadow: none;
-  background: var(--SmartThemeBlurTintColor, #1a1a2e);
+  background: color-mix(in srgb, var(--stmp-accent) 15%, var(--stmp-bg) 80%);
   padding: 2px 8px;
 }
 
@@ -366,7 +377,7 @@ onBeforeUnmount(() => {
 }
 
 .stmp-widget *:focus-visible {
-  outline: 2px solid var(--stmp-accent, #7e57c2);
+  outline: 2px solid var(--stmp-accent);
   outline-offset: 2px;
 }
 </style>

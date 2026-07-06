@@ -306,7 +306,7 @@ function closeOverlay(): void {
 .stmp-icon-btn {
   background: none;
   border: none;
-  color: var(--SmartThemeBodyColor, #ccc);
+  color: var(--stmp-text);
   cursor: pointer;
   padding: 2px 4px;
   border-radius: 8px;
@@ -318,7 +318,7 @@ function closeOverlay(): void {
 }
 
 .stmp-icon-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--stmp-hover);
 }
 
 /* Display area: grid stack so both modes share the same cell,
@@ -352,7 +352,7 @@ function closeOverlay(): void {
   height: 180px;
   border-radius: 16px;
   object-fit: cover;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 16px var(--SmartThemeShadowColor, rgba(0, 0, 0, 0.35));
 }
 
 .stmp-cover-placeholder {
@@ -362,8 +362,8 @@ function closeOverlay(): void {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.2);
-  color: var(--SmartThemeBodyColor, #ccc);
+  background: color-mix(in srgb, var(--stmp-bg) 70%, transparent);
+  color: var(--stmp-text);
   opacity: 0.3;
 }
 
@@ -375,7 +375,7 @@ function closeOverlay(): void {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
-  color: var(--SmartThemeBodyColor, #fff);
+  color: var(--stmp-text);
 }
 
 .stmp-track-artist {
@@ -386,7 +386,7 @@ function closeOverlay(): void {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
-  color: var(--SmartThemeBodyColor, #ccc);
+  color: var(--stmp-text-dim);
 }
 
 /* ===== Lyric mode: fills same height as cover mode ===== */
@@ -432,7 +432,7 @@ function closeOverlay(): void {
   font-size: calc(var(--fontSize, 14px) * 0.82);
   text-align: center;
   opacity: 0.35;
-  color: var(--SmartThemeBodyColor, #ccc);
+  color: var(--stmp-text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -442,7 +442,7 @@ function closeOverlay(): void {
 .stmp-lyric-active {
   opacity: 1;
   font-weight: 600;
-  color: var(--SmartThemeQuoteColor, #fff);
+  color: var(--stmp-accent);
 }
 
 /* Progress */
@@ -457,7 +457,7 @@ function closeOverlay(): void {
   appearance: none;
   width: 100%;
   height: 4px;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--stmp-track);
   border-radius: 2px;
   cursor: pointer;
   outline: none;
@@ -469,7 +469,7 @@ function closeOverlay(): void {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--SmartThemeQuoteColor, #fff);
+  background: var(--stmp-accent);
   cursor: pointer;
 }
 
@@ -478,7 +478,7 @@ function closeOverlay(): void {
   height: 12px;
   border: none;
   border-radius: 50%;
-  background: var(--SmartThemeQuoteColor, #fff);
+  background: var(--stmp-accent);
   cursor: pointer;
 }
 
@@ -487,7 +487,7 @@ function closeOverlay(): void {
   justify-content: space-between;
   font-size: calc(var(--fontSize, 14px) * 0.72);
   opacity: 0.6;
-  color: var(--SmartThemeBodyColor, #ccc);
+  color: var(--stmp-text-dim);
 }
 
 /* Controls: 3 groups — left side, center cluster, right side */
@@ -532,7 +532,7 @@ function closeOverlay(): void {
 .stmp-ctrl-btn {
   background: none;
   border: none;
-  color: var(--SmartThemeBodyColor, #ccc);
+  color: var(--stmp-text);
   cursor: pointer;
   padding: 5px;
   border-radius: 8px;
@@ -545,13 +545,13 @@ function closeOverlay(): void {
 }
 
 .stmp-ctrl-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--stmp-hover);
   opacity: 1;
 }
 
 .stmp-ctrl-btn.active {
   opacity: 1;
-  color: var(--SmartThemeQuoteColor, #fff);
+  color: var(--stmp-accent);
 }
 
 .stmp-play-btn {
@@ -570,9 +570,9 @@ function closeOverlay(): void {
   padding: 6px 4px;
   margin-bottom: 4px;
   pointer-events: none;
-  background: rgba(0, 0, 0, 0.55);
+  background: color-mix(in srgb, var(--stmp-bg) 88%, transparent);
   border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid color-mix(in srgb, var(--stmp-border) 50%, transparent);
 }
 
 .stmp-volume-popup.show {
@@ -596,14 +596,14 @@ function closeOverlay(): void {
 .stmp-volume-vertical::-webkit-slider-runnable-track {
   width: 4px;
   height: 80px;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--stmp-track);
   border-radius: 2px;
 }
 
 .stmp-volume-vertical::-moz-range-track {
   width: 4px;
   height: 80px;
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--stmp-track);
   border-radius: 2px;
 }
 
@@ -613,7 +613,7 @@ function closeOverlay(): void {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: var(--SmartThemeQuoteColor, #fff);
+  background: var(--stmp-accent);
   margin-left: -4px;
   cursor: pointer;
 }
@@ -623,7 +623,7 @@ function closeOverlay(): void {
   height: 12px;
   border: none;
   border-radius: 50%;
-  background: var(--SmartThemeQuoteColor, #fff);
+  background: var(--stmp-accent);
   cursor: pointer;
 }
 
@@ -634,9 +634,9 @@ function closeOverlay(): void {
   left: 0;
   right: 0;
   bottom: 0;
-  background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1a1a2e) 92%, transparent);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: color-mix(in srgb, var(--stmp-bg) 90%, transparent);
+  backdrop-filter: var(--stmp-blur);
+  -webkit-backdrop-filter: var(--stmp-blur);
   border-radius: 16px;
   display: flex;
   flex-direction: column;
@@ -655,13 +655,13 @@ function closeOverlay(): void {
 .stmp-overlay-title {
   font-size: calc(var(--fontSize, 14px) * 0.9);
   font-weight: 600;
-  color: var(--SmartThemeBodyColor, #fff);
+  color: var(--stmp-text);
 }
 
 .stmp-overlay-close {
   background: none;
   border: none;
-  color: var(--SmartThemeBodyColor, #ccc);
+  color: var(--stmp-text-dim);
   cursor: pointer;
   padding: 4px;
   border-radius: 8px;
@@ -671,7 +671,7 @@ function closeOverlay(): void {
 }
 
 .stmp-overlay-close:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--stmp-hover);
 }
 
 .stmp-overlay-body {

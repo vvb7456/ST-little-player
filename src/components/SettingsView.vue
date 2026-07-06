@@ -264,7 +264,7 @@ function toggleProvider(id: string): void {
   opacity: 0.6;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--SmartThemeBodyColor, #ccc);
+  color: var(--stmp-text-dim);
 }
 
 .stmp-setting-row {
@@ -272,7 +272,7 @@ function toggleProvider(id: string): void {
   align-items: center;
   justify-content: space-between;
   font-size: calc(var(--fontSize, 14px) * 0.85);
-  color: var(--SmartThemeBodyColor, #fff);
+  color: var(--stmp-text);
 }
 
 .stmp-range {
@@ -282,10 +282,10 @@ function toggleProvider(id: string): void {
 
 .stmp-select {
   padding: 4px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--stmp-border);
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.2);
-  color: var(--SmartThemeBodyColor, #fff);
+  background: color-mix(in srgb, var(--stmp-bg) 75%, transparent);
+  color: var(--stmp-text);
   font-size: calc(var(--fontSize, 14px) * 0.85);
   outline: none;
 }
@@ -302,20 +302,20 @@ function toggleProvider(id: string): void {
   gap: 6px;
   padding: 2px 6px;
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.15);
+  background: color-mix(in srgb, var(--stmp-bg) 60%, transparent);
 }
 
 .stmp-rule code {
   flex: 1;
   font-size: calc(var(--fontSize, 14px) * 0.78);
-  color: var(--SmartThemeBodyColor, #ccc);
+  color: var(--stmp-text-dim);
   word-break: break-all;
 }
 
 .stmp-rule-del {
   background: none;
   border: none;
-  color: #ff6b6b;
+  color: var(--fullred, #ff6b6b);
   cursor: pointer;
   font-size: 12px;
   padding: 0 2px;
@@ -329,19 +329,19 @@ function toggleProvider(id: string): void {
 .stmp-rule-input {
   flex: 1;
   padding: 4px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--stmp-border);
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.2);
-  color: var(--SmartThemeBodyColor, #fff);
+  background: color-mix(in srgb, var(--stmp-bg) 75%, transparent);
+  color: var(--stmp-text);
   font-size: calc(var(--fontSize, 14px) * 0.8);
   outline: none;
 }
 
 .stmp-rule-add-btn {
   background: none;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--stmp-border);
   border-radius: 6px;
-  color: var(--SmartThemeBodyColor, #fff);
+  color: var(--stmp-text);
   cursor: pointer;
   padding: 2px 12px;
   font-size: 16px;
@@ -358,10 +358,10 @@ function toggleProvider(id: string): void {
   width: 100%;
   box-sizing: border-box;
   padding: 4px 8px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--stmp-border);
   border-radius: 6px;
-  background: rgba(0, 0, 0, 0.2);
-  color: var(--SmartThemeBodyColor, #fff);
+  background: color-mix(in srgb, var(--stmp-bg) 75%, transparent);
+  color: var(--stmp-text);
   font-size: calc(var(--fontSize, 14px) * 0.78);
   outline: none;
 }
@@ -374,9 +374,9 @@ function toggleProvider(id: string): void {
 
 .stmp-data-btn {
   background: none;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--stmp-border);
   border-radius: 6px;
-  color: var(--SmartThemeBodyColor, #fff);
+  color: var(--stmp-text);
   cursor: pointer;
   padding: 4px 10px;
   font-size: calc(var(--fontSize, 14px) * 0.8);
@@ -384,13 +384,13 @@ function toggleProvider(id: string): void {
 }
 
 .stmp-data-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--stmp-hover);
 }
 
 .stmp-mode-toggle {
   display: flex;
   gap: 0;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--stmp-border);
   border-radius: 6px;
   overflow: hidden;
 }
@@ -399,7 +399,7 @@ function toggleProvider(id: string): void {
   flex: 1;
   background: none;
   border: none;
-  color: var(--SmartThemeBodyColor, #ccc);
+  color: var(--stmp-text-dim);
   cursor: pointer;
   padding: 6px 12px;
   font-size: calc(var(--fontSize, 14px) * 0.82);
@@ -408,7 +408,8 @@ function toggleProvider(id: string): void {
 }
 
 .stmp-mode-btn.active {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--stmp-hover);
   opacity: 1;
+  color: var(--stmp-accent);
 }
 </style>

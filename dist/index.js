@@ -5679,7 +5679,7 @@ const ws = /* @__PURE__ */ an("playlist", {
       ], 8, Mc)
     ]));
   }
-}), Rc = /* @__PURE__ */ Lt(Pc, [["__scopeId", "data-v-eb242a58"]]), Lc = { class: "stmp-playlist" }, $c = { class: "stmp-upload-area" }, kc = ["aria-label"], Oc = {
+}), Rc = /* @__PURE__ */ Lt(Pc, [["__scopeId", "data-v-69ef4583"]]), Lc = { class: "stmp-playlist" }, $c = { class: "stmp-upload-area" }, kc = ["aria-label"], Oc = {
   key: 0,
   class: "stmp-empty"
 }, Dc = { class: "stmp-group-label" }, Nc = ["onClick"], Fc = { class: "stmp-item-index" }, Uc = { class: "stmp-item-info" }, jc = { class: "stmp-item-song" }, Vc = {
@@ -5761,7 +5761,7 @@ const ws = /* @__PURE__ */ an("playlist", {
       ])), 64))
     ]));
   }
-}), Kc = /* @__PURE__ */ Lt(Bc, [["__scopeId", "data-v-362389ee"]]), Wc = { class: "stmp-search" }, zc = { class: "stmp-search-bar" }, Jc = ["placeholder"], Gc = ["disabled"], qc = {
+}), Kc = /* @__PURE__ */ Lt(Bc, [["__scopeId", "data-v-a0ede277"]]), Wc = { class: "stmp-search" }, zc = { class: "stmp-search-bar" }, Jc = ["placeholder"], Gc = ["disabled"], qc = {
   key: 0,
   class: "stmp-search-error"
 }, Yc = ["aria-label"], Xc = {
@@ -5874,7 +5874,7 @@ const ws = /* @__PURE__ */ an("playlist", {
       ])) : Re("", !0)
     ]));
   }
-}), ou = /* @__PURE__ */ Lt(ru, [["__scopeId", "data-v-b85f309b"]]), lu = { class: "stmp-panel" }, au = { class: "stmp-topbar stmp-drag-handle" }, cu = ["aria-label"], uu = { class: "stmp-cover-large" }, fu = ["src"], du = {
+}), ou = /* @__PURE__ */ Lt(ru, [["__scopeId", "data-v-467063cc"]]), lu = { class: "stmp-panel" }, au = { class: "stmp-topbar stmp-drag-handle" }, cu = ["aria-label"], uu = { class: "stmp-cover-large" }, fu = ["src"], du = {
   key: 1,
   class: "stmp-cover-placeholder"
 }, hu = { class: "stmp-track-name" }, pu = {
@@ -6138,7 +6138,7 @@ const ws = /* @__PURE__ */ an("playlist", {
       })
     ]));
   }
-}), Fu = /* @__PURE__ */ Lt(Nu, [["__scopeId", "data-v-c323d695"]]), Uu = /* @__PURE__ */ Pt({
+}), Fu = /* @__PURE__ */ Lt(Nu, [["__scopeId", "data-v-e670965a"]]), Uu = /* @__PURE__ */ Pt({
   __name: "App",
   setup(e) {
     const t = Se(), s = Rt(), n = /* @__PURE__ */ Oe(!1), i = /* @__PURE__ */ Oe(null);
@@ -6237,7 +6237,7 @@ const ws = /* @__PURE__ */ an("playlist", {
       })) : (N(), Mt(Rc, { key: 0 }))
     ], 34));
   }
-}), ju = /* @__PURE__ */ Lt(Uu, [["__scopeId", "data-v-dbbf789e"]]), Vu = { class: "stmp-settings" }, Hu = { class: "stmp-setting-group" }, Bu = { class: "stmp-setting-label" }, Ku = { class: "stmp-setting-row" }, Wu = ["checked", "onChange"], zu = ["onUpdate:modelValue", "placeholder"], Ju = ["onUpdate:modelValue", "placeholder"], Gu = ["onUpdate:modelValue", "placeholder"], qu = { class: "stmp-setting-group" }, Yu = { class: "stmp-setting-label" }, Xu = ["value"], Zu = { class: "stmp-setting-group" }, Qu = { class: "stmp-setting-label" }, ef = ["value"], tf = ["value"], sf = { class: "stmp-setting-group" }, nf = { class: "stmp-setting-label" }, rf = { class: "stmp-mode-toggle" }, of = { class: "stmp-setting-group" }, lf = { class: "stmp-setting-row" }, af = ["checked"], cf = { class: "stmp-setting-group" }, uf = { class: "stmp-setting-label" }, ff = { class: "stmp-rules" }, df = ["onClick"], hf = { class: "stmp-rule-add" }, pf = ["placeholder"], gf = { class: "stmp-setting-group" }, mf = { class: "stmp-setting-label" }, vf = { class: "stmp-data-btns" }, yf = ["aria-label"], bf = ["aria-label"], _f = ["aria-label"], xf = /* @__PURE__ */ Pt({
+}), ju = /* @__PURE__ */ Lt(Uu, [["__scopeId", "data-v-ad5c7cff"]]), Vu = { class: "stmp-settings" }, Hu = { class: "stmp-setting-group" }, Bu = { class: "stmp-setting-label" }, Ku = { class: "stmp-setting-row" }, Wu = ["checked", "onChange"], zu = ["onUpdate:modelValue", "placeholder"], Ju = ["onUpdate:modelValue", "placeholder"], Gu = ["onUpdate:modelValue", "placeholder"], qu = { class: "stmp-setting-group" }, Yu = { class: "stmp-setting-label" }, Xu = ["value"], Zu = { class: "stmp-setting-group" }, Qu = { class: "stmp-setting-label" }, ef = ["value"], tf = ["value"], sf = { class: "stmp-setting-group" }, nf = { class: "stmp-setting-label" }, rf = { class: "stmp-mode-toggle" }, of = { class: "stmp-setting-group" }, lf = { class: "stmp-setting-row" }, af = ["checked"], cf = { class: "stmp-setting-group" }, uf = { class: "stmp-setting-label" }, ff = { class: "stmp-rules" }, df = ["onClick"], hf = { class: "stmp-rule-add" }, pf = ["placeholder"], gf = { class: "stmp-setting-group" }, mf = { class: "stmp-setting-label" }, vf = { class: "stmp-data-btns" }, yf = ["aria-label"], bf = ["aria-label"], _f = ["aria-label"], xf = /* @__PURE__ */ Pt({
   __name: "SettingsView",
   setup(e) {
     const t = Se(), s = /* @__PURE__ */ Oe(""), n = [
@@ -6446,7 +6446,7 @@ const ws = /* @__PURE__ */ an("playlist", {
       ])
     ]));
   }
-}), Sf = /* @__PURE__ */ Lt(xf, [["__scopeId", "data-v-1606c260"]]);
+}), Sf = /* @__PURE__ */ Lt(xf, [["__scopeId", "data-v-2c96815c"]]);
 class wf {
   constructor() {
     this.listeners = /* @__PURE__ */ new Map(), this.registered = [];

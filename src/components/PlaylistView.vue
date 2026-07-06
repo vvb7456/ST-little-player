@@ -114,9 +114,9 @@ function remove(index: number): void {
 .stmp-upload-btn {
   width: 100%;
   background: none;
-  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border: 1px dashed color-mix(in srgb, var(--stmp-border) 60%, transparent);
   border-radius: 8px;
-  color: var(--SmartThemeBodyColor, #fff);
+  color: var(--stmp-text);
   cursor: pointer;
   padding: 6px;
   font-size: calc(var(--fontSize, 14px) * 0.8);
@@ -125,14 +125,14 @@ function remove(index: number): void {
 }
 
 .stmp-upload-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--stmp-hover);
   opacity: 1;
 }
 
 .stmp-empty {
   text-align: center;
   padding: 24px 0;
-  color: var(--SmartThemeBodyColor, #ccc);
+  color: var(--stmp-text-dim);
   opacity: 0.6;
   font-size: calc(var(--fontSize, 14px) * 0.9);
 }
@@ -143,7 +143,7 @@ function remove(index: number): void {
   padding: 6px 4px 2px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--SmartThemeBodyColor, #ccc);
+  color: var(--stmp-text-dim);
 }
 
 .stmp-item {
@@ -157,11 +157,11 @@ function remove(index: number): void {
 }
 
 .stmp-item:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--stmp-hover);
 }
 
 .stmp-item.active {
-  background: var(--SmartThemeQuoteColor, rgba(255, 255, 255, 0.15));
+  background: color-mix(in srgb, var(--stmp-accent) 15%, transparent);
 }
 
 .stmp-item-index {
@@ -169,7 +169,7 @@ function remove(index: number): void {
   opacity: 0.5;
   min-width: 20px;
   text-align: right;
-  color: var(--SmartThemeBodyColor, #ccc);
+  color: var(--stmp-text-dim);
 }
 
 .stmp-item-info {
@@ -184,7 +184,7 @@ function remove(index: number): void {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--SmartThemeBodyColor, #fff);
+  color: var(--stmp-text);
 }
 
 .stmp-item-artist {
@@ -193,13 +193,13 @@ function remove(index: number): void {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--SmartThemeBodyColor, #ccc);
+  color: var(--stmp-text-dim);
 }
 
 .stmp-item-del {
   background: none;
   border: none;
-  color: var(--SmartThemeBodyColor, #ccc);
+  color: var(--stmp-text-dim);
   opacity: 0.4;
   cursor: pointer;
   font-size: 12px;
@@ -210,6 +210,6 @@ function remove(index: number): void {
 
 .stmp-item-del:hover {
   opacity: 1;
-  background: rgba(255, 80, 80, 0.2);
+  background: color-mix(in srgb, var(--fullred, rgba(255, 80, 80, 0.5)) 30%, transparent);
 }
 </style>

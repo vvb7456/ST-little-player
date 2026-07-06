@@ -36,7 +36,7 @@ const songName = computed(() => playerStore.currentTrack?.name || t('No Song'));
 .stmp-collapsed-icon {
   opacity: 0.4;
   flex-shrink: 0;
-  color: var(--SmartThemeBodyColor, #ccc);
+  color: var(--stmp-text-dim);
 }
 
 .stmp-collapsed-title {
@@ -45,13 +45,13 @@ const songName = computed(() => playerStore.currentTrack?.name || t('No Song'));
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--SmartThemeBodyColor, #fff);
+  color: var(--stmp-text);
 }
 
 .stmp-icon-btn {
   background: none;
   border: none;
-  color: var(--SmartThemeBodyColor, #fff);
+  color: var(--stmp-text);
   cursor: pointer;
   padding: 0 4px;
   display: flex;
