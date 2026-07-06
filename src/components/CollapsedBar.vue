@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue';
+import { ref, computed, watch, nextTick, onMounted } from 'vue';
 import { usePlayerStore, usePlaylistStore } from '@/stores/index';
 import Icon from './Icon.vue';
 import { t } from '@/i18n';
@@ -24,6 +24,9 @@ const displayText = computed(() => {
   return artist ? `${name} - ${artist}` : name;
 });
 
+// Dock mode: show current lyric if available, fall back to song name
+const dockText = computed(() => currentLyric.value || displayText.value);
+
 const currentLyric = computed(() => {
   const idx = playerStore.currentLyricIndex;
   if (idx < 0 || idx >= playerStore.lyrics.length) return '';
@@ -31,16 +34,27 @@ const currentLyric = computed(() => {
 });
 
 const lyricScrollRef = ref<HTMLElement | null>(null);
+const lyricContainerRef = ref<HTMLElement | null>(null);
 const lyricIsScrolling = ref(false);
 
-watch(currentLyric, async () => {
-  await nextTick();
-  const el = lyricScrollRef.value;
-  if (!el) {
+function checkLyricOverflow(): void {
+  const span = lyricScrollRef.value;
+  const container = lyricContainerRef.value;
+  if (!span || !container) {
     lyricIsScrolling.value = false;
     return;
   }
-  lyricIsScrolling.value = el.scrollWidth > el.clientWidth;
+  // Force reflow to get accurate measurements
+  const overflow = span.scrollWidth - container.clientWidth;
+  lyricIsScrolling.value = overflow > 3;
+}
+
+watch(currentLyric, () => {
+  nextTick(() => requestAnimationFrame(checkLyricOverflow));
+});
+
+onMounted(() => {
+  requestAnimationFrame(checkLyricOverflow);
 });
 
 function onCoverError(): void {
@@ -63,7 +77,7 @@ function onNext(e: Event): void {
 </script>
 
 <template>
-  <!-- ===== Desktop Dock mini: single row, cover + text + controls ===== -->
+  <!-- ===== Desktop Dock mini: single row, cover + lyric/song + controls ===== -->
   <div v-if="props.isDock && !props.isMobile" class="stmp-mini stmp-mini-dock-desktop">
     <div class="stmp-mini-cover" v-if="coverUrl && !coverError">
       <img :src="coverUrl" alt="" @error="onCoverError" />
@@ -71,7 +85,7 @@ function onNext(e: Event): void {
     <div class="stmp-mini-cover stmp-mini-cover-placeholder" v-else>
       <Icon name="music" :size="14" />
     </div>
-    <span class="stmp-mini-text">{{ displayText }}</span>
+    <span class="stmp-mini-text">{{ dockText }}</span>
     <div class="stmp-mini-controls">
       <button class="stmp-mini-btn" :aria-label="playerStore.isPlaying ? t('Pause') : t('Play')" @click="onPlay">
         <Icon :name="playerStore.isPlaying ? 'pause' : 'play'" :size="14" />
@@ -82,7 +96,7 @@ function onNext(e: Event): void {
     </div>
   </div>
 
-  <!-- ===== Mobile Dock mini: full width, cover + text + controls ===== -->
+  <!-- ===== Mobile Dock mini: full width, cover + lyric/song + controls ===== -->
   <div v-else-if="props.isDock && props.isMobile" class="stmp-mini stmp-mini-dock-mobile">
     <div class="stmp-mini-cover" v-if="coverUrl && !coverError">
       <img :src="coverUrl" alt="" @error="onCoverError" />
@@ -90,7 +104,7 @@ function onNext(e: Event): void {
     <div class="stmp-mini-cover stmp-mini-cover-placeholder" v-else>
       <Icon name="music" :size="14" />
     </div>
-    <span class="stmp-mini-text">{{ displayText }}</span>
+    <span class="stmp-mini-text">{{ dockText }}</span>
     <div class="stmp-mini-controls">
       <button class="stmp-mini-btn" :aria-label="playerStore.isPlaying ? t('Pause') : t('Play')" @click="onPlay">
         <Icon :name="playerStore.isPlaying ? 'pause' : 'play'" :size="16" />
@@ -116,7 +130,7 @@ function onNext(e: Event): void {
     </button>
     <div class="stmp-mini-drag-right">
       <span class="stmp-mini-text stmp-mini-text-drag">{{ displayText }}</span>
-      <div class="stmp-mini-lyric">
+      <div ref="lyricContainerRef" class="stmp-mini-lyric">
         <span
           ref="lyricScrollRef"
           class="stmp-mini-lyric-scroll"
@@ -283,11 +297,12 @@ function onNext(e: Event): void {
 }
 
 .stmp-mini-lyric-scroll.scrolling {
-  animation: stmp-marquee 8s linear infinite;
+  animation: stmp-marquee 10s linear infinite;
 }
 
 @keyframes stmp-marquee {
-  0%, 10% { transform: translateX(0); }
-  90%, 100% { transform: translateX(calc(-100% + 70px)); }
+  0%, 5% { transform: translateX(0); }
+  45%, 55% { transform: translateX(calc(-100% + 70px)); }
+  95%, 100% { transform: translateX(0); }
 }
 </style>
