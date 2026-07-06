@@ -294,6 +294,7 @@ onBeforeUnmount(() => {
   --stmp-hover: color-mix(in srgb, var(--SmartThemeBodyColor, #ccc) 8%, transparent);
   --stmp-track: color-mix(in srgb, var(--SmartThemeBodyColor, #ccc) 15%, transparent);
   --stmp-shadow: 0 4px 24px var(--SmartThemeShadowColor, rgba(0, 0, 0, 0.4));
+  --stmp-radius: 16px;
 
   position: fixed;
   z-index: 21000;
@@ -309,6 +310,7 @@ onBeforeUnmount(() => {
 
 /* ===== Dock mode: same glass as base, no shadow/bottom border ===== */
 .stmp-dock {
+  --stmp-radius: 10px 10px 0 0;
   border-radius: 10px 10px 0 0;
   border: 1px solid var(--stmp-border);
   border-bottom: none;

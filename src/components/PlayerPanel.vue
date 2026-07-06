@@ -285,7 +285,6 @@ function closeOverlay(): void {
 
 <style scoped>
 .stmp-panel {
-  position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -638,7 +637,7 @@ function closeOverlay(): void {
   background: color-mix(in srgb, var(--stmp-bg) 90%, transparent);
   backdrop-filter: var(--stmp-blur);
   -webkit-backdrop-filter: var(--stmp-blur);
-  border-radius: 16px;
+  border-radius: var(--stmp-radius, 16px);
   display: flex;
   flex-direction: column;
   padding: 10px;
