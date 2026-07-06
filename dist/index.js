@@ -6082,8 +6082,9 @@ const ws = /* @__PURE__ */ an("playlist", {
             size: 18
           })
         ], 10, Mu),
+        p[8] || (p[8] = m("div", { class: "stmp-ctrl-side-end" }, null, -1)),
         m("div", {
-          class: "stmp-volume-container stmp-ctrl-side",
+          class: "stmp-volume-container",
           onMouseenter: q,
           onMouseleave: P
         }, [
@@ -6137,7 +6138,7 @@ const ws = /* @__PURE__ */ an("playlist", {
       })
     ]));
   }
-}), Fu = /* @__PURE__ */ Lt(Nu, [["__scopeId", "data-v-d6429a2b"]]), Uu = /* @__PURE__ */ Pt({
+}), Fu = /* @__PURE__ */ Lt(Nu, [["__scopeId", "data-v-c323d695"]]), Uu = /* @__PURE__ */ Pt({
   __name: "App",
   setup(e) {
     const t = Se(), s = Rt(), n = /* @__PURE__ */ Oe(!1), i = /* @__PURE__ */ Oe(null);

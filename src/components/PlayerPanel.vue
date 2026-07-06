@@ -235,8 +235,9 @@ function closeOverlay(): void {
       </button>
 
       <!-- Volume (rightmost) -->
+      <div class="stmp-ctrl-side-end" />
       <div
-        class="stmp-volume-container stmp-ctrl-side"
+        class="stmp-volume-container"
         @mouseenter="onVolumeEnter"
         @mouseleave="onVolumeLeave"
       >
@@ -508,9 +509,15 @@ function closeOverlay(): void {
   justify-content: flex-start;
 }
 
-.stmp-volume-container.stmp-ctrl-side {
-  justify-content: flex-end;
+.stmp-ctrl-side-end {
+  flex: 1;
+}
+
+.stmp-volume-container {
   position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 /* Center cluster: prev, playMode, play, next, playlist */
@@ -555,9 +562,9 @@ function closeOverlay(): void {
 .stmp-volume-popup {
   position: absolute;
   bottom: 100%;
-  right: 0;
-  transform: scaleY(0);
-  transform-origin: bottom right;
+  left: 50%;
+  transform: translateX(-50%) scaleY(0);
+  transform-origin: bottom center;
   transition: transform 0.2s ease, opacity 0.2s ease;
   opacity: 0;
   padding: 6px 4px;
@@ -569,7 +576,7 @@ function closeOverlay(): void {
 }
 
 .stmp-volume-popup.show {
-  transform: scaleY(1);
+  transform: translateX(-50%) scaleY(1);
   opacity: 1;
   pointer-events: auto;
 }
