@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useSettingsStore } from '@/stores/index';
-import type { PlayMode, WidgetMode } from '@/types';
+import type { PlayMode, WidgetMode, DockAlign } from '@/types';
 import { t } from '@/i18n';
 import ToggleSwitch from './ToggleSwitch.vue';
 
@@ -28,6 +28,11 @@ const widgetModes: { value: WidgetMode; label: string; icon: string }[] = [
   { value: 'dock', label: t('Dock'), icon: 'fa-solid fa-grip-lines' },
   { value: 'drag', label: t('Drag'), icon: 'fa-solid fa-up-down-left-right' },
   { value: 'hidden', label: t('Hidden'), icon: 'fa-solid fa-eye-slash' },
+];
+
+const dockAligns: { value: DockAlign; label: string; icon: string }[] = [
+  { value: 'left', label: t('Left'), icon: 'fa-solid fa-align-left' },
+  { value: 'right', label: t('Right'), icon: 'fa-solid fa-align-right' },
 ];
 
 function onVolume(e: Event): void {
@@ -162,6 +167,23 @@ const importData = (): void => {
             >
               <i :class="mode.icon" />
               <span>{{ mode.label }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dock Alignment (desktop only, dock mode only) -->
+        <div v-if="settingsStore.settings.widgetMode === 'dock'" class="stmp-setting-group">
+          <label class="stmp-setting-label">{{ t('Dock Alignment') }}</label>
+          <div class="stmp-mode-toggle">
+            <div
+              v-for="align in dockAligns"
+              :key="align.value"
+              class="menu_button menu_button_icon stmp-mode-btn"
+              :class="{ toggled: settingsStore.settings.dockAlign === align.value }"
+              @click="settingsStore.setDockAlign(align.value)"
+            >
+              <i :class="align.icon" />
+              <span>{{ align.label }}</span>
             </div>
           </div>
         </div>

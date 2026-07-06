@@ -157,12 +157,18 @@ function dockToInput(): void {
   if (top < 4) top = 4;
 
   // Mobile: match #send_form full width
-  // Desktop: compact (collapsed) or fixed width (expanded), aligned to send_form left
+  // Desktop: compact, aligned left or right to send_form
   if (window.innerWidth <= 768) {
     widgetRef.value.style.left = formRect.left + 'px';
     widgetRef.value.style.width = formRect.width + 'px';
   } else {
-    widgetRef.value.style.left = formRect.left + 'px';
+    const alignRight = settingsStore.settings.dockAlign === 'right';
+    const widgetW = widgetRef.value.offsetWidth;
+    if (alignRight) {
+      widgetRef.value.style.left = (formRect.right - widgetW) + 'px';
+    } else {
+      widgetRef.value.style.left = formRect.left + 'px';
+    }
     widgetRef.value.style.width = '';
   }
 
@@ -173,6 +179,8 @@ function dockToInput(): void {
 
 /**
  * Drag mode: restore saved position or default to top-right.
+ * On mobile, always clamp to viewport since saved positions may be
+ * from a larger desktop screen.
  */
 function restoreDragPosition(): void {
   if (!widgetRef.value || isDock.value) return;
@@ -180,6 +188,12 @@ function restoreDragPosition(): void {
   if (pos) {
     widgetRef.value.style.left = pos.x + 'px';
     widgetRef.value.style.top = pos.y + 'px';
+    widgetRef.value.style.right = 'auto';
+    widgetRef.value.style.bottom = 'auto';
+    // On mobile, saved desktop coords may be off-screen — clamp
+    if (window.innerWidth <= 768) {
+      nextTick(() => clampToViewport());
+    }
   } else {
     // Default: top-right
     widgetRef.value.style.right = '16px';
@@ -249,9 +263,8 @@ function onResize(): void {
   if (isDock.value) {
     nextTick(() => dockToInput());
   } else {
-    if (settingsStore.settings.position) {
-      nextTick(() => clampToViewport());
-    }
+    // Drag mode: always clamp on resize (e.g. orientation change, mobile)
+    nextTick(() => clampToViewport());
   }
 }
 

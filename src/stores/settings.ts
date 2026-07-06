@@ -20,6 +20,7 @@ function defaultSettings(): ExtensionSettings {
     playMode: 'list',
     position: null,
     widgetMode: 'dock',
+    dockAlign: 'left',
     autoPlayOnNewCue: true,
     providers: defaultProviders(),
     customCueRules: [],
@@ -84,6 +85,11 @@ export const useSettingsStore = defineStore('settings', {
 
     setWidgetMode(mode: import('@/types').WidgetMode): void {
       this.settings.widgetMode = mode;
+      this.save();
+    },
+
+    setDockAlign(align: import('@/types').DockAlign): void {
+      this.settings.dockAlign = align;
       this.save();
     },
 

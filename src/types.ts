@@ -70,12 +70,14 @@ export interface ScanCursor {
 // ===== Settings =====
 
 export type WidgetMode = 'dock' | 'drag' | 'hidden';
+export type DockAlign = 'left' | 'right';
 
 export interface ExtensionSettings {
   volume: number;
   playMode: PlayMode;
   position: { x: number; y: number } | null;
   widgetMode: WidgetMode;
+  dockAlign: DockAlign;
   autoPlayOnNewCue: boolean;
   providers: ProviderConfig[];
   customCueRules: string[];
