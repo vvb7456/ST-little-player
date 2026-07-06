@@ -200,15 +200,11 @@ onMounted(() => {
   </div>
 
   <!-- ===== Drag mini (desktop & mobile unified) ===== -->
-  <!-- Idle (no track): cover-only square -->
+  <!-- Idle (no track): cover-only square, click anywhere to expand -->
   <div v-else-if="!hasTrack" class="stmp-mini stmp-mini-drag stmp-mini-drag-idle">
-    <button
-      class="stmp-mini-cover stmp-mini-cover-square"
-      :aria-label="t('Play')"
-      @click="onPlay"
-    >
+    <div class="stmp-mini-cover stmp-mini-cover-square">
       <Icon name="music" :size="20" />
-    </button>
+    </div>
   </div>
   <!-- Playing: cover + 2 rows (title + lyric) -->
   <div v-else class="stmp-mini stmp-mini-drag">

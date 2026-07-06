@@ -1552,8 +1552,8 @@ function $n(e, t, s, n, i) {
       K
     );
   }, V = (I, K) => {
-    const F = K[1];
-    se(I, K), z(I) ? I.every((y) => y.length <= 1) && F() : I.length <= 1 && F();
+    const N = K[1];
+    se(I, K), z(I) ? I.every((y) => y.length <= 1) && N() : I.length <= 1 && N();
   }, j = {
     mode: o,
     persisted: l,
@@ -1568,26 +1568,26 @@ function $n(e, t, s, n, i) {
         !0
         /* cancelled */
       );
-      const F = B[E];
-      F && Mt(e, F) && F.el[Ne] && F.el[Ne](), se(K, [I]);
+      const N = B[E];
+      N && Mt(e, N) && N.el[Ne] && N.el[Ne](), se(K, [I]);
     },
     enter(I) {
       if (B[E] === e) return;
-      let K = f, F = c, y = h;
+      let K = f, N = c, y = h;
       if (!s.isMounted)
         if (r)
-          K = H || f, F = A || c, y = C || h;
+          K = H || f, N = A || c, y = C || h;
         else
           return;
       let D = !1;
       I[Qt] = (re) => {
-        D || (D = !0, re ? se(y, [I]) : se(F, [I]), j.delayedLeave && j.delayedLeave(), I[Qt] = void 0);
+        D || (D = !0, re ? se(y, [I]) : se(N, [I]), j.delayedLeave && j.delayedLeave(), I[Qt] = void 0);
       };
       const q = I[Qt].bind(null, !1);
       K ? V(K, [I, q]) : q();
     },
     leave(I, K) {
-      const F = String(e.key);
+      const N = String(e.key);
       if (I[Qt] && I[Qt](
         !0
         /* cancelled */
@@ -1596,10 +1596,10 @@ function $n(e, t, s, n, i) {
       se(v, [I]);
       let y = !1;
       I[Ne] = (q) => {
-        y || (y = !0, K(), q ? se(M, [I]) : se(L, [I]), I[Ne] = void 0, B[F] === e && delete B[F]);
+        y || (y = !0, K(), q ? se(M, [I]) : se(L, [I]), I[Ne] = void 0, B[N] === e && delete B[N]);
       };
       const D = I[Ne].bind(null, !1);
-      B[F] = e, m ? V(m, [I, D]) : D();
+      B[N] = e, m ? V(m, [I, D]) : D();
     },
     clone(I) {
       const K = $n(
@@ -1945,7 +1945,7 @@ function Ul(e) {
     serverPrefetch: I,
     // public API
     expose: K,
-    inheritAttrs: F,
+    inheritAttrs: N,
     // assets
     components: y,
     directives: D,
@@ -1997,7 +1997,7 @@ function Ul(e) {
         });
       });
     } else e.exposed || (e.exposed = {});
-  B && e.render === tt && (e.render = B), F != null && (e.inheritAttrs = F), y && (e.components = y), D && (e.directives = D), I && Br(e);
+  B && e.render === tt && (e.render = B), N != null && (e.inheritAttrs = N), y && (e.components = y), D && (e.directives = D), I && Br(e);
 }
 function Hl(e, t, s = tt) {
   z(e) && (e = Dn(e));
@@ -2624,7 +2624,7 @@ function oa(e, t) {
     if (u === d)
       return;
     u && !Mt(u, d) && (S = Ts(u), ze(u, w, _, !0), u = null), d.patchFlag === -2 && (k = !1, d.dynamicChildren = null);
-    const { type: x, ref: J, shapeFlag: U } = d;
+    const { type: x, ref: J, shapeFlag: F } = d;
     switch (x) {
       case un:
         Y(u, d, g, S);
@@ -2649,7 +2649,7 @@ function oa(e, t) {
         );
         break;
       default:
-        U & 1 ? B(
+        F & 1 ? B(
           u,
           d,
           g,
@@ -2659,7 +2659,7 @@ function oa(e, t) {
           O,
           P,
           k
-        ) : U & 6 ? D(
+        ) : F & 6 ? D(
           u,
           d,
           g,
@@ -2669,7 +2669,7 @@ function oa(e, t) {
           O,
           P,
           k
-        ) : (U & 64 || U & 128) && x.process(
+        ) : (F & 64 || F & 128) && x.process(
           u,
           d,
           g,
@@ -2749,13 +2749,13 @@ function oa(e, t) {
     }
   }, se = (u, d, g, S, w, _, O, P) => {
     let k, x;
-    const { props: J, shapeFlag: U, transition: W, dirs: G } = u;
+    const { props: J, shapeFlag: F, transition: W, dirs: G } = u;
     if (k = u.el = o(
       u.type,
       _,
       J && J.is,
       J
-    ), U & 8 ? c(k, u.children) : U & 16 && j(
+    ), F & 8 ? c(k, u.children) : F & 16 && j(
       u.children,
       k,
       null,
@@ -2813,11 +2813,11 @@ function oa(e, t) {
     const P = d.el = u.el;
     let { patchFlag: k, dynamicChildren: x, dirs: J } = d;
     k |= u.patchFlag & 16;
-    const U = u.props || de, W = d.props || de;
+    const F = u.props || de, W = d.props || de;
     let G;
     if (g && Et(g, !1), (G = W.onVnodeBeforeUpdate) && Ge(G, g, d, u), J && It(d, u, g, "beforeUpdate"), g && Et(g, !0), // #6385 the old vnode may be a user-wrapped non-isomorphic block
     // Force full diff when block metadata is unstable.
-    x && (!u.dynamicChildren || u.dynamicChildren.length !== x.length) && (k = 0, O = !1, x = null), (U.innerHTML && W.innerHTML == null || U.textContent && W.textContent == null) && c(P, ""), x ? K(
+    x && (!u.dynamicChildren || u.dynamicChildren.length !== x.length) && (k = 0, O = !1, x = null), (F.innerHTML && W.innerHTML == null || F.textContent && W.textContent == null) && c(P, ""), x ? K(
       u.dynamicChildren,
       x,
       P,
@@ -2837,16 +2837,16 @@ function oa(e, t) {
       !1
     ), k > 0) {
       if (k & 16)
-        F(P, U, W, g, w);
-      else if (k & 2 && U.class !== W.class && r(P, "class", null, W.class, w), k & 4 && r(P, "style", U.style, W.style, w), k & 8) {
+        N(P, F, W, g, w);
+      else if (k & 2 && F.class !== W.class && r(P, "class", null, W.class, w), k & 4 && r(P, "style", F.style, W.style, w), k & 8) {
         const ne = d.dynamicProps;
         for (let fe = 0; fe < ne.length; fe++) {
-          const ue = ne[fe], be = U[ue], we = W[ue];
+          const ue = ne[fe], be = F[ue], we = W[ue];
           (we !== be || ue === "value") && r(P, ue, be, we, w, g);
         }
       }
       k & 1 && u.children !== d.children && c(P, d.children);
-    } else !O && x == null && F(P, U, W, g, w);
+    } else !O && x == null && N(P, F, W, g, w);
     ((G = W.onVnodeUpdated) || J) && Ae(() => {
       G && Ge(G, g, d, u), J && It(d, u, g, "updated");
     }, S);
@@ -2878,7 +2878,7 @@ function oa(e, t) {
         !0
       );
     }
-  }, F = (u, d, g, S, w) => {
+  }, N = (u, d, g, S, w) => {
     if (d !== g) {
       if (d !== de)
         for (const _ in d)
@@ -2899,7 +2899,7 @@ function oa(e, t) {
     }
   }, y = (u, d, g, S, w, _, O, P, k) => {
     const x = d.el = u ? u.el : l(""), J = d.anchor = u ? u.anchor : l("");
-    let { patchFlag: U, dynamicChildren: W, slotScopeIds: G } = d;
+    let { patchFlag: F, dynamicChildren: W, slotScopeIds: G } = d;
     G && (P = P ? P.concat(G) : G), u == null ? (n(x, g, S), n(J, g, S), j(
       // #10007
       // such fragment like `<></>` will be compiled into
@@ -2913,7 +2913,7 @@ function oa(e, t) {
       O,
       P,
       k
-    )) : U > 0 && U & 64 && W && // #2715 the previous fragment could've been a BAILed one as a result
+    )) : F > 0 && F & 64 && W && // #2715 the previous fragment could've been a BAILed one as a result
     // of renderSlot() with no valid children
     u.dynamicChildren && u.dynamicChildren.length === W.length ? (K(
       u.dynamicChildren,
@@ -2993,11 +2993,11 @@ function oa(e, t) {
   }, oe = (u, d, g, S, w, _, O) => {
     const P = () => {
       if (u.isMounted) {
-        let { next: U, bu: W, u: G, parent: ne, vnode: fe } = u;
+        let { next: F, bu: W, u: G, parent: ne, vnode: fe } = u;
         {
           const qe = oo(u);
           if (qe) {
-            U && (U.el = fe.el, Q(u, U, O)), qe.asyncDep.then(() => {
+            F && (F.el = fe.el, Q(u, F, O)), qe.asyncDep.then(() => {
               Ae(() => {
                 u.isUnmounted || x();
               }, w);
@@ -3005,8 +3005,8 @@ function oa(e, t) {
             return;
           }
         }
-        let ue = U, be;
-        Et(u, !1), U ? (U.el = fe.el, Q(u, U, O)) : U = fe, W && Os(W), (be = U.props && U.props.onVnodeBeforeUpdate) && Ge(be, ne, U, fe), Et(u, !0);
+        let ue = F, be;
+        Et(u, !1), F ? (F.el = fe.el, Q(u, F, O)) : F = fe, W && Os(W), (be = F.props && F.props.onVnodeBeforeUpdate) && Ge(be, ne, F, fe), Et(u, !0);
         const we = xi(u), Je = u.subTree;
         u.subTree = we, M(
           Je,
@@ -3018,14 +3018,14 @@ function oa(e, t) {
           u,
           w,
           _
-        ), U.el = we.el, ue === null && Zl(u, we.el), G && Ae(G, w), (be = U.props && U.props.onVnodeUpdated) && Ae(
-          () => Ge(be, ne, U, fe),
+        ), F.el = we.el, ue === null && Zl(u, we.el), G && Ae(G, w), (be = F.props && F.props.onVnodeUpdated) && Ae(
+          () => Ge(be, ne, F, fe),
           w
         );
       } else {
-        let U;
+        let F;
         const { el: W, props: G } = d, { bm: ne, m: fe, parent: ue, root: be, type: we } = u, Je = us(d);
-        Et(u, !1), ne && Os(ne), !Je && (U = G && G.onVnodeBeforeMount) && Ge(U, ue, d), Et(u, !0);
+        Et(u, !1), ne && Os(ne), !Je && (F = G && G.onVnodeBeforeMount) && Ge(F, ue, d), Et(u, !0);
         {
           be.ce && be.ce._hasShadowRoot() && be.ce._injectChildStyle(
             we,
@@ -3042,10 +3042,10 @@ function oa(e, t) {
             _
           ), d.el = qe.el;
         }
-        if (fe && Ae(fe, w), !Je && (U = G && G.onVnodeMounted)) {
+        if (fe && Ae(fe, w), !Je && (F = G && G.onVnodeMounted)) {
           const qe = d;
           Ae(
-            () => Ge(U, ue, qe),
+            () => Ge(F, ue, qe),
             w
           );
         }
@@ -3062,12 +3062,12 @@ function oa(e, t) {
     const S = u.vnode.props;
     u.vnode = d, u.next = null, ea(u, d.props, S, g), ia(u, d.children, g), st(), hi(u), nt();
   }, ce = (u, d, g, S, w, _, O, P, k = !1) => {
-    const x = u && u.children, J = u ? u.shapeFlag : 0, U = d.children, { patchFlag: W, shapeFlag: G } = d;
+    const x = u && u.children, J = u ? u.shapeFlag : 0, F = d.children, { patchFlag: W, shapeFlag: G } = d;
     if (W > 0) {
       if (W & 128) {
         Es(
           x,
-          U,
+          F,
           g,
           S,
           w,
@@ -3080,7 +3080,7 @@ function oa(e, t) {
       } else if (W & 256) {
         it(
           x,
-          U,
+          F,
           g,
           S,
           w,
@@ -3092,9 +3092,9 @@ function oa(e, t) {
         return;
       }
     }
-    G & 8 ? (J & 16 && Yt(x, w, _), U !== x && c(g, U)) : J & 16 ? G & 16 ? Es(
+    G & 8 ? (J & 16 && Yt(x, w, _), F !== x && c(g, F)) : J & 16 ? G & 16 ? Es(
       x,
-      U,
+      F,
       g,
       S,
       w,
@@ -3103,7 +3103,7 @@ function oa(e, t) {
       P,
       k
     ) : Yt(x, w, _, !0) : (J & 8 && c(g, ""), G & 16 && j(
-      U,
+      F,
       g,
       S,
       w,
@@ -3114,9 +3114,9 @@ function oa(e, t) {
     ));
   }, it = (u, d, g, S, w, _, O, P, k) => {
     u = u || jt, d = d || jt;
-    const x = u.length, J = d.length, U = Math.min(x, J);
+    const x = u.length, J = d.length, F = Math.min(x, J);
     let W;
-    for (W = 0; W < U; W++) {
+    for (W = 0; W < F; W++) {
       const G = d[W] = k ? ut(d[W]) : Qe(d[W]);
       M(
         u[W],
@@ -3136,7 +3136,7 @@ function oa(e, t) {
       _,
       !0,
       !1,
-      U
+      F
     ) : j(
       d,
       g,
@@ -3146,13 +3146,13 @@ function oa(e, t) {
       O,
       P,
       k,
-      U
+      F
     );
   }, Es = (u, d, g, S, w, _, O, P, k) => {
     let x = 0;
     const J = d.length;
-    let U = u.length - 1, W = J - 1;
-    for (; x <= U && x <= W; ) {
+    let F = u.length - 1, W = J - 1;
+    for (; x <= F && x <= W; ) {
       const G = u[x], ne = d[x] = k ? ut(d[x]) : Qe(d[x]);
       if (Mt(G, ne))
         M(
@@ -3170,8 +3170,8 @@ function oa(e, t) {
         break;
       x++;
     }
-    for (; x <= U && x <= W; ) {
-      const G = u[U], ne = d[W] = k ? ut(d[W]) : Qe(d[W]);
+    for (; x <= F && x <= W; ) {
+      const G = u[F], ne = d[W] = k ? ut(d[W]) : Qe(d[W]);
       if (Mt(G, ne))
         M(
           G,
@@ -3186,9 +3186,9 @@ function oa(e, t) {
         );
       else
         break;
-      U--, W--;
+      F--, W--;
     }
-    if (x > U) {
+    if (x > F) {
       if (x <= W) {
         const G = W + 1, ne = G < J ? d[G].el : S;
         for (; x <= W; )
@@ -3205,7 +3205,7 @@ function oa(e, t) {
           ), x++;
       }
     } else if (x > W)
-      for (; x <= U; )
+      for (; x <= F; )
         ze(u[x], w, _, !0), x++;
     else {
       const G = x, ne = x, fe = /* @__PURE__ */ new Map();
@@ -3218,7 +3218,7 @@ function oa(e, t) {
       let Je = !1, qe = 0;
       const Xt = new Array(we);
       for (x = 0; x < we; x++) Xt[x] = 0;
-      for (x = G; x <= U; x++) {
+      for (x = G; x <= F; x++) {
         const Pe = u[x];
         if (be >= we) {
           ze(Pe, w, _, !0);
@@ -3280,8 +3280,8 @@ function oa(e, t) {
     }
     if (O === te) {
       n(_, d, g);
-      for (let U = 0; U < k.length; U++)
-        Ct(k[U], d, g, S);
+      for (let F = 0; F < k.length; F++)
+        Ct(k[F], d, g, S);
       n(u.anchor, d, g);
       return;
     }
@@ -3293,14 +3293,14 @@ function oa(e, t) {
       if (S === 0)
         P.persisted && !_[Ne] ? n(_, d, g) : (P.beforeEnter(_), n(_, d, g), Ae(() => P.enter(_), w));
       else {
-        const { leave: U, delayLeave: W, afterLeave: G } = P, ne = () => {
+        const { leave: F, delayLeave: W, afterLeave: G } = P, ne = () => {
           u.ctx.isUnmounted ? i(_) : n(_, d, g);
         }, fe = () => {
           const ue = _._isLeaving || !!_[Ne];
           _._isLeaving && _[Ne](
             !0
             /* cancelled */
-          ), P.persisted && !ue ? ne() : U(_, () => {
+          ), P.persisted && !ue ? ne() : F(_, () => {
             ne(), G && G();
           });
         };
@@ -3316,12 +3316,12 @@ function oa(e, t) {
       children: k,
       dynamicChildren: x,
       shapeFlag: J,
-      patchFlag: U,
+      patchFlag: F,
       dirs: W,
       cacheIndex: G,
       memo: ne
     } = u;
-    if (U === -2 && (w = !1), P != null && (st(), cs(P, null, g, u, !0), nt()), G != null && (d.renderCache[G] = void 0), J & 256) {
+    if (F === -2 && (w = !1), P != null && (st(), cs(P, null, g, u, !0), nt()), G != null && (d.renderCache[G] = void 0), J & 256) {
       d.ctx.deactivate(u);
       return;
     }
@@ -3346,13 +3346,13 @@ function oa(e, t) {
       // so that it doesn't take the fast path during unmount - otherwise
       // components nested in v-once are never unmounted.
       !x.hasOnce && // #1153: fast path should not be taken for non-stable (v-for) fragments
-      (_ !== te || U > 0 && U & 64) ? Yt(
+      (_ !== te || F > 0 && F & 64) ? Yt(
         x,
         d,
         g,
         !1,
         !0
-      ) : (_ === te && U & 384 || !w && J & 16) && Yt(k, d, g), S && ii(u);
+      ) : (_ === te && F & 384 || !w && J & 16) && Yt(k, d, g), S && ii(u);
     }
     const we = ne != null && G == null;
     (ue && (be = O && O.onVnodeUnmounted) || fe || we) && Ae(() => {
@@ -4061,7 +4061,7 @@ function Pa(e) {
     y._enterCancelled = re, kt(y, D ? c : l), kt(y, D ? f : o), q && q();
   }, K = (y, D) => {
     y._isLeaving = !1, kt(y, h), kt(y, m), kt(y, v), D && D();
-  }, F = (y) => (D, q) => {
+  }, N = (y) => (D, q) => {
     const re = y ? V : A, oe = () => I(D, y, q);
     Tt(re, [D, oe]), Mi(() => {
       kt(D, y ? a : r), ot(D, y ? c : l), Ai(re) || Pi(D, n, M, oe);
@@ -4074,8 +4074,8 @@ function Pa(e) {
     onBeforeAppear(y) {
       Tt(se, [y]), ot(y, a), ot(y, f);
     },
-    onEnter: F(!1),
-    onAppear: F(!0),
+    onEnter: N(!1),
+    onAppear: N(!0),
     onLeave(y, D) {
       y._isLeaving = !0;
       const q = () => K(y, D);
@@ -4600,8 +4600,8 @@ function wo(e, t, s = {}, n, i, r) {
   }
   const H = r ? function() {
     const { state: I } = s, K = I ? I() : {};
-    this.$patch((F) => {
-      vt(F, K);
+    this.$patch((N) => {
+      vt(N, K);
     });
   } : (
     /* istanbul ignore next */
@@ -4615,7 +4615,7 @@ function wo(e, t, s = {}, n, i, r) {
       return j[Tn] = I, j;
     const K = function() {
       dn(n);
-      const F = Array.from(arguments), y = [], D = [];
+      const N = Array.from(arguments), y = [], D = [];
       function q(Q) {
         y.push(Q);
       }
@@ -4623,7 +4623,7 @@ function wo(e, t, s = {}, n, i, r) {
         D.push(Q);
       }
       Dt(v, {
-        args: F,
+        args: N,
         name: K[Tn],
         store: B,
         after: q,
@@ -4631,7 +4631,7 @@ function wo(e, t, s = {}, n, i, r) {
       });
       let oe;
       try {
-        oe = j.apply(this && this.$id === e ? this : B, F);
+        oe = j.apply(this && this.$id === e ? this : B, N);
       } catch (Q) {
         throw Dt(D, Q), Q;
       }
@@ -4646,7 +4646,7 @@ function wo(e, t, s = {}, n, i, r) {
     $patch: Y,
     $reset: H,
     $subscribe(j, I = {}) {
-      const K = zi(h, j, I.detached, () => F()), F = o.run(() => $e(() => n.state.value[e], (y) => {
+      const K = zi(h, j, I.detached, () => N()), N = o.run(() => $e(() => n.state.value[e], (y) => {
         (I.flush === "sync" ? c : f) && j({
           storeId: e,
           type: hs.direct,
@@ -5219,7 +5219,7 @@ function wc() {
   }
   return Nt || (Nt = (typeof navigator < "u" ? navigator.language || navigator.userLanguage : "en")?.toLowerCase() || "en"), Nt;
 }
-function N(e) {
+function U(e) {
   return wc().startsWith("zh") ? xc[e] ?? e : e;
 }
 function $s() {
@@ -5354,7 +5354,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
         });
       }
       if (!i && t.song && (i = await r.searchAndResolve(t.song, t.artist), i && (t.providerId = i.source)), !i) {
-        console.warn(`[playlist] resolve failed for "${t.song}"`), typeof toastr < "u" && toastr.warning(`${N("Cannot play")}: ${t.song}`);
+        console.warn(`[playlist] resolve failed for "${t.song}"`), typeof toastr < "u" && toastr.warning(`${U("Cannot play")}: ${t.song}`);
         return;
       }
       await Lt().loadAndPlay(i);
@@ -5717,7 +5717,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
 }, Kc = { class: "stmp-mini-controls" }, Wc = ["aria-label"], zc = ["aria-label"], Jc = {
   key: 2,
   class: "stmp-mini stmp-mini-drag stmp-mini-drag-idle"
-}, qc = ["aria-label"], Yc = {
+}, qc = { class: "stmp-mini-cover stmp-mini-cover-square" }, Yc = {
   key: 3,
   class: "stmp-mini stmp-mini-drag"
 }, Gc = ["aria-label"], Xc = ["src"], Zc = { class: "stmp-mini-cover-overlay" }, Qc = { class: "stmp-mini-drag-right" }, eu = { class: "stmp-mini-text stmp-mini-text-drag" }, tu = /* @__PURE__ */ wt({
@@ -5753,8 +5753,8 @@ const qt = /* @__PURE__ */ hn("playlist", {
       }
       const I = h.value[V];
       if (!I) return;
-      const K = I.offsetTop, F = I.offsetHeight, y = j.clientHeight;
-      c.value = K - y / 2 + F / 2;
+      const K = I.offsetTop, N = I.offsetHeight, y = j.clientHeight;
+      c.value = K - y / 2 + N / 2;
     }
     $e(() => t.currentLyricIndex, L), $e(() => t.lyrics, () => {
       h.value = [], L();
@@ -5816,7 +5816,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
           (T(!0), R(te, null, Fe(b(t).lyrics, (I, K) => (T(), R("span", {
             key: K,
             ref_for: !0,
-            ref: (F) => m(F, K),
+            ref: (N) => m(N, K),
             class: ye(["stmp-mini-dock-line", { "stmp-mini-dock-line-active": K === b(t).currentLyricIndex }])
           }, X(I.text), 3))), 128))
         ], 4)) : (T(), R("span", Lc, X(l.value), 1))
@@ -5824,7 +5824,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
       p("div", Oc, [
         p("button", {
           class: "stmp-mini-btn",
-          "aria-label": b(t).isPlaying ? b(N)("Pause") : b(N)("Play"),
+          "aria-label": b(t).isPlaying ? b(U)("Pause") : b(U)("Play"),
           onClick: B
         }, [
           ee(ge, {
@@ -5834,7 +5834,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
         ], 8, Dc),
         p("button", {
           class: "stmp-mini-btn",
-          "aria-label": b(N)("Next"),
+          "aria-label": b(U)("Next"),
           onClick: se
         }, [
           ee(ge, {
@@ -5865,7 +5865,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
           (T(!0), R(te, null, Fe(b(t).lyrics, (I, K) => (T(), R("span", {
             key: K,
             ref_for: !0,
-            ref: (F) => m(F, K),
+            ref: (N) => m(N, K),
             class: ye(["stmp-mini-dock-line", { "stmp-mini-dock-line-active": K === b(t).currentLyricIndex }])
           }, X(I.text), 3))), 128))
         ], 4)) : (T(), R("span", Bc, X(l.value), 1))
@@ -5873,7 +5873,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
       p("div", Kc, [
         p("button", {
           class: "stmp-mini-btn",
-          "aria-label": b(t).isPlaying ? b(N)("Pause") : b(N)("Play"),
+          "aria-label": b(t).isPlaying ? b(U)("Pause") : b(U)("Play"),
           onClick: B
         }, [
           ee(ge, {
@@ -5883,7 +5883,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
         ], 8, Wc),
         p("button", {
           class: "stmp-mini-btn",
-          "aria-label": b(N)("Next"),
+          "aria-label": b(U)("Next"),
           onClick: se
         }, [
           ee(ge, {
@@ -5895,7 +5895,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
     ])) : o.value ? (T(), R("div", Yc, [
       p("button", {
         class: "stmp-mini-cover stmp-mini-cover-square",
-        "aria-label": b(t).isPlaying ? b(N)("Pause") : b(N)("Play"),
+        "aria-label": b(t).isPlaying ? b(U)("Pause") : b(U)("Play"),
         onClick: B
       }, [
         r.value && !i.value ? (T(), R("img", {
@@ -5934,19 +5934,15 @@ const qt = /* @__PURE__ */ hn("playlist", {
         ], 512)
       ])
     ])) : (T(), R("div", Jc, [
-      p("button", {
-        class: "stmp-mini-cover stmp-mini-cover-square",
-        "aria-label": b(N)("Play"),
-        onClick: B
-      }, [
+      p("div", qc, [
         ee(ge, {
           name: "music",
           size: 20
         })
-      ], 8, qc)
+      ])
     ]));
   }
-}), su = /* @__PURE__ */ St(tu, [["__scopeId", "data-v-177f5f6b"]]), nu = { class: "stmp-playlist" }, iu = { class: "stmp-upload-area" }, ru = ["aria-label"], ou = {
+}), su = /* @__PURE__ */ St(tu, [["__scopeId", "data-v-18f3ad88"]]), nu = { class: "stmp-playlist" }, iu = { class: "stmp-upload-area" }, ru = ["aria-label"], ou = {
   key: 0,
   class: "stmp-empty"
 }, lu = { class: "stmp-group-label" }, au = ["onClick"], cu = { class: "stmp-item-index" }, uu = { class: "stmp-item-info" }, fu = { class: "stmp-item-song" }, du = {
@@ -5972,9 +5968,9 @@ const qt = /* @__PURE__ */ hn("playlist", {
         c[h.source] && c[h.source].push({ index: v, item: h });
       }), c;
     }), l = {
-      chat: N("From Chat"),
-      user: N("My List"),
-      local: N("Local Files")
+      chat: U("From Chat"),
+      user: U("My List"),
+      local: U("Local Files")
     };
     function a(c) {
       t.play(c);
@@ -5994,11 +5990,11 @@ const qt = /* @__PURE__ */ hn("playlist", {
         }, null, 544),
         p("button", {
           class: "stmp-upload-btn",
-          "aria-label": b(N)("Add local file"),
+          "aria-label": b(U)("Add local file"),
           onClick: i
-        }, " + " + X(b(N)("Add local file")), 9, ru)
+        }, " + " + X(b(U)("Add local file")), 9, ru)
       ]),
-      b(t).isEmpty ? (T(), R("div", ou, X(b(N)("No Songs")), 1)) : (T(), R(te, { key: 1 }, Fe(["chat", "user", "local"], (v) => p("div", {
+      b(t).isEmpty ? (T(), R("div", ou, X(b(U)("No Songs")), 1)) : (T(), R(te, { key: 1 }, Fe(["chat", "user", "local"], (v) => p("div", {
         key: v,
         class: "stmp-group"
       }, [
@@ -6084,7 +6080,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
         lt(p("input", {
           "onUpdate:modelValue": L[0] || (L[0] = (M) => i.value = M),
           class: "stmp-search-input",
-          placeholder: b(N)("Search Song..."),
+          placeholder: b(U)("Search Song..."),
           onKeydown: vo(l, ["enter"])
         }, null, 40, yu), [
           [is, i.value]
@@ -6110,11 +6106,11 @@ const qt = /* @__PURE__ */ hn("playlist", {
         p("span", null, X(b(t).error), 1),
         p("button", {
           class: "stmp-retry-btn",
-          "aria-label": b(N)("Retry"),
+          "aria-label": b(U)("Retry"),
           onClick: a
-        }, X(b(N)("Retry")), 9, xu)
+        }, X(b(U)("Retry")), 9, xu)
       ])) : Me("", !0),
-      b(t).isSearching ? (T(), R("div", wu, X(b(N)("Searching...")), 1)) : i.value && !b(t).results.length ? (T(), R("div", Su, X(b(N)("No results")), 1)) : !i.value && !b(t).results.length ? (T(), R("div", Cu, X(b(N)("Type a song name to search")), 1)) : Me("", !0),
+      b(t).isSearching ? (T(), R("div", wu, X(b(U)("Searching...")), 1)) : i.value && !b(t).results.length ? (T(), R("div", Su, X(b(U)("No results")), 1)) : !i.value && !b(t).results.length ? (T(), R("div", Cu, X(b(U)("Type a song name to search")), 1)) : Me("", !0),
       b(t).results.length ? (T(), R("div", Iu, [
         (T(!0), R(te, null, Fe(b(t).results, (M) => (T(), R("div", {
           key: M.provider + M.id,
@@ -6129,7 +6125,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
           ], 8, Eu),
           p("button", {
             class: ye(["stmp-icon-btn stmp-result-add", { added: h(M) }]),
-            "aria-label": h(M) ? b(N)("Added") : b(N)("Add to list"),
+            "aria-label": h(M) ? b(U)("Added") : b(U)("Add to list"),
             onClick: Ht((Y) => c(M), ["stop"])
           }, [
             ee(ge, {
@@ -6221,7 +6217,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
     function K(y) {
       r.value === y ? r.value = null : r.value = y;
     }
-    function F() {
+    function N() {
       r.value = null;
     }
     return (y, D) => (T(), R("div", Ru, [
@@ -6229,7 +6225,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
         D[7] || (D[7] = p("div", { class: "stmp-topbar-spacer" }, null, -1)),
         p("button", {
           class: "stmp-icon-btn",
-          "aria-label": b(N)("Collapse panel"),
+          "aria-label": b(U)("Collapse panel"),
           onClick: D[0] || (D[0] = Ht((q) => y.$emit("collapse"), ["stop"]))
         }, [
           ee(ge, {
@@ -6258,14 +6254,14 @@ const qt = /* @__PURE__ */ hn("playlist", {
               })
             ]))
           ]),
-          p("div", Fu, X(b(t).currentTrack?.name || b(N)("No Song")), 1),
+          p("div", Fu, X(b(t).currentTrack?.name || b(U)("No Song")), 1),
           p("div", Uu, X(b(t).currentTrack?.artist || " "), 1)
         ], 2),
         p("div", {
           class: ye(["stmp-lyric-mode", { hidden: i.value !== "lyric" }])
         }, [
           p("div", Hu, [
-            p("div", Vu, X(b(t).currentTrack?.name || b(N)("No Song")), 1),
+            p("div", Vu, X(b(t).currentTrack?.name || b(U)("No Song")), 1),
             p("div", ju, X(b(t).currentTrack?.artist || " "), 1)
           ]),
           p("div", {
@@ -6312,7 +6308,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
         p("div", qu, [
           p("button", {
             class: ye(["stmp-ctrl-btn", { active: r.value === "search" }]),
-            "aria-label": b(N)("Search"),
+            "aria-label": b(U)("Search"),
             onClick: D[2] || (D[2] = Ht((q) => K("search"), ["stop"]))
           }, [
             ee(ge, {
@@ -6323,7 +6319,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
         ]),
         p("button", {
           class: "stmp-ctrl-btn",
-          "aria-label": b(N)("Toggle play mode"),
+          "aria-label": b(U)("Toggle play mode"),
           onClick: B
         }, [
           ee(ge, {
@@ -6333,7 +6329,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
         ], 8, Gu),
         p("button", {
           class: "stmp-ctrl-btn",
-          "aria-label": b(N)("Previous"),
+          "aria-label": b(U)("Previous"),
           onClick: D[3] || (D[3] = (q) => b(s).prev())
         }, [
           ee(ge, {
@@ -6343,7 +6339,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
         ], 8, Xu),
         p("button", {
           class: "stmp-ctrl-btn stmp-play-btn",
-          "aria-label": b(t).isPlaying ? b(N)("Pause") : b(N)("Play"),
+          "aria-label": b(t).isPlaying ? b(U)("Pause") : b(U)("Play"),
           onClick: D[4] || (D[4] = (q) => b(t).togglePlay())
         }, [
           ee(ge, {
@@ -6353,7 +6349,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
         ], 8, Zu),
         p("button", {
           class: "stmp-ctrl-btn",
-          "aria-label": b(N)("Next"),
+          "aria-label": b(U)("Next"),
           onClick: D[5] || (D[5] = (q) => b(s).next())
         }, [
           ee(ge, {
@@ -6363,7 +6359,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
         ], 8, Qu),
         p("button", {
           class: ye(["stmp-ctrl-btn", { active: r.value === "list" }]),
-          "aria-label": b(N)("Playlist"),
+          "aria-label": b(U)("Playlist"),
           onClick: D[6] || (D[6] = Ht((q) => K("list"), ["stop"]))
         }, [
           ee(ge, {
@@ -6379,7 +6375,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
           }, [
             p("button", {
               class: "stmp-ctrl-btn",
-              "aria-label": b(N)("Mute / Unmute"),
+              "aria-label": b(U)("Mute / Unmute"),
               onClick: I
             }, [
               ee(ge, {
@@ -6407,11 +6403,11 @@ const qt = /* @__PURE__ */ hn("playlist", {
         default: Lr(() => [
           r.value ? (T(), R("div", rf, [
             p("div", of, [
-              p("span", lf, X(r.value === "list" ? b(N)("Playlist") : b(N)("Search")), 1),
+              p("span", lf, X(r.value === "list" ? b(U)("Playlist") : b(U)("Search")), 1),
               p("button", {
                 class: "stmp-overlay-close",
-                "aria-label": b(N)("Close"),
-                onClick: Ht(F, ["stop"])
+                "aria-label": b(U)("Close"),
+                onClick: Ht(N, ["stop"])
               }, [
                 ee(ge, {
                   name: "x",
@@ -6433,21 +6429,21 @@ const qt = /* @__PURE__ */ hn("playlist", {
   setup(e) {
     const t = Ie(), s = Lt(), n = /* @__PURE__ */ pe(!1), i = /* @__PURE__ */ pe(null);
     let r = null;
-    const o = Ue(() => t.settings.widgetMode === "dock"), l = Ue(() => t.settings.widgetMode === "hidden"), a = /* @__PURE__ */ pe(window.innerWidth <= 768), f = (F) => {
-      F.key === "Escape" && (n.value = !1), F.key === " " && F.target === document.body && (F.preventDefault(), s.togglePlay());
+    const o = Ue(() => t.settings.widgetMode === "dock"), l = Ue(() => t.settings.widgetMode === "hidden"), a = /* @__PURE__ */ pe(window.innerWidth <= 768), f = (N) => {
+      N.key === "Escape" && (n.value = !1), N.key === " " && N.target === document.body && (N.preventDefault(), s.togglePlay());
     };
     let c = 0, h = 0, v = 0, m = 0, L = !1, M = !1, Y = null, H = null;
-    function A(F) {
+    function A(N) {
       if (o.value) return;
-      const y = F.target;
+      const y = N.target;
       if (y.closest("input, .stmp-result, .stmp-item, .stmp-upload-btn, .stmp-search-input, .stmp-controls, .stmp-lyrics, .stmp-overlay, .stmp-display, .stmp-overlay-close") || n.value && (!y.closest(".stmp-drag-handle") || y.closest("button")) || !n.value && y.closest("button"))
         return;
       const D = i.value?.getBoundingClientRect();
-      D && (c = F.clientX, h = F.clientY, v = D.left, m = D.top, L = !1, M = !0, i.value && (i.value.style.left = D.left + "px", i.value.style.top = D.top + "px", i.value.style.right = "auto", i.value.style.bottom = "auto"), Y = C, H = E, document.addEventListener("pointermove", Y), document.addEventListener("pointerup", H), F.preventDefault());
+      D && (c = N.clientX, h = N.clientY, v = D.left, m = D.top, L = !1, M = !0, i.value && (i.value.style.left = D.left + "px", i.value.style.top = D.top + "px", i.value.style.right = "auto", i.value.style.bottom = "auto"), Y = C, H = E, document.addEventListener("pointermove", Y), document.addEventListener("pointerup", H), N.preventDefault());
     }
-    function C(F) {
+    function C(N) {
       if (!i.value || !M) return;
-      const y = F.clientX - c, D = F.clientY - h;
+      const y = N.clientX - c, D = N.clientY - h;
       (Math.abs(y) > 3 || Math.abs(D) > 3) && (L = !0);
       let q = v + y, re = m + D;
       const oe = i.value.offsetWidth || 60, Q = i.value.offsetHeight || 40, ce = window.innerWidth - oe, it = window.innerHeight - Q;
@@ -6459,21 +6455,21 @@ const qt = /* @__PURE__ */ hn("playlist", {
         return;
       }
       if (i.value) {
-        const F = i.value.getBoundingClientRect();
-        t.setPosition({ x: F.left, y: F.top }), n.value && Re(() => B());
+        const N = i.value.getBoundingClientRect();
+        t.setPosition({ x: N.left, y: N.top }), n.value && Re(() => B());
       }
     }
     function B() {
       if (!i.value) return;
-      const F = i.value.getBoundingClientRect(), y = i.value.offsetWidth, D = i.value.offsetHeight;
-      let q = F.left, re = F.top;
+      const N = i.value.getBoundingClientRect(), y = i.value.offsetWidth, D = i.value.offsetHeight;
+      let q = N.left, re = N.top;
       q + y > window.innerWidth && (q = window.innerWidth - y), re + D > window.innerHeight && (re = window.innerHeight - D), q < 0 && (q = 0), re < 0 && (re = 0), i.value.style.left = q + "px", i.value.style.top = re + "px", i.value.style.right = "auto", i.value.style.bottom = "auto", t.setPosition({ x: q, y: re });
     }
     function se() {
       if (!i.value || !o.value) return;
-      const F = document.querySelector("#send_form");
-      if (!F) return;
-      const y = F.getBoundingClientRect(), D = i.value.offsetHeight || 38, q = Math.max(80, y.top - 8);
+      const N = document.querySelector("#send_form");
+      if (!N) return;
+      const y = N.getBoundingClientRect(), D = i.value.offsetHeight || 38, q = Math.max(80, y.top - 8);
       i.value.style.maxHeight = q + "px";
       let re = y.top - Math.min(D, q);
       if (re < 4 && (re = 4), window.innerWidth <= 768)
@@ -6486,23 +6482,25 @@ const qt = /* @__PURE__ */ hn("playlist", {
     }
     function V() {
       if (!i.value || o.value) return;
-      const F = t.settings.position;
-      F ? (i.value.style.left = F.x + "px", i.value.style.top = F.y + "px", i.value.style.right = "auto", i.value.style.bottom = "auto", window.innerWidth <= 768 && Re(() => B())) : (i.value.style.right = "16px", i.value.style.top = "16px", i.value.style.left = "auto", i.value.style.bottom = "auto");
+      const N = t.settings.position;
+      N ? (i.value.style.left = N.x + "px", i.value.style.top = N.y + "px", i.value.style.right = "auto", i.value.style.bottom = "auto", window.innerWidth <= 768 && Re(() => B())) : (i.value.style.right = "16px", i.value.style.top = "16px", i.value.style.left = "auto", i.value.style.bottom = "auto");
     }
-    function j(F) {
+    function j(N) {
       if (o.value && !n.value) {
-        if (F.target.closest("button, input")) return;
+        if (N.target.closest("button, input")) return;
         I();
+        return;
       }
+      !o.value && !n.value && !s.currentTrack && I();
     }
     function I() {
       n.value = !n.value, Re(() => {
         o.value ? se() : t.settings.position && B();
       });
     }
-    $e(() => t.settings.widgetMode, (F) => {
+    $e(() => t.settings.widgetMode, (N) => {
       n.value = !1, i.value && (i.value.style.width = "", i.value.style.left = "", i.value.style.top = "", i.value.style.right = "", i.value.style.bottom = "", i.value.style.maxHeight = ""), Re(() => {
-        F === "dock" ? se() : V();
+        N === "dock" ? se() : V();
       });
     }), $e(() => t.settings.dockAlign, () => {
       o.value && Re(() => se());
@@ -6518,7 +6516,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
     }
     return ei(() => {
       E(), r && (r.disconnect(), r = null), window.removeEventListener("resize", K), window.removeEventListener("keydown", f);
-    }), (F, y) => l.value ? Me("", !0) : (T(), R("div", {
+    }), (N, y) => l.value ? Me("", !0) : (T(), R("div", {
       key: 0,
       ref_key: "widgetRef",
       ref: i,
@@ -6540,7 +6538,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
       }, null, 8, ["is-dock", "is-mobile"]))
     ], 34));
   }
-}), hf = /* @__PURE__ */ St(df, [["__scopeId", "data-v-ca33d764"]]), pf = { class: "stmp-switch-row" }, gf = {
+}), hf = /* @__PURE__ */ St(df, [["__scopeId", "data-v-b0d28107"]]), pf = { class: "stmp-switch-row" }, gf = {
   key: 0,
   class: "stmp-switch-label"
 }, mf = { class: "stmp-switch" }, vf = ["checked"], yf = /* @__PURE__ */ wt({
@@ -6586,21 +6584,21 @@ const qt = /* @__PURE__ */ hn("playlist", {
   __name: "SettingsView",
   setup(e) {
     const t = Ie(), s = /* @__PURE__ */ pe("playback"), n = [
-      { id: "playback", label: N("Playback"), icon: "fa-solid fa-music" },
-      { id: "providers", label: N("Providers"), icon: "fa-solid fa-cloud" },
-      { id: "cue", label: N("AI Cue"), icon: "fa-solid fa-wand-magic-sparkles" },
-      { id: "data", label: N("Data"), icon: "fa-solid fa-database" }
+      { id: "playback", label: U("Playback"), icon: "fa-solid fa-music" },
+      { id: "providers", label: U("Providers"), icon: "fa-solid fa-cloud" },
+      { id: "cue", label: U("AI Cue"), icon: "fa-solid fa-wand-magic-sparkles" },
+      { id: "data", label: U("Data"), icon: "fa-solid fa-database" }
     ], i = [
-      { value: "list", label: N("List Loop") },
-      { value: "random", label: N("Random") },
-      { value: "single", label: N("Single Loop") }
+      { value: "list", label: U("List Loop") },
+      { value: "random", label: U("Random") },
+      { value: "single", label: U("Single Loop") }
     ], r = [
-      { value: "dock", label: N("Dock"), icon: "fa-solid fa-grip-lines" },
-      { value: "drag", label: N("Drag"), icon: "fa-solid fa-up-down-left-right" },
-      { value: "hidden", label: N("Hidden"), icon: "fa-solid fa-eye-slash" }
+      { value: "dock", label: U("Dock"), icon: "fa-solid fa-grip-lines" },
+      { value: "drag", label: U("Drag"), icon: "fa-solid fa-up-down-left-right" },
+      { value: "hidden", label: U("Hidden"), icon: "fa-solid fa-eye-slash" }
     ], o = [
-      { value: "left", label: N("Left"), icon: "fa-solid fa-align-left" },
-      { value: "right", label: N("Right"), icon: "fa-solid fa-align-right" }
+      { value: "left", label: U("Left"), icon: "fa-solid fa-align-left" },
+      { value: "right", label: U("Right"), icon: "fa-solid fa-align-right" }
     ];
     function l(H) {
       const A = H.target;
@@ -6611,9 +6609,9 @@ const qt = /* @__PURE__ */ hn("playlist", {
       t.setPlayMode(A.value);
     }
     const f = {
-      netease: N("NetEase"),
-      local: N("Local Files"),
-      custom: N("Custom API")
+      netease: U("NetEase"),
+      local: U("Local Files"),
+      custom: U("Custom API")
     };
     function c(H) {
       const A = t.settings.providers.find((C) => C.id === H);
@@ -6629,7 +6627,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
     }
     const L = async () => {
       const H = t.storage;
-      H && (await H.clearCache(), toastr.success(N("Cache cleared")));
+      H && (await H.clearCache(), toastr.success(U("Cache cleared")));
     }, M = () => {
       const H = JSON.stringify(t.settings, null, 2), A = new Blob([H], { type: "application/json" }), C = URL.createObjectURL(A), E = document.createElement("a");
       E.href = C, E.download = "st-music-player-settings.json", E.click(), URL.revokeObjectURL(C);
@@ -6653,9 +6651,9 @@ const qt = /* @__PURE__ */ hn("playlist", {
             throw new Error("Invalid providers");
           if (V.customCueRules && !Array.isArray(V.customCueRules))
             throw new Error("Invalid customCueRules");
-          Object.assign(t.settings, V), t.save(), toastr.success(N("Data imported"));
+          Object.assign(t.settings, V), t.save(), toastr.success(U("Data imported"));
         } catch (B) {
-          console.error("Import failed", B), toastr.error(N("Import failed") + ": " + (B instanceof Error ? B.message : N("Invalid JSON")));
+          console.error("Import failed", B), toastr.error(U("Import failed") + ": " + (B instanceof Error ? B.message : U("Invalid JSON")));
         }
       }, H.click();
     };
@@ -6675,7 +6673,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
       p("div", wf, [
         lt(p("div", Sf, [
           p("div", Cf, [
-            p("label", If, X(b(N)("Widget Mode")), 1),
+            p("label", If, X(b(U)("Widget Mode")), 1),
             p("div", Ef, [
               (T(), R(te, null, Fe(r, (C) => p("div", {
                 key: C.value,
@@ -6690,7 +6688,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
             ])
           ]),
           b(t).settings.widgetMode === "dock" ? (T(), R("div", kf, [
-            p("label", Af, X(b(N)("Dock Alignment")), 1),
+            p("label", Af, X(b(U)("Dock Alignment")), 1),
             p("div", Mf, [
               (T(), R(te, null, Fe(o, (C) => p("div", {
                 key: C.value,
@@ -6705,7 +6703,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
             ])
           ])) : Me("", !0),
           p("div", Rf, [
-            p("label", $f, X(b(N)("Default Volume")) + ": " + X(b(t).settings.volume), 1),
+            p("label", $f, X(b(U)("Default Volume")) + ": " + X(b(t).settings.volume), 1),
             p("input", {
               type: "range",
               min: "0",
@@ -6715,7 +6713,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
             }, null, 40, Lf)
           ]),
           p("div", Of, [
-            p("label", Df, X(b(N)("Default Play Mode")), 1),
+            p("label", Df, X(b(U)("Default Play Mode")), 1),
             p("select", {
               id: "stmp-playmode",
               class: "text_pole",
@@ -6730,7 +6728,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
           ]),
           ee(Zi, {
             "model-value": b(t).settings.autoPlayOnNewCue,
-            label: b(N)("Auto-play on new cue"),
+            label: b(U)("Auto-play on new cue"),
             "onUpdate:modelValue": A[0] || (A[0] = (C) => {
               b(t).settings.autoPlayOnNewCue = C, b(t).save();
             })
@@ -6752,7 +6750,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
               lt(p("input", {
                 class: "text_pole",
                 "onUpdate:modelValue": (E) => C.config.baseURL = E,
-                placeholder: b(N)("API baseURL"),
+                placeholder: b(U)("API baseURL"),
                 onChange: A[1] || (A[1] = (E) => b(t).save())
               }, null, 40, Vf), [
                 [is, C.config.baseURL]
@@ -6762,7 +6760,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
               lt(p("input", {
                 class: "text_pole",
                 "onUpdate:modelValue": (E) => C.config.searchURL = E,
-                placeholder: b(N)("Search URL"),
+                placeholder: b(U)("Search URL"),
                 onChange: A[2] || (A[2] = (E) => b(t).save())
               }, null, 40, Bf), [
                 [is, C.config.searchURL]
@@ -6770,7 +6768,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
               lt(p("input", {
                 class: "text_pole",
                 "onUpdate:modelValue": (E) => C.config.resolveURL = E,
-                placeholder: b(N)("Resolve URL"),
+                placeholder: b(U)("Resolve URL"),
                 onChange: A[3] || (A[3] = (E) => b(t).save())
               }, null, 40, Kf), [
                 [is, C.config.resolveURL]
@@ -6782,7 +6780,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
         ]),
         lt(p("div", Wf, [
           p("div", zf, [
-            p("label", Jf, X(b(N)("Custom Cue Rules (Regex)")), 1),
+            p("label", Jf, X(b(U)("Custom Cue Rules (Regex)")), 1),
             p("div", qf, [
               (T(!0), R(te, null, Fe(b(t).settings.customCueRules, (C, E) => (T(), R("div", {
                 key: E,
@@ -6801,7 +6799,7 @@ const qt = /* @__PURE__ */ hn("playlist", {
               lt(p("input", {
                 "onUpdate:modelValue": A[4] || (A[4] = (C) => h.value = C),
                 class: "text_pole",
-                placeholder: b(N)("Add regex rule..."),
+                placeholder: b(U)("Add regex rule..."),
                 onKeydown: vo(v, ["enter"])
               }, null, 40, Xf), [
                 [is, h.value]
@@ -6824,21 +6822,21 @@ const qt = /* @__PURE__ */ hn("playlist", {
               onClick: L
             }, [
               A[7] || (A[7] = p("i", { class: "fa-solid fa-trash-can" }, null, -1)),
-              p("span", null, X(b(N)("Clear cache")), 1)
+              p("span", null, X(b(U)("Clear cache")), 1)
             ]),
             p("div", {
               class: "menu_button menu_button_icon stmp-data-btn",
               onClick: M
             }, [
               A[8] || (A[8] = p("i", { class: "fa-solid fa-file-export" }, null, -1)),
-              p("span", null, X(b(N)("Export data")), 1)
+              p("span", null, X(b(U)("Export data")), 1)
             ]),
             p("div", {
               class: "menu_button menu_button_icon stmp-data-btn",
               onClick: Y
             }, [
               A[9] || (A[9] = p("i", { class: "fa-solid fa-file-import" }, null, -1)),
-              p("span", null, X(b(N)("Import data")), 1)
+              p("span", null, X(b(U)("Import data")), 1)
             ])
           ])
         ], 512), [
