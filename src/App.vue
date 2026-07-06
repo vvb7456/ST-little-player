@@ -151,16 +151,11 @@ function dockToInput(): void {
   if (top < 4) top = 4;
 
   // Mobile: match #send_form full width
-  // Desktop collapsed: compact pill aligned to send_form left edge
-  // Desktop expanded: fixed max width aligned to send_form left edge
+  // Desktop: compact (collapsed) or fixed width (expanded), aligned to send_form left
   if (window.innerWidth <= 768) {
     widgetRef.value.style.left = formRect.left + 'px';
     widgetRef.value.style.width = formRect.width + 'px';
-  } else if (isExpanded.value) {
-    widgetRef.value.style.left = formRect.left + 'px';
-    widgetRef.value.style.width = '';
   } else {
-    // Desktop collapsed: compact, no explicit width
     widgetRef.value.style.left = formRect.left + 'px';
     widgetRef.value.style.width = '';
   }
@@ -324,23 +319,27 @@ onBeforeUnmount(() => {
   cursor: grabbing;
 }
 
-/* Dock mode collapsed: clickable but not draggable */
+/* Dock mode collapsed: clickable */
 .stmp-collapsed.stmp-dock {
   cursor: pointer;
+}
+
+/* Expanded: default cursor, only drag handle grabs (drag mode only) */
+.stmp-expanded {
+  cursor: default;
 }
 
 .stmp-expanded:not(.stmp-dock) {
   width: min(360px, calc(100vw - 16px));
   padding: 12px;
-  cursor: default;
 }
 
-.stmp-expanded:not(.stmp-dock) .stmp-drag-handle {
+.stmp-expanded:not(.stmp-dock) :deep(.stmp-drag-handle) {
   cursor: grab;
   touch-action: none;
 }
 
-.stmp-expanded:not(.stmp-dock) .stmp-drag-handle:active {
+.stmp-expanded:not(.stmp-dock) :deep(.stmp-drag-handle):active {
   cursor: grabbing;
 }
 

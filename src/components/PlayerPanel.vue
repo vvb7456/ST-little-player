@@ -241,14 +241,7 @@ function toggleMute(): void {
   gap: 10px;
 }
 
-.stmp-drag-handle {
-  cursor: grab;
-  touch-action: none;
-}
-
-.stmp-drag-handle:active {
-  cursor: grabbing;
-}
+/* Drag handle cursor is set by App.vue based on dock/drag mode */
 
 .stmp-cover {
   width: 48px;

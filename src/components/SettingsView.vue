@@ -9,15 +9,15 @@ const settingsStore = useSettingsStore();
 const newRule = ref('');
 
 const playModes: { value: PlayMode; label: string }[] = [
-  { value: 'list', label: 'List Loop' },
-  { value: 'random', label: 'Random' },
-  { value: 'single', label: 'Single Loop' },
+  { value: 'list', label: t('List Loop') },
+  { value: 'random', label: t('Random') },
+  { value: 'single', label: t('Single Loop') },
 ];
 
 const providerNames: Record<string, string> = {
-  netease: 'NetEase',
-  local: 'Local Files',
-  custom: 'Custom API',
+  netease: t('NetEase'),
+  local: t('Local Files'),
+  custom: t('Custom API'),
 };
 
 function addRule(): void {
@@ -51,7 +51,7 @@ const clearCache = async (): Promise<void> => {
   const storage = settingsStore.storage;
   if (storage) {
     await storage.clearCache();
-    toastr.success('缓存已清理');
+    toastr.success(t('Cache cleared'));
   }
 };
 
@@ -78,7 +78,7 @@ const importData = (): void => {
       const data = JSON.parse(text);
       // Validate structure before merging
       if (typeof data !== 'object' || data === null) throw new Error('Not an object');
-      const validKeys = ['volume', 'playMode', 'position', 'autoPlayOnNewCue', 'providers', 'customCueRules'];
+      const validKeys = ['volume', 'playMode', 'position', 'widgetMode', 'autoPlayOnNewCue', 'providers', 'customCueRules'];
       const filtered: Record<string, unknown> = {};
       for (const key of validKeys) {
         if (key in data) filtered[key] = data[key];
@@ -97,13 +97,12 @@ const importData = (): void => {
         throw new Error('Invalid customCueRules');
       }
       // Merge validated data
-      const settingsStore = useSettingsStore();
       Object.assign(settingsStore.settings, filtered);
       settingsStore.save();
-      toastr.success('设置已导入');
+      toastr.success(t('Data imported'));
     } catch (err) {
       console.error('Import failed', err);
-      toastr.error('导入失败: ' + (err instanceof Error ? err.message : 'JSON 格式错误'));
+      toastr.error(t('Import failed') + ': ' + (err instanceof Error ? err.message : t('Invalid JSON')));
     }
   };
   input.click();
@@ -122,7 +121,7 @@ function toggleProvider(id: string): void {
   <div class="stmp-settings">
     <!-- Providers -->
     <div class="stmp-setting-group">
-      <div class="stmp-setting-label">Providers</div>
+      <div class="stmp-setting-label">{{ t('Providers') }}</div>
       <div
         v-for="p in settingsStore.settings.providers"
         :key="p.id"
@@ -140,20 +139,20 @@ function toggleProvider(id: string): void {
           v-if="p.id === 'netease'"
           class="stmp-provider-input"
           v-model="p.config!.baseURL"
-          placeholder="API baseURL"
+          :placeholder="t('API baseURL')"
           @change="settingsStore.save()"
         />
         <template v-if="p.id === 'custom'">
           <input
             class="stmp-provider-input"
             v-model="p.config!.searchURL"
-            placeholder="Search URL"
+            :placeholder="t('Search URL')"
             @change="settingsStore.save()"
           />
           <input
             class="stmp-provider-input"
             v-model="p.config!.resolveURL"
-            placeholder="Resolve URL"
+            :placeholder="t('Resolve URL')"
             @change="settingsStore.save()"
           />
         </template>
@@ -162,7 +161,7 @@ function toggleProvider(id: string): void {
 
     <!-- Default Volume -->
     <div class="stmp-setting-group">
-      <div class="stmp-setting-label">Default Volume: {{ settingsStore.settings.volume }}</div>
+      <div class="stmp-setting-label">{{ t('Default Volume') }}: {{ settingsStore.settings.volume }}</div>
       <input
         type="range"
         min="0"
@@ -175,7 +174,7 @@ function toggleProvider(id: string): void {
 
     <!-- Default Play Mode -->
     <div class="stmp-setting-group">
-      <div class="stmp-setting-label">Default Play Mode</div>
+      <div class="stmp-setting-label">{{ t('Default Play Mode') }}</div>
       <select class="stmp-select" :value="settingsStore.settings.playMode" @change="onPlayMode">
         <option v-for="m in playModes" :key="m.value" :value="m.value">{{ m.label }}</option>
       </select>
@@ -201,7 +200,7 @@ function toggleProvider(id: string): void {
     <!-- Auto Play -->
     <div class="stmp-setting-group">
       <div class="stmp-setting-row">
-        <span>Auto-play on new cue</span>
+        <span>{{ t('Auto-play on new cue') }}</span>
         <input
           type="checkbox"
           :checked="settingsStore.settings.autoPlayOnNewCue"
@@ -212,7 +211,7 @@ function toggleProvider(id: string): void {
 
     <!-- Custom Cue Rules -->
     <div class="stmp-setting-group">
-      <div class="stmp-setting-label">Custom Cue Rules (Regex)</div>
+      <div class="stmp-setting-label">{{ t('Custom Cue Rules (Regex)') }}</div>
       <div class="stmp-rules">
         <div
           v-for="(rule, i) in settingsStore.settings.customCueRules"
@@ -227,7 +226,7 @@ function toggleProvider(id: string): void {
         <input
           v-model="newRule"
           class="stmp-rule-input"
-          placeholder="Add regex rule..."
+          :placeholder="t('Add regex rule...')"
           @keydown.enter="addRule"
         />
         <button class="stmp-rule-add-btn" @click="addRule">+</button>
@@ -236,11 +235,11 @@ function toggleProvider(id: string): void {
 
     <!-- Data Management -->
     <div class="stmp-setting-group">
-      <div class="stmp-setting-label">Data</div>
+      <div class="stmp-setting-label">{{ t('Data') }}</div>
       <div class="stmp-data-btns">
-        <button class="stmp-data-btn" aria-label="清理缓存" @click="clearCache">清理缓存</button>
-        <button class="stmp-data-btn" aria-label="导出数据" @click="exportData">导出数据</button>
-        <button class="stmp-data-btn" aria-label="导入数据" @click="importData">导入数据</button>
+        <button class="stmp-data-btn" :aria-label="t('Clear cache')" @click="clearCache">{{ t('Clear cache') }}</button>
+        <button class="stmp-data-btn" :aria-label="t('Export data')" @click="exportData">{{ t('Export data') }}</button>
+        <button class="stmp-data-btn" :aria-label="t('Import data')" @click="importData">{{ t('Import data') }}</button>
       </div>
     </div>
   </div>
