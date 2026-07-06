@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useSettingsStore } from '@/stores/index';
-import type { PlayMode } from '@/types';
+import type { PlayMode, WidgetMode } from '@/types';
 import { t } from '@/i18n';
+import ToggleSwitch from './ToggleSwitch.vue';
 
 const settingsStore = useSettingsStore();
 
@@ -23,6 +24,12 @@ const playModes: { value: PlayMode; label: string }[] = [
   { value: 'single', label: t('Single Loop') },
 ];
 
+const widgetModes: { value: WidgetMode; label: string; icon: string }[] = [
+  { value: 'dock', label: t('Dock'), icon: 'fa-solid fa-grip-lines' },
+  { value: 'drag', label: t('Drag'), icon: 'fa-solid fa-up-down-left-right' },
+  { value: 'hidden', label: t('Hidden'), icon: 'fa-solid fa-eye-slash' },
+];
+
 function onVolume(e: Event): void {
   const target = e.target as HTMLInputElement;
   settingsStore.setVolume(Number(target.value));
@@ -31,12 +38,6 @@ function onVolume(e: Event): void {
 function onPlayMode(e: Event): void {
   const target = e.target as HTMLSelectElement;
   settingsStore.setPlayMode(target.value as PlayMode);
-}
-
-function onAutoPlay(e: Event): void {
-  const target = e.target as HTMLInputElement;
-  settingsStore.settings.autoPlayOnNewCue = target.checked;
-  settingsStore.save();
 }
 
 // ===== Providers tab =====
@@ -153,20 +154,14 @@ const importData = (): void => {
           <label class="stmp-setting-label">{{ t('Widget Mode') }}</label>
           <div class="stmp-mode-toggle">
             <div
+              v-for="mode in widgetModes"
+              :key="mode.value"
               class="menu_button menu_button_icon stmp-mode-btn"
-              :class="{ toggled: settingsStore.settings.widgetMode === 'dock' }"
-              @click="settingsStore.setWidgetMode('dock')"
+              :class="{ toggled: settingsStore.settings.widgetMode === mode.value }"
+              @click="settingsStore.setWidgetMode(mode.value)"
             >
-              <i class="fa-solid fa-grip-lines" />
-              <span>{{ t('Dock') }}</span>
-            </div>
-            <div
-              class="menu_button menu_button_icon stmp-mode-btn"
-              :class="{ toggled: settingsStore.settings.widgetMode === 'drag' }"
-              @click="settingsStore.setWidgetMode('drag')"
-            >
-              <i class="fa-solid fa-up-down-left-right" />
-              <span>{{ t('Drag') }}</span>
+              <i :class="mode.icon" />
+              <span>{{ mode.label }}</span>
             </div>
           </div>
         </div>
@@ -192,14 +187,11 @@ const importData = (): void => {
         </div>
 
         <!-- Auto Play -->
-        <label class="checkbox_label stmp-setting-row">
-          <input
-            type="checkbox"
-            :checked="settingsStore.settings.autoPlayOnNewCue"
-            @change="onAutoPlay"
-          />
-          <span>{{ t('Auto-play on new cue') }}</span>
-        </label>
+        <ToggleSwitch
+          :model-value="settingsStore.settings.autoPlayOnNewCue"
+          :label="t('Auto-play on new cue')"
+          @update:model-value="settingsStore.settings.autoPlayOnNewCue = $event; settingsStore.save()"
+        />
       </div>
 
       <!-- ===== Providers ===== -->
@@ -209,15 +201,12 @@ const importData = (): void => {
           :key="p.id"
           class="stmp-provider-card"
         >
-          <label class="checkbox_label">
-            <input
-              type="checkbox"
-              :checked="p.enabled"
-              @change="toggleProvider(p.id)"
-            />
-            <span>{{ providerNames[p.id] || p.id }}</span>
-          </label>
-          <div v-if="p.id === 'netease'" class="stmp-provider-fields">
+          <ToggleSwitch
+            :model-value="p.enabled"
+            :label="providerNames[p.id] || p.id"
+            @update:model-value="() => toggleProvider(p.id)"
+          />
+          <div v-if="p.id === 'netease' && p.enabled" class="stmp-provider-fields">
             <input
               class="text_pole"
               v-model="p.config!.baseURL"
@@ -225,7 +214,7 @@ const importData = (): void => {
               @change="settingsStore.save()"
             />
           </div>
-          <div v-if="p.id === 'custom'" class="stmp-provider-fields">
+          <div v-if="p.id === 'custom' && p.enabled" class="stmp-provider-fields">
             <input
               class="text_pole"
               v-model="p.config!.searchURL"
@@ -377,13 +366,7 @@ const importData = (): void => {
   margin: 0;
 }
 
-.stmp-setting-row {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-/* ===== Mode toggle (dock/drag) ===== */
+/* ===== Mode toggle (dock/drag/hidden) ===== */
 .stmp-mode-toggle {
   display: flex;
   gap: 5px;
@@ -416,7 +399,7 @@ const importData = (): void => {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  margin-left: calc(var(--mainFontSize, 14px) + 5px);
+  padding-left: 4px;
 }
 
 /* ===== Cue rules ===== */

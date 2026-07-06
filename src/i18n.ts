@@ -35,6 +35,7 @@ const zhCN: Record<string, string> = {
   'Widget Mode': '播放器模式',
   'Dock': '吸附',
   'Drag': '拖动',
+  'Hidden': '隐藏',
   'Providers': '数据源',
   'Default Volume': '默认音量',
   'Default Play Mode': '默认播放模式',

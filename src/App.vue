@@ -12,6 +12,7 @@ const widgetRef = ref<HTMLElement | null>(null);
 let resizeObs: ResizeObserver | null = null;
 
 const isDock = computed(() => settingsStore.settings.widgetMode === 'dock');
+const isHidden = computed(() => settingsStore.settings.widgetMode === 'hidden');
 
 const onKeyDown = (e: KeyboardEvent): void => {
   if (e.key === 'Escape') isExpanded.value = false;
@@ -267,6 +268,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div
+    v-if="!isHidden"
     ref="widgetRef"
     class="stmp-widget"
     :class="{
@@ -361,6 +363,18 @@ onBeforeUnmount(() => {
 .stmp-expanded:not(.stmp-dock) {
   width: min(360px, calc(100vw - 16px));
   padding: 12px;
+}
+
+/* Mobile drag mode: compact width, not full screen */
+@media (max-width: 768px) {
+  .stmp-collapsed:not(.stmp-dock) {
+    width: auto;
+    max-width: calc(100vw - 32px);
+  }
+
+  .stmp-expanded:not(.stmp-dock) {
+    width: min(300px, calc(100vw - 32px));
+  }
 }
 
 .stmp-expanded:not(.stmp-dock) :deep(.stmp-drag-handle) {

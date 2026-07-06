@@ -69,7 +69,7 @@ export interface ScanCursor {
 
 // ===== Settings =====
 
-export type WidgetMode = 'dock' | 'drag';
+export type WidgetMode = 'dock' | 'drag' | 'hidden';
 
 export interface ExtensionSettings {
   volume: number;

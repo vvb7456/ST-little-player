@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
 import { usePlayerStore, usePlaylistStore, useSettingsStore } from '@/stores/index';
-import type { PlayMode, LyricLine } from '@/types';
+import type { PlayMode } from '@/types';
 import Icon from './Icon.vue';
 import PlaylistView from './PlaylistView.vue';
 import SearchView from './SearchView.vue';
