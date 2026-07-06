@@ -433,9 +433,10 @@ function closeOverlay(): void {
   text-align: center;
   opacity: 0.35;
   color: var(--stmp-text);
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   transition: opacity 0.3s ease;
 }
 
