@@ -26,9 +26,10 @@ const songName = computed(() => playerStore.currentTrack?.name || t('No Song'));
 .stmp-collapsed-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
+  gap: 6px;
+  padding: 4px 10px;
   user-select: none;
+  max-width: min(200px, calc(100vw - 60px));
   overflow: hidden;
   touch-action: none;
 }

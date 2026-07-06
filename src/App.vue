@@ -10,11 +10,6 @@ const playerStore = usePlayerStore();
 const isExpanded = ref(false);
 const widgetRef = ref<HTMLElement | null>(null);
 
-const isMobile = ref(typeof window !== 'undefined' && window.innerWidth < 768);
-const updateMobile = (): void => {
-  isMobile.value = window.innerWidth < 768;
-};
-
 const onKeyDown = (e: KeyboardEvent): void => {
   if (e.key === 'Escape') isExpanded.value = false;
   if (e.key === ' ' && e.target === document.body) {
@@ -33,16 +28,11 @@ let isDragging = false;
 let boundOnDrag: ((e: PointerEvent) => void) | null = null;
 let boundStopDrag: (() => void) | null = null;
 
+// Whether the widget is user-dragged (free position) or docked above input
+let isUserPositioned = false;
+
 function startDrag(e: PointerEvent): void {
   const target = e.target as HTMLElement;
-
-  // On mobile: no drag, but allow tap to expand/collapse
-  if (isMobile.value) {
-    // Ignore taps on interactive elements
-    if (target.closest('button')) return;
-    toggleExpand();
-    return;
-  }
 
   // Never drag from these interactive elements
   if (target.closest('input, .stmp-tab, .stmp-result, .stmp-item, .stmp-upload-btn, .stmp-search-input, .stmp-controls, .stmp-lyrics, .stmp-lyrics-toggle, .stmp-tabs, .stmp-tab-content')) return;
@@ -58,7 +48,6 @@ function startDrag(e: PointerEvent): void {
     if (target.closest('button')) return;
   }
 
-  // Use getBoundingClientRect for accurate position (works with right/left/top/bottom)
   const rect = widgetRef.value?.getBoundingClientRect();
   if (!rect) return;
 
@@ -116,12 +105,10 @@ function stopDrag(): void {
     return;
   }
 
+  isUserPositioned = true;
   if (widgetRef.value) {
-    settingsStore.setPosition({
-      x: widgetRef.value.offsetLeft,
-      y: widgetRef.value.offsetTop,
-    });
-    // After expanding, ensure widget stays fully visible
+    const rect = widgetRef.value.getBoundingClientRect();
+    settingsStore.setPosition({ x: rect.left, y: rect.top });
     if (isExpanded.value) {
       nextTick(() => clampToViewport());
     }
@@ -129,7 +116,7 @@ function stopDrag(): void {
 }
 
 function clampToViewport(): void {
-  if (!widgetRef.value || isMobile.value) return;
+  if (!widgetRef.value) return;
   const rect = widgetRef.value.getBoundingClientRect();
   const w = widgetRef.value.offsetWidth;
   const h = widgetRef.value.offsetHeight;
@@ -146,59 +133,61 @@ function clampToViewport(): void {
   settingsStore.setPosition({ x, y });
 }
 
-function positionMobile(): void {
-  if (!widgetRef.value || !isMobile.value) return;
-  // Place widget above ST's input bar (#send_form) to avoid overlap.
+/**
+ * Dock the widget above ST's input bar (#send_form), left-aligned.
+ * Used for both mini and expanded modes when the user hasn't dragged it elsewhere.
+ */
+function dockAboveInput(): void {
+  if (!widgetRef.value || isUserPositioned) return;
+
   const sendForm = document.querySelector('#send_form');
   let bottomAnchor = window.innerHeight;
   if (sendForm) {
     const rect = sendForm.getBoundingClientRect();
-    // Use the top of the input bar as the bottom anchor
     bottomAnchor = rect.top;
   }
+
   const h = widgetRef.value.offsetHeight || 38;
-  widgetRef.value.style.left = '0px';
-  widgetRef.value.style.top = (bottomAnchor - h) + 'px';
+  let top = bottomAnchor - h - 4;
+  // Clamp: never go above viewport top
+  if (top < 4) top = 4;
+  widgetRef.value.style.left = '8px';
+  widgetRef.value.style.top = top + 'px';
   widgetRef.value.style.right = 'auto';
   widgetRef.value.style.bottom = 'auto';
 }
 
 function toggleExpand(): void {
   isExpanded.value = !isExpanded.value;
-  if (isExpanded.value) {
-    nextTick(() => {
-      if (isMobile.value) {
-        positionMobile();
-      } else {
-        clampToViewport();
-      }
-    });
-  } else {
-    nextTick(() => positionMobile());
-  }
+  nextTick(() => {
+    if (isUserPositioned) {
+      clampToViewport();
+    } else {
+      dockAboveInput();
+    }
+  });
 }
 
 onMounted(() => {
   const pos = settingsStore.settings.position;
-  if (pos && widgetRef.value && !isMobile.value) {
+  if (pos && pos.x !== undefined && widgetRef.value) {
+    isUserPositioned = true;
     widgetRef.value.style.left = pos.x + 'px';
     widgetRef.value.style.top = pos.y + 'px';
     widgetRef.value.style.right = 'auto';
     widgetRef.value.style.bottom = 'auto';
   }
-  if (isMobile.value) {
-    nextTick(() => positionMobile());
-  }
+  // Always dock on mount (unless user already has a saved position)
+  nextTick(() => dockAboveInput());
+
   window.addEventListener('resize', () => {
-    updateMobile();
-    if (isMobile.value) nextTick(() => positionMobile());
+    if (!isUserPositioned) nextTick(() => dockAboveInput());
   });
   window.addEventListener('keydown', onKeyDown);
 });
 
 onBeforeUnmount(() => {
   stopDrag();
-  window.removeEventListener('resize', updateMobile);
   window.removeEventListener('keydown', onKeyDown);
 });
 </script>
@@ -210,7 +199,6 @@ onBeforeUnmount(() => {
     :class="{
       'stmp-expanded': isExpanded,
       'stmp-collapsed': !isExpanded,
-      'stmp-mobile': isMobile,
     }"
     @pointerdown="startDrag"
   >
@@ -232,43 +220,31 @@ onBeforeUnmount(() => {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   border: 1px solid rgba(255, 255, 255, 0.08);
   padding: 4px;
+  touch-action: auto;
 }
 
-.stmp-collapsed:not(.stmp-mobile) {
+.stmp-collapsed {
   cursor: grab;
   touch-action: none;
 }
 
-.stmp-collapsed:not(.stmp-mobile):active {
+.stmp-collapsed:active {
   cursor: grabbing;
 }
 
 .stmp-expanded {
-  width: 320px;
+  width: min(360px, calc(100vw - 16px));
   padding: 12px;
-}
-
-.stmp-expanded:not(.stmp-mobile) {
   cursor: default;
-  touch-action: auto;
 }
 
-.stmp-mobile {
-  left: 0 !important;
-  width: 100% !important;
-  border-radius: 16px 16px 0 0;
-  max-height: 70vh;
-  overflow-y: auto;
-  touch-action: auto !important;
-  z-index: 999999 !important;
+.stmp-expanded .stmp-drag-handle {
+  cursor: grab;
+  touch-action: none;
 }
 
-.stmp-mobile.stmp-expanded {
-  max-height: 70vh;
-}
-
-.stmp-mobile.stmp-collapsed {
-  border-radius: 8px 8px 0 0;
+.stmp-expanded .stmp-drag-handle:active {
+  cursor: grabbing;
 }
 
 .stmp-widget *:focus-visible {
