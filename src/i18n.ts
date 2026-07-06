@@ -12,6 +12,7 @@ const zhCN: Record<string, string> = {
   'Search Song...': '搜索歌曲...',
   'Searching...': '搜索中...',
   'No results': '无结果',
+  'Type a song name to search': '输入歌名进行搜索',
   'No Songs': '暂无歌曲',
   'From Chat': '来自聊天',
   'My List': '我的列表',

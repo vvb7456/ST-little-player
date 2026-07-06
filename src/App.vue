@@ -316,9 +316,6 @@ onBeforeUnmount(() => {
 /* Dock expanded: responsive width */
 .stmp-dock.stmp-expanded {
   padding: 10px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
 }
 
 @media (min-width: 769px) {
@@ -347,10 +344,6 @@ onBeforeUnmount(() => {
 /* Expanded: default cursor, only drag handle grabs (drag mode only) */
 .stmp-expanded {
   cursor: default;
-  max-height: calc(100vh - 32px);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
 }
 
 .stmp-expanded:not(.stmp-dock) {

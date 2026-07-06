@@ -233,8 +233,6 @@ function toggleMute(): void {
   flex-direction: column;
   gap: 10px;
   width: 100%;
-  min-height: 0;
-  flex: 1;
 }
 
 .stmp-topbar {
@@ -524,10 +522,6 @@ function toggleMute(): void {
 }
 
 .stmp-tab-content {
-  min-height: 80px;
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
+  min-height: 100px;
 }
 </style>

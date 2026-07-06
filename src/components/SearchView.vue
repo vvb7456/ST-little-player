@@ -82,6 +82,10 @@ function isPlaying(result: SearchResult): boolean {
       {{ t('No results') }}
     </div>
 
+    <div v-else-if="!keyword && !searchStore.results.length" class="stmp-search-hint">
+      {{ t('Type a song name to search') }}
+    </div>
+
     <div v-if="searchStore.results.length" class="stmp-results">
       <div
         v-for="result in searchStore.results"
@@ -111,8 +115,6 @@ function isPlaying(result: SearchResult): boolean {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  min-height: 0;
-  flex: 1;
 }
 
 .stmp-search-bar {
@@ -194,7 +196,8 @@ function isPlaying(result: SearchResult): boolean {
 }
 
 .stmp-search-loading,
-.stmp-search-empty {
+.stmp-search-empty,
+.stmp-search-hint {
   text-align: center;
   padding: 20px 0;
   opacity: 0.6;
@@ -207,8 +210,7 @@ function isPlaying(result: SearchResult): boolean {
   flex-direction: column;
   gap: 2px;
   overflow-y: auto;
-  min-height: 0;
-  flex: 1;
+  max-height: 200px;
 }
 
 .stmp-result {
