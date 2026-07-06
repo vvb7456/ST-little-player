@@ -119,7 +119,7 @@ function remove(index: number): void {
   color: var(--stmp-text);
   cursor: pointer;
   padding: 6px;
-  font-size: calc(var(--fontSize, 14px) * 0.8);
+  font-size: calc(var(--mainFontSize, 14px) * 0.8);
   opacity: 0.7;
   transition: all 0.15s;
 }
@@ -134,11 +134,11 @@ function remove(index: number): void {
   padding: 24px 0;
   color: var(--stmp-text-dim);
   opacity: 0.6;
-  font-size: calc(var(--fontSize, 14px) * 0.9);
+  font-size: calc(var(--mainFontSize, 14px) * 0.9);
 }
 
 .stmp-group-label {
-  font-size: calc(var(--fontSize, 14px) * 0.75);
+  font-size: calc(var(--mainFontSize, 14px) * 0.75);
   opacity: 0.5;
   padding: 6px 4px 2px;
   text-transform: uppercase;
@@ -165,7 +165,7 @@ function remove(index: number): void {
 }
 
 .stmp-item-index {
-  font-size: calc(var(--fontSize, 14px) * 0.75);
+  font-size: calc(var(--mainFontSize, 14px) * 0.75);
   opacity: 0.5;
   min-width: 20px;
   text-align: right;
@@ -180,7 +180,7 @@ function remove(index: number): void {
 }
 
 .stmp-item-song {
-  font-size: calc(var(--fontSize, 14px) * 0.85);
+  font-size: calc(var(--mainFontSize, 14px) * 0.85);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -188,7 +188,7 @@ function remove(index: number): void {
 }
 
 .stmp-item-artist {
-  font-size: calc(var(--fontSize, 14px) * 0.72);
+  font-size: calc(var(--mainFontSize, 14px) * 0.72);
   opacity: 0.6;
   white-space: nowrap;
   overflow: hidden;

@@ -260,7 +260,7 @@ function toggleProvider(id: string): void {
 }
 
 .stmp-setting-label {
-  font-size: calc(var(--fontSize, 14px) * 0.75);
+  font-size: calc(var(--mainFontSize, 14px) * 0.75);
   opacity: 0.6;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -271,7 +271,7 @@ function toggleProvider(id: string): void {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: calc(var(--fontSize, 14px) * 0.85);
+  font-size: calc(var(--mainFontSize, 14px) * 0.85);
   color: var(--stmp-text);
 }
 
@@ -286,7 +286,7 @@ function toggleProvider(id: string): void {
   border-radius: 6px;
   background: color-mix(in srgb, var(--stmp-bg) 75%, transparent);
   color: var(--stmp-text);
-  font-size: calc(var(--fontSize, 14px) * 0.85);
+  font-size: calc(var(--mainFontSize, 14px) * 0.85);
   outline: none;
 }
 
@@ -307,7 +307,7 @@ function toggleProvider(id: string): void {
 
 .stmp-rule code {
   flex: 1;
-  font-size: calc(var(--fontSize, 14px) * 0.78);
+  font-size: calc(var(--mainFontSize, 14px) * 0.78);
   color: var(--stmp-text-dim);
   word-break: break-all;
 }
@@ -333,7 +333,7 @@ function toggleProvider(id: string): void {
   border-radius: 6px;
   background: color-mix(in srgb, var(--stmp-bg) 75%, transparent);
   color: var(--stmp-text);
-  font-size: calc(var(--fontSize, 14px) * 0.8);
+  font-size: calc(var(--mainFontSize, 14px) * 0.8);
   outline: none;
 }
 
@@ -362,7 +362,7 @@ function toggleProvider(id: string): void {
   border-radius: 6px;
   background: color-mix(in srgb, var(--stmp-bg) 75%, transparent);
   color: var(--stmp-text);
-  font-size: calc(var(--fontSize, 14px) * 0.78);
+  font-size: calc(var(--mainFontSize, 14px) * 0.78);
   outline: none;
 }
 
@@ -379,7 +379,7 @@ function toggleProvider(id: string): void {
   color: var(--stmp-text);
   cursor: pointer;
   padding: 4px 10px;
-  font-size: calc(var(--fontSize, 14px) * 0.8);
+  font-size: calc(var(--mainFontSize, 14px) * 0.8);
   transition: background 0.15s;
 }
 
@@ -402,7 +402,7 @@ function toggleProvider(id: string): void {
   color: var(--stmp-text-dim);
   cursor: pointer;
   padding: 6px 12px;
-  font-size: calc(var(--fontSize, 14px) * 0.82);
+  font-size: calc(var(--mainFontSize, 14px) * 0.82);
   opacity: 0.5;
   transition: all 0.15s;
 }

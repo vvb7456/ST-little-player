@@ -41,7 +41,7 @@ const songName = computed(() => playerStore.currentTrack?.name || t('No Song'));
 
 .stmp-collapsed-title {
   flex: 1;
-  font-size: calc(var(--fontSize, 14px) * 0.85);
+  font-size: calc(var(--mainFontSize, 14px) * 0.85);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

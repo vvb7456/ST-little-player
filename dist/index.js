@@ -5679,7 +5679,7 @@ const ws = /* @__PURE__ */ an("playlist", {
       ], 8, Mc)
     ]));
   }
-}), Rc = /* @__PURE__ */ Lt(Pc, [["__scopeId", "data-v-69ef4583"]]), Lc = { class: "stmp-playlist" }, $c = { class: "stmp-upload-area" }, kc = ["aria-label"], Oc = {
+}), Rc = /* @__PURE__ */ Lt(Pc, [["__scopeId", "data-v-d0f4f061"]]), Lc = { class: "stmp-playlist" }, $c = { class: "stmp-upload-area" }, kc = ["aria-label"], Oc = {
   key: 0,
   class: "stmp-empty"
 }, Dc = { class: "stmp-group-label" }, Nc = ["onClick"], Fc = { class: "stmp-item-index" }, Uc = { class: "stmp-item-info" }, jc = { class: "stmp-item-song" }, Vc = {
@@ -5761,7 +5761,7 @@ const ws = /* @__PURE__ */ an("playlist", {
       ])), 64))
     ]));
   }
-}), Kc = /* @__PURE__ */ Lt(Bc, [["__scopeId", "data-v-a0ede277"]]), Wc = { class: "stmp-search" }, zc = { class: "stmp-search-bar" }, Jc = ["placeholder"], Gc = ["disabled"], qc = {
+}), Kc = /* @__PURE__ */ Lt(Bc, [["__scopeId", "data-v-6157de27"]]), Wc = { class: "stmp-search" }, zc = { class: "stmp-search-bar" }, Jc = ["placeholder"], Gc = ["disabled"], qc = {
   key: 0,
   class: "stmp-search-error"
 }, Yc = ["aria-label"], Xc = {
@@ -5874,7 +5874,7 @@ const ws = /* @__PURE__ */ an("playlist", {
       ])) : Re("", !0)
     ]));
   }
-}), ou = /* @__PURE__ */ Lt(ru, [["__scopeId", "data-v-467063cc"]]), lu = { class: "stmp-panel" }, au = { class: "stmp-topbar stmp-drag-handle" }, cu = ["aria-label"], uu = { class: "stmp-cover-large" }, fu = ["src"], du = {
+}), ou = /* @__PURE__ */ Lt(ru, [["__scopeId", "data-v-a8d156af"]]), lu = { class: "stmp-panel" }, au = { class: "stmp-topbar stmp-drag-handle" }, cu = ["aria-label"], uu = { class: "stmp-cover-large" }, fu = ["src"], du = {
   key: 1,
   class: "stmp-cover-placeholder"
 }, hu = { class: "stmp-track-name" }, pu = {
@@ -6139,7 +6139,7 @@ const ws = /* @__PURE__ */ an("playlist", {
       })
     ]));
   }
-}), Uu = /* @__PURE__ */ Lt(Fu, [["__scopeId", "data-v-f81a73c6"]]), ju = /* @__PURE__ */ Pt({
+}), Uu = /* @__PURE__ */ Lt(Fu, [["__scopeId", "data-v-51c81921"]]), ju = /* @__PURE__ */ Pt({
   __name: "App",
   setup(e) {
     const t = Se(), s = Rt(), n = /* @__PURE__ */ Oe(!1), i = /* @__PURE__ */ Oe(null);
@@ -6447,7 +6447,7 @@ const ws = /* @__PURE__ */ an("playlist", {
       ])
     ]));
   }
-}), wf = /* @__PURE__ */ Lt(Sf, [["__scopeId", "data-v-2c96815c"]]);
+}), wf = /* @__PURE__ */ Lt(Sf, [["__scopeId", "data-v-93244059"]]);
 class Cf {
   constructor() {
     this.listeners = /* @__PURE__ */ new Map(), this.registered = [];

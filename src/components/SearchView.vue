@@ -131,7 +131,7 @@ function isPlaying(result: SearchResult): boolean {
   border-radius: 8px;
   background: color-mix(in srgb, var(--stmp-bg) 75%, transparent);
   color: var(--stmp-text);
-  font-size: calc(var(--fontSize, 14px) * 0.85);
+  font-size: calc(var(--mainFontSize, 14px) * 0.85);
   outline: none;
 }
 
@@ -179,7 +179,7 @@ function isPlaying(result: SearchResult): boolean {
 
 .stmp-search-error {
   color: #ff6b6b;
-  font-size: calc(var(--fontSize, 14px) * 0.8);
+  font-size: calc(var(--mainFontSize, 14px) * 0.8);
   padding: 4px 0;
   display: flex;
   align-items: center;
@@ -193,7 +193,7 @@ function isPlaying(result: SearchResult): boolean {
   color: #ff6b6b;
   cursor: pointer;
   padding: 2px 8px;
-  font-size: calc(var(--fontSize, 14px) * 0.78);
+  font-size: calc(var(--mainFontSize, 14px) * 0.78);
   flex-shrink: 0;
 }
 
@@ -204,7 +204,7 @@ function isPlaying(result: SearchResult): boolean {
   padding: 20px 0;
   opacity: 0.6;
   color: var(--stmp-text-dim);
-  font-size: calc(var(--fontSize, 14px) * 0.85);
+  font-size: calc(var(--mainFontSize, 14px) * 0.85);
 }
 
 .stmp-results {
@@ -248,7 +248,7 @@ function isPlaying(result: SearchResult): boolean {
 }
 
 .stmp-result-name {
-  font-size: calc(var(--fontSize, 14px) * 0.85);
+  font-size: calc(var(--mainFontSize, 14px) * 0.85);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -256,7 +256,7 @@ function isPlaying(result: SearchResult): boolean {
 }
 
 .stmp-result-artist {
-  font-size: calc(var(--fontSize, 14px) * 0.72);
+  font-size: calc(var(--mainFontSize, 14px) * 0.72);
   opacity: 0.6;
   white-space: nowrap;
   overflow: hidden;

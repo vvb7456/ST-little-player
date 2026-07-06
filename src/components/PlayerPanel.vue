@@ -368,7 +368,7 @@ function closeOverlay(): void {
 }
 
 .stmp-track-name {
-  font-size: calc(var(--fontSize, 14px) * 1.0);
+  font-size: calc(var(--mainFontSize, 14px) * 1.0);
   font-weight: 600;
   text-align: center;
   white-space: nowrap;
@@ -379,7 +379,7 @@ function closeOverlay(): void {
 }
 
 .stmp-track-artist {
-  font-size: calc(var(--fontSize, 14px) * 0.8);
+  font-size: calc(var(--mainFontSize, 14px) * 0.8);
   opacity: 0.55;
   text-align: center;
   white-space: nowrap;
@@ -429,7 +429,7 @@ function closeOverlay(): void {
 }
 
 .stmp-lyric-line {
-  font-size: calc(var(--fontSize, 14px) * 0.82);
+  font-size: calc(var(--mainFontSize, 14px) * 0.9);
   text-align: center;
   opacity: 0.35;
   color: var(--stmp-text);
@@ -485,7 +485,7 @@ function closeOverlay(): void {
 .stmp-time {
   display: flex;
   justify-content: space-between;
-  font-size: calc(var(--fontSize, 14px) * 0.72);
+  font-size: calc(var(--mainFontSize, 14px) * 0.72);
   opacity: 0.6;
   color: var(--stmp-text-dim);
 }
@@ -653,7 +653,7 @@ function closeOverlay(): void {
 }
 
 .stmp-overlay-title {
-  font-size: calc(var(--fontSize, 14px) * 0.9);
+  font-size: calc(var(--mainFontSize, 14px) * 0.9);
   font-weight: 600;
   color: var(--stmp-text);
 }
