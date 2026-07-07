@@ -17,6 +17,14 @@ const isHidden = computed(() => settingsStore.settings.widgetMode === 'hidden');
 const isMobile = ref(window.innerWidth <= 768);
 const sendFormReady = ref(false);
 
+/** Opacity for widget background. When customOpacity is off, default 75%. */
+const bgOpacity = computed(() => {
+  if (settingsStore.settings.customOpacity) {
+    return settingsStore.settings.opacity;
+  }
+  return 75;
+});
+
 const onKeyDown = (e: KeyboardEvent): void => {
   if (e.key === 'Escape') isExpanded.value = false;
   if (e.key === ' ' && e.target === document.body) {
@@ -347,11 +355,11 @@ onBeforeUnmount(() => {
   <template v-if="isInline">
     <Teleport v-if="sendFormReady" to="#send_form">
       <!-- Collapsed: compact bar -->
-      <div v-if="!isExpanded" class="stmp-inline-bar" @click="onInlineClick">
+      <div v-if="!isExpanded" class="stmp-inline-bar" :style="{ '--stmp-opacity': bgOpacity + '%' }" @click="onInlineClick">
         <CollapsedBar :is-dock="true" :is-mobile="true" />
       </div>
       <!-- Expanded: full player panel inline -->
-      <div v-else class="stmp-inline-expanded">
+      <div v-else class="stmp-inline-expanded" :style="{ '--stmp-opacity': bgOpacity + '%' }">
         <PlayerPanel @collapse="toggleExpand" />
       </div>
     </Teleport>
@@ -367,6 +375,7 @@ onBeforeUnmount(() => {
       'stmp-collapsed': !isExpanded,
       'stmp-dock': isDock,
     }"
+    :style="{ '--stmp-opacity': bgOpacity + '%' }"
     @pointerdown="startDrag"
     @click="onWidgetClick"
   >
@@ -392,7 +401,7 @@ onBeforeUnmount(() => {
   position: fixed;
   z-index: 2050;
   border-radius: 16px;
-  background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1a1a2e) 75%, transparent);
+  background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1a1a2e) var(--stmp-opacity, 75%), transparent);
   backdrop-filter: var(--stmp-blur);
   -webkit-backdrop-filter: var(--stmp-blur);
   box-shadow: var(--stmp-shadow);
@@ -427,6 +436,7 @@ onBeforeUnmount(() => {
   order: 1;
   width: 100%;
   cursor: pointer;
+  background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1a1a2e) var(--stmp-opacity, 75%), transparent);
   border-bottom: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.08));
 }
 
@@ -447,6 +457,7 @@ onBeforeUnmount(() => {
   width: 100%;
   max-height: min(50vh, 400px);
   overflow-y: auto;
+  background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1a1a2e) var(--stmp-opacity, 75%), transparent);
   border-bottom: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.08));
 }
 

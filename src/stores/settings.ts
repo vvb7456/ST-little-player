@@ -24,6 +24,8 @@ function defaultSettings(): ExtensionSettings {
     autoPlayOnNewCue: true,
     providers: defaultProviders(),
     customCueRules: [],
+    customOpacity: false,
+    opacity: 75,
   };
 }
 
@@ -85,6 +87,16 @@ export const useSettingsStore = defineStore('settings', {
 
     setWidgetMode(mode: import('@/types').WidgetMode): void {
       this.settings.widgetMode = mode;
+      this.save();
+    },
+
+    setOpacity(opacity: number): void {
+      this.settings.opacity = opacity;
+      this.save();
+    },
+
+    setCustomOpacity(enabled: boolean): void {
+      this.settings.customOpacity = enabled;
       this.save();
     },
 

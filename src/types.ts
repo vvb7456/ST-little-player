@@ -81,6 +81,8 @@ export interface ExtensionSettings {
   autoPlayOnNewCue: boolean;
   providers: ProviderConfig[];
   customCueRules: string[];
+  customOpacity: boolean;
+  opacity: number;
 }
 
 export interface ProviderConfig {

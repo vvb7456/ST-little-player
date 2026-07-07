@@ -41,6 +41,11 @@ function onVolume(e: Event): void {
   settingsStore.setVolume(Number(target.value));
 }
 
+function onOpacity(e: Event): void {
+  const target = e.target as HTMLInputElement;
+  settingsStore.setOpacity(Number(target.value));
+}
+
 function onPlayMode(e: Event): void {
   const target = e.target as HTMLSelectElement;
   settingsStore.setPlayMode(target.value as PlayMode);
@@ -98,7 +103,7 @@ const importData = (): void => {
     try {
       const data = JSON.parse(text);
       if (typeof data !== 'object' || data === null) throw new Error('Not an object');
-      const validKeys = ['volume', 'playMode', 'position', 'widgetMode', 'autoPlayOnNewCue', 'providers', 'customCueRules'];
+      const validKeys = ['volume', 'playMode', 'position', 'widgetMode', 'autoPlayOnNewCue', 'providers', 'customCueRules', 'customOpacity', 'opacity'];
       const filtered: Record<string, unknown> = {};
       for (const key of validKeys) {
         if (key in data) filtered[key] = data[key];
@@ -207,6 +212,23 @@ const importData = (): void => {
           :label="t('Auto-play on new cue')"
           @update:model-value="settingsStore.settings.autoPlayOnNewCue = $event; settingsStore.save()"
         />
+
+        <!-- Custom Opacity -->
+        <ToggleSwitch
+          :model-value="settingsStore.settings.customOpacity"
+          :label="t('Custom opacity')"
+          @update:model-value="settingsStore.setCustomOpacity"
+        />
+        <div v-if="settingsStore.settings.customOpacity" class="stmp-setting-group">
+          <label class="stmp-setting-label">{{ t('Opacity') }}: {{ settingsStore.settings.opacity }}%</label>
+          <input
+            type="range"
+            min="0"
+            max="100"
+            :value="settingsStore.settings.opacity"
+            @input="onOpacity"
+          />
+        </div>
       </div>
 
       <!-- ===== Providers ===== -->

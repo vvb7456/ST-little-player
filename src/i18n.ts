@@ -44,6 +44,8 @@ const zhCN: Record<string, string> = {
   'Default Volume': '默认音量',
   'Default Play Mode': '默认播放模式',
   'Auto-play on new cue': '新提示自动播放',
+  'Custom opacity': '自定义透明度',
+  'Opacity': '透明度',
   'Custom Cue Rules (Regex)': '自定义提示规则 (正则)',
   'Add regex rule...': '添加正则规则...',
   'Data': '数据管理',
