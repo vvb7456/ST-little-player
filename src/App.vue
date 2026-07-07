@@ -399,7 +399,7 @@ onBeforeUnmount(() => {
   --stmp-radius: 16px;
 
   position: fixed;
-  z-index: 2050;
+  z-index: 100;
   border-radius: 16px;
   background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1a1a2e) var(--stmp-opacity, 75%), transparent);
   backdrop-filter: var(--stmp-blur);

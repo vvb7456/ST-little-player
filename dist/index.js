@@ -6788,7 +6788,7 @@ const Xt = /* @__PURE__ */ yn("playlist", {
       }, null, 8, ["is-dock", "is-mobile"]))
     ], 38));
   }
-}), Tf = /* @__PURE__ */ Et(If, [["__scopeId", "data-v-bd91601a"]]), Ef = {
+}), Tf = /* @__PURE__ */ Et(If, [["__scopeId", "data-v-1eadddfd"]]), Ef = {
   key: 0,
   class: "stmp-switch-label"
 }, Af = { class: "stmp-switch" }, kf = ["checked", "disabled"], Mf = /* @__PURE__ */ Tt({
