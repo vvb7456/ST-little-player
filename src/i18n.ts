@@ -81,7 +81,7 @@ const zhCN: Record<string, string> = {
   'A scene-aware music player extension for SillyTavern': 'SillyTavern 情景音乐播放器扩展',
   'GitHub': 'GitHub',
   'Repository': '仓库',
-  'MIT License': 'MIT 许可证',
+  'AGPLv3 License': 'AGPLv3 许可证',
   'Copyright': '版权',
 };
 

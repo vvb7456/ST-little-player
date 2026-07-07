@@ -5417,7 +5417,7 @@ const Dc = {
   "A scene-aware music player extension for SillyTavern": "SillyTavern 情景音乐播放器扩展",
   GitHub: "GitHub",
   Repository: "仓库",
-  "MIT License": "MIT 许可证",
+  "AGPLv3 License": "AGPLv3 许可证",
   Copyright: "版权"
 };
 let Vt = null;
@@ -7314,7 +7314,7 @@ let Gt = null, ut = null, ys = null, _s = null, qt = null, en = null;
 const nh = `
 <div class="inline-drawer">
   <div class="inline-drawer-toggle inline-drawer-header">
-    <b data-i18n="半月——情景播放器">半月——情景播放器</b>
+    <b data-i18n="半月——情景音乐播放器">半月——情景音乐播放器</b>
     <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
   </div>
   <div class="inline-drawer-content stmp-ext-settings-content">

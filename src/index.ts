@@ -20,7 +20,7 @@ let piniaInstance: Pinia | null = null;
 const SETTINGS_HTML = `
 <div class="inline-drawer">
   <div class="inline-drawer-toggle inline-drawer-header">
-    <b data-i18n="半月——情景播放器">半月——情景播放器</b>
+    <b data-i18n="半月——情景音乐播放器">半月——情景音乐播放器</b>
     <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
   </div>
   <div class="inline-drawer-content stmp-ext-settings-content">
