@@ -2,6 +2,7 @@
 defineProps<{
   modelValue: boolean;
   label?: string;
+  disabled?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -15,12 +16,13 @@ function onToggle(e: Event): void {
 </script>
 
 <template>
-  <label class="stmp-switch-row">
+  <label class="stmp-switch-row" :class="{ 'stmp-switch-disabled': disabled }">
     <span v-if="label" class="stmp-switch-label">{{ label }}</span>
     <span class="stmp-switch">
       <input
         type="checkbox"
         :checked="modelValue"
+        :disabled="disabled"
         @change="onToggle"
       />
       <span class="stmp-switch-track">
@@ -38,6 +40,12 @@ function onToggle(e: Event): void {
   gap: 8px;
   cursor: pointer;
   user-select: none;
+}
+
+.stmp-switch-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .stmp-switch-label {

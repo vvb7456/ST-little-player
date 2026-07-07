@@ -213,13 +213,14 @@ const importData = (): void => {
           @update:model-value="settingsStore.settings.autoPlayOnNewCue = $event; settingsStore.save()"
         />
 
-        <!-- Custom Opacity -->
+        <!-- Custom Opacity (disabled in inline mode — uses ST variables) -->
         <ToggleSwitch
-          :model-value="settingsStore.settings.customOpacity"
+          :model-value="settingsStore.settings.customOpacity && settingsStore.settings.widgetMode !== 'inline'"
           :label="t('Custom opacity')"
+          :disabled="settingsStore.settings.widgetMode === 'inline'"
           @update:model-value="settingsStore.setCustomOpacity"
         />
-        <div v-if="settingsStore.settings.customOpacity" class="stmp-setting-group">
+        <div v-if="settingsStore.settings.customOpacity && settingsStore.settings.widgetMode !== 'inline'" class="stmp-setting-group">
           <label class="stmp-setting-label">{{ t('Opacity') }}: {{ settingsStore.settings.opacity }}%</label>
           <input
             type="range"

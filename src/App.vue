@@ -355,11 +355,11 @@ onBeforeUnmount(() => {
   <template v-if="isInline">
     <Teleport v-if="sendFormReady" to="#send_form">
       <!-- Collapsed: compact bar -->
-      <div v-if="!isExpanded" class="stmp-inline-bar" :style="{ '--stmp-opacity': bgOpacity + '%' }" @click="onInlineClick">
+      <div v-if="!isExpanded" class="stmp-inline-bar" @click="onInlineClick">
         <CollapsedBar :is-dock="true" :is-mobile="true" />
       </div>
       <!-- Expanded: full player panel inline -->
-      <div v-else class="stmp-inline-expanded" :style="{ '--stmp-opacity': bgOpacity + '%' }">
+      <div v-else class="stmp-inline-expanded">
         <PlayerPanel @collapse="toggleExpand" />
       </div>
     </Teleport>
@@ -436,7 +436,6 @@ onBeforeUnmount(() => {
   order: 1;
   width: 100%;
   cursor: pointer;
-  background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1a1a2e) var(--stmp-opacity, 75%), transparent);
   border-bottom: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.08));
 }
 
@@ -457,7 +456,6 @@ onBeforeUnmount(() => {
   width: 100%;
   max-height: min(50vh, 400px);
   overflow-y: auto;
-  background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1a1a2e) var(--stmp-opacity, 75%), transparent);
   border-bottom: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.08));
 }
 
