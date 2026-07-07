@@ -6134,7 +6134,7 @@ const Yt = /* @__PURE__ */ vn("playlist", {
       ])
     ]));
   }
-}), lr = /* @__PURE__ */ Tt(pu, [["__scopeId", "data-v-55f344e6"]]), gu = { class: "stmp-playlist" }, mu = {
+}), lr = /* @__PURE__ */ Tt(pu, [["__scopeId", "data-v-f2316395"]]), gu = { class: "stmp-playlist" }, mu = {
   key: 0,
   class: "stmp-upload-area"
 }, vu = ["aria-label"], yu = {

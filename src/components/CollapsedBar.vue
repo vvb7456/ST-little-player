@@ -389,6 +389,10 @@ onMounted(() => {
   cursor: pointer;
   padding: 0;
   background: color-mix(in srgb, var(--stmp-bg, #1a1a2e) 60%, transparent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--stmp-text-dim, #999);
 }
 
 .stmp-mini-cover-overlay {
