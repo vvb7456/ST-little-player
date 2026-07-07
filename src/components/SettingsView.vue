@@ -346,14 +346,14 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 
         <div class="stmp-about">
           <div class="stmp-about-icon"><i class="fa-solid fa-music" /></div>
-          <div class="stmp-about-name">ST-Music-Player</div>
+          <div class="stmp-about-name">半月</div>
           <div class="stmp-about-version">{{ t('Version') }} {{ EXT_VERSION }}</div>
-          <div class="stmp-about-desc">{{ t('A floating music player extension for SillyTavern') }}</div>
+          <div class="stmp-about-desc">{{ t('A scene-aware music player extension for SillyTavern') }}</div>
           <a :href="REPO_URL" target="_blank" rel="noopener" class="stmp-about-link">
             <i class="fa-brands fa-github" />
             <span>GitHub</span>
           </a>
-          <div class="stmp-about-copyright">© 2024-2026 ST-Music-Player</div>
+          <div class="stmp-about-copyright">© 2024-2026 半月 (ST-Little-Player)</div>
         </div>
       </div>
     </div>

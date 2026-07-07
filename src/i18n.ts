@@ -78,7 +78,7 @@ const zhCN: Record<string, string> = {
   'AI': 'AI',
   'About': '关于',
   'Version': '版本',
-  'A floating music player extension for SillyTavern': 'SillyTavern 悬浮音乐播放器扩展',
+  'A scene-aware music player extension for SillyTavern': 'SillyTavern 情景音乐播放器扩展',
   'GitHub': 'GitHub',
   'Repository': '仓库',
   'MIT License': 'MIT 许可证',

@@ -20,7 +20,7 @@ let piniaInstance: Pinia | null = null;
 const SETTINGS_HTML = `
 <div class="inline-drawer">
   <div class="inline-drawer-toggle inline-drawer-header">
-    <b data-i18n="悬浮音乐播放器">悬浮音乐播放器</b>
+    <b data-i18n="半月——情景播放器">半月——情景播放器</b>
     <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
   </div>
   <div class="inline-drawer-content stmp-ext-settings-content">
@@ -174,9 +174,9 @@ export async function init(): Promise<void> {
     };
     ctx.eventSource.on(ctx.event_types.APP_READY, appReadyHandler);
 
-    console.log('[ST-Music-Player] 播放器加载完成');
+    console.log('[半月] 播放器加载完成');
   } catch (err) {
-    console.error('[ST-Music-Player] init failed:', err);
+    console.error('[半月] init failed:', err);
   }
 }
 
@@ -220,7 +220,7 @@ export async function clean(): Promise<void> {
     delete ctx.extensionSettings[MODULE_NAME];
     ctx.saveSettingsDebounced();
   } catch (err) {
-    console.error('[ST-Music-Player] clean: failed to delete settings:', err);
+    console.error('[半月] clean: failed to delete settings:', err);
   }
 
   try {
@@ -234,7 +234,7 @@ export async function clean(): Promise<void> {
       );
     }
   } catch (err) {
-    console.error('[ST-Music-Player] clean: failed to clear localforage:', err);
+    console.error('[半月] clean: failed to clear localforage:', err);
   }
 }
 
