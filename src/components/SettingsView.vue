@@ -7,23 +7,18 @@ import ToggleSwitch from './ToggleSwitch.vue';
 
 const settingsStore = useSettingsStore();
 
-type TabId = 'playback' | 'providers' | 'cue' | 'data';
-const activeTab = ref<TabId>('playback');
+type TabId = 'general' | 'appearance' | 'playback' | 'ai' | 'about';
+const activeTab = ref<TabId>('general');
 
 const tabs: { id: TabId; label: string; icon: string }[] = [
+  { id: 'general', label: t('General'), icon: 'fa-solid fa-sliders' },
+  { id: 'appearance', label: t('Appearance'), icon: 'fa-solid fa-palette' },
   { id: 'playback', label: t('Playback'), icon: 'fa-solid fa-music' },
-  { id: 'providers', label: t('Providers'), icon: 'fa-solid fa-cloud' },
-  { id: 'cue', label: t('AI Cue'), icon: 'fa-solid fa-wand-magic-sparkles' },
-  { id: 'data', label: t('Data'), icon: 'fa-solid fa-database' },
+  { id: 'ai', label: t('AI'), icon: 'fa-solid fa-wand-magic-sparkles' },
+  { id: 'about', label: t('About'), icon: 'fa-solid fa-circle-info' },
 ];
 
-// ===== Playback tab =====
-const playModes: { value: PlayMode; label: string }[] = [
-  { value: 'list', label: t('List Loop') },
-  { value: 'random', label: t('Random') },
-  { value: 'single', label: t('Single Loop') },
-];
-
+// ===== General =====
 const widgetModes: { value: WidgetMode; label: string; icon: string }[] = [
   { value: 'dock', label: t('Dock'), icon: 'fa-solid fa-grip-lines' },
   { value: 'drag', label: t('Drag'), icon: 'fa-solid fa-up-down-left-right' },
@@ -36,14 +31,24 @@ const dockAligns: { value: DockAlign; label: string; icon: string }[] = [
   { value: 'right', label: t('Right'), icon: 'fa-solid fa-align-right' },
 ];
 
-function onVolume(e: Event): void {
-  const target = e.target as HTMLInputElement;
-  settingsStore.setVolume(Number(target.value));
-}
+const isInline = () => settingsStore.settings.widgetMode === 'inline';
 
+// ===== Appearance =====
 function onOpacity(e: Event): void {
   const target = e.target as HTMLInputElement;
   settingsStore.setOpacity(Number(target.value));
+}
+
+// ===== Playback =====
+const playModes: { value: PlayMode; label: string }[] = [
+  { value: 'list', label: t('List Loop') },
+  { value: 'random', label: t('Random') },
+  { value: 'single', label: t('Single Loop') },
+];
+
+function onVolume(e: Event): void {
+  const target = e.target as HTMLInputElement;
+  settingsStore.setVolume(Number(target.value));
 }
 
 function onPlayMode(e: Event): void {
@@ -51,7 +56,7 @@ function onPlayMode(e: Event): void {
   settingsStore.setPlayMode(target.value as PlayMode);
 }
 
-// ===== Providers tab =====
+// ===== AI =====
 const providerNames: Record<string, string> = {
   netease: t('NetEase'),
   local: t('Local Files'),
@@ -66,7 +71,6 @@ function toggleProvider(id: string): void {
   }
 }
 
-// ===== Cue tab =====
 const newRule = ref('');
 
 function addRule(): void {
@@ -80,7 +84,7 @@ function removeRule(index: number): void {
   settingsStore.removeCustomCueRule(index);
 }
 
-// ===== Data tab =====
+// ===== General → Data =====
 const exportData = (): void => {
   const data = JSON.stringify(settingsStore.settings, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
@@ -130,6 +134,8 @@ const importData = (): void => {
   };
   input.click();
 };
+
+const EXT_VERSION = '1.0.0';
 </script>
 
 <template>
@@ -150,17 +156,20 @@ const importData = (): void => {
 
     <!-- Tab content -->
     <div class="stmp-tab-content">
-      <!-- ===== Playback ===== -->
-      <div v-show="activeTab === 'playback'" class="stmp-tab-panel">
+      <!-- ===== 通用 ===== -->
+      <div v-show="activeTab === 'general'" class="stmp-tab-panel">
         <!-- Widget Mode -->
-        <div class="stmp-setting-group">
-          <label class="stmp-setting-label">{{ t('Widget Mode') }}</label>
-          <div class="stmp-mode-toggle">
+        <div class="stmp-row">
+          <div class="stmp-row-info">
+            <div class="stmp-row-title">{{ t('Widget Mode') }}</div>
+            <div class="stmp-row-desc">{{ t('Choose how the player widget is displayed') }}</div>
+          </div>
+          <div class="stmp-chips">
             <div
               v-for="mode in widgetModes"
               :key="mode.value"
-              class="menu_button menu_button_icon stmp-mode-btn"
-              :class="{ toggled: settingsStore.settings.widgetMode === mode.value }"
+              class="stmp-chip"
+              :class="{ active: settingsStore.settings.widgetMode === mode.value }"
               @click="settingsStore.setWidgetMode(mode.value)"
             >
               <i :class="mode.icon" />
@@ -169,15 +178,18 @@ const importData = (): void => {
           </div>
         </div>
 
-        <!-- Dock Alignment (desktop only, dock mode only) -->
-        <div v-if="settingsStore.settings.widgetMode === 'dock'" class="stmp-setting-group">
-          <label class="stmp-setting-label">{{ t('Dock Alignment') }}</label>
-          <div class="stmp-mode-toggle">
+        <!-- Dock Alignment -->
+        <div v-if="settingsStore.settings.widgetMode === 'dock'" class="stmp-row">
+          <div class="stmp-row-info">
+            <div class="stmp-row-title">{{ t('Dock Alignment') }}</div>
+            <div class="stmp-row-desc">{{ t('Align the docked player to the left or right of the input bar') }}</div>
+          </div>
+          <div class="stmp-chips">
             <div
               v-for="align in dockAligns"
               :key="align.value"
-              class="menu_button menu_button_icon stmp-mode-btn"
-              :class="{ toggled: settingsStore.settings.dockAlign === align.value }"
+              class="stmp-chip"
+              :class="{ active: settingsStore.settings.dockAlign === align.value }"
               @click="settingsStore.setDockAlign(align.value)"
             >
               <i :class="align.icon" />
@@ -186,11 +198,60 @@ const importData = (): void => {
           </div>
         </div>
 
-        <!-- Default Volume -->
-        <div class="stmp-setting-group">
-          <label class="stmp-setting-label">{{ t('Default Volume') }}: {{ settingsStore.settings.volume }}</label>
+        <!-- Data Management -->
+        <div class="stmp-section">
+          <div class="stmp-section-title">{{ t('Data') }}</div>
+          <div class="stmp-row">
+            <div class="stmp-row-info">
+              <div class="stmp-row-title">{{ t('Export data') }}</div>
+              <div class="stmp-row-desc">{{ t('Save your settings to a JSON file') }}</div>
+            </div>
+            <div class="menu_button menu_button_icon stmp-action-btn" @click="exportData">
+              <i class="fa-solid fa-file-export" />
+            </div>
+          </div>
+          <div class="stmp-row">
+            <div class="stmp-row-info">
+              <div class="stmp-row-title">{{ t('Import data') }}</div>
+              <div class="stmp-row-desc">{{ t('Load settings from a JSON file') }}</div>
+            </div>
+            <div class="menu_button menu_button_icon stmp-action-btn" @click="importData">
+              <i class="fa-solid fa-file-import" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 外观 ===== -->
+      <div v-show="activeTab === 'appearance'" class="stmp-tab-panel">
+        <ToggleSwitch
+          :model-value="settingsStore.settings.customOpacity && !isInline()"
+          :label="t('Custom opacity')"
+          :disabled="isInline()"
+          @update:model-value="settingsStore.setCustomOpacity"
+        />
+        <div v-if="isInline()" class="stmp-hint">{{ t('Not available in inline mode') }}</div>
+        <div v-if="settingsStore.settings.customOpacity && !isInline()" class="stmp-slider-row">
+          <div class="stmp-slider-label">{{ t('Opacity') }}: {{ settingsStore.settings.opacity }}%</div>
           <input
             type="range"
+            class="stmp-slider"
+            min="0"
+            max="100"
+            :value="settingsStore.settings.opacity"
+            @input="onOpacity"
+          />
+        </div>
+      </div>
+
+      <!-- ===== 播放 ===== -->
+      <div v-show="activeTab === 'playback'" class="stmp-tab-panel">
+        <!-- Default Volume -->
+        <div class="stmp-slider-row">
+          <div class="stmp-slider-label">{{ t('Default Volume') }}: {{ settingsStore.settings.volume }}</div>
+          <input
+            type="range"
+            class="stmp-slider"
             min="0"
             max="100"
             :value="settingsStore.settings.volume"
@@ -199,9 +260,11 @@ const importData = (): void => {
         </div>
 
         <!-- Default Play Mode -->
-        <div class="stmp-setting-group">
-          <label class="stmp-setting-label" for="stmp-playmode">{{ t('Default Play Mode') }}</label>
-          <select id="stmp-playmode" class="text_pole" :value="settingsStore.settings.playMode" @change="onPlayMode">
+        <div class="stmp-row">
+          <div class="stmp-row-info">
+            <div class="stmp-row-title">{{ t('Default Play Mode') }}</div>
+          </div>
+          <select class="text_pole stmp-select" :value="settingsStore.settings.playMode" @change="onPlayMode">
             <option v-for="m in playModes" :key="m.value" :value="m.value">{{ m.label }}</option>
           </select>
         </div>
@@ -212,59 +275,45 @@ const importData = (): void => {
           :label="t('Auto-play on new cue')"
           @update:model-value="settingsStore.settings.autoPlayOnNewCue = $event; settingsStore.save()"
         />
-
-        <!-- Custom Opacity (disabled in inline mode — uses ST variables) -->
-        <ToggleSwitch
-          :model-value="settingsStore.settings.customOpacity && settingsStore.settings.widgetMode !== 'inline'"
-          :label="t('Custom opacity')"
-          :disabled="settingsStore.settings.widgetMode === 'inline'"
-          @update:model-value="settingsStore.setCustomOpacity"
-        />
-        <div v-if="settingsStore.settings.customOpacity && settingsStore.settings.widgetMode !== 'inline'" class="stmp-setting-group">
-          <label class="stmp-setting-label">{{ t('Opacity') }}: {{ settingsStore.settings.opacity }}%</label>
-          <input
-            type="range"
-            min="0"
-            max="100"
-            :value="settingsStore.settings.opacity"
-            @input="onOpacity"
-          />
-        </div>
       </div>
 
-      <!-- ===== Providers ===== -->
-      <div v-show="activeTab === 'providers'" class="stmp-tab-panel">
-        <div
-          v-for="p in settingsStore.settings.providers"
-          :key="p.id"
-          class="stmp-provider-card"
-        >
-          <ToggleSwitch
-            :model-value="p.enabled"
-            :label="providerNames[p.id] || p.id"
-            @update:model-value="() => toggleProvider(p.id)"
-          />
-          <div v-if="p.id === 'custom' && p.enabled" class="stmp-provider-fields">
-            <input
-              class="text_pole"
-              v-model="p.config!.searchURL"
-              :placeholder="t('Search URL')"
-              @change="settingsStore.save()"
+      <!-- ===== AI ===== -->
+      <div v-show="activeTab === 'ai'" class="stmp-tab-panel">
+        <!-- Providers -->
+        <div class="stmp-section">
+          <div class="stmp-section-title">{{ t('Providers') }}</div>
+          <div class="stmp-row-desc" style="margin-bottom: 6px;">{{ t('Enable or disable music sources') }}</div>
+          <div
+            v-for="p in settingsStore.settings.providers"
+            :key="p.id"
+            class="stmp-provider-row"
+          >
+            <ToggleSwitch
+              :model-value="p.enabled"
+              :label="providerNames[p.id] || p.id"
+              @update:model-value="() => toggleProvider(p.id)"
             />
-            <input
-              class="text_pole"
-              v-model="p.config!.resolveURL"
-              :placeholder="t('Resolve URL')"
-              @change="settingsStore.save()"
-            />
+            <div v-if="p.id === 'custom' && p.enabled" class="stmp-provider-fields">
+              <input
+                class="text_pole"
+                v-model="p.config!.searchURL"
+                :placeholder="t('Search URL')"
+                @change="settingsStore.save()"
+              />
+              <input
+                class="text_pole"
+                v-model="p.config!.resolveURL"
+                :placeholder="t('Resolve URL')"
+                @change="settingsStore.save()"
+              />
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- ===== AI Cue ===== -->
-      <div v-show="activeTab === 'cue'" class="stmp-tab-panel">
-        <div class="stmp-setting-group">
-          <label class="stmp-setting-label">{{ t('Custom Cue Rules (Regex)') }}</label>
+        <!-- Custom Cue Rules -->
+        <div class="stmp-section">
+          <div class="stmp-section-title">{{ t('Custom Cue Rules (Regex)') }}</div>
+          <div class="stmp-row-desc" style="margin-bottom: 6px;">{{ t('Additional regex patterns to detect song cues in chat') }}</div>
           <div class="stmp-rules">
             <div
               v-for="(rule, i) in settingsStore.settings.customCueRules"
@@ -272,10 +321,7 @@ const importData = (): void => {
               class="stmp-rule"
             >
               <code>{{ rule }}</code>
-              <div
-                class="menu_button menu_button_icon stmp-rule-del"
-                @click="removeRule(i)"
-              >
+              <div class="menu_button menu_button_icon stmp-rule-del" @click="removeRule(i)">
                 <i class="fa-solid fa-xmark" />
               </div>
             </div>
@@ -287,33 +333,20 @@ const importData = (): void => {
               :placeholder="t('Add regex rule...')"
               @keydown.enter="addRule"
             />
-            <div
-              class="menu_button menu_button_icon stmp-rule-add-btn"
-              @click="addRule"
-            >
+            <div class="menu_button menu_button_icon stmp-rule-add-btn" @click="addRule">
               <i class="fa-solid fa-plus" />
             </div>
           </div>
         </div>
       </div>
 
-      <!-- ===== Data ===== -->
-      <div v-show="activeTab === 'data'" class="stmp-tab-panel">
-        <div class="stmp-data-btns">
-          <div
-            class="menu_button menu_button_icon stmp-data-btn"
-            @click="exportData"
-          >
-            <i class="fa-solid fa-file-export" />
-            <span>{{ t('Export data') }}</span>
-          </div>
-          <div
-            class="menu_button menu_button_icon stmp-data-btn"
-            @click="importData"
-          >
-            <i class="fa-solid fa-file-import" />
-            <span>{{ t('Import data') }}</span>
-          </div>
+      <!-- ===== 关于 ===== -->
+      <div v-show="activeTab === 'about'" class="stmp-tab-panel">
+        <div class="stmp-about">
+          <div class="stmp-about-icon"><i class="fa-solid fa-music" /></div>
+          <div class="stmp-about-name">ST-Music-Player</div>
+          <div class="stmp-about-version">{{ t('Version') }} {{ EXT_VERSION }}</div>
+          <div class="stmp-about-desc">{{ t('A floating music player extension for SillyTavern') }}</div>
         </div>
       </div>
     </div>
@@ -332,19 +365,22 @@ const importData = (): void => {
 .stmp-tab-bar {
   display: flex;
   gap: 2px;
-  border-bottom: 1px solid var(--SmartThemeBorderColor, rgba(0,0,0,0.5));
-  padding-bottom: 2px;
+  border: 1px solid var(--SmartThemeBorderColor, rgba(0,0,0,0.5));
+  border-radius: 7px;
+  padding: 2px;
   overflow-x: auto;
 }
 
 .stmp-tab {
+  flex: 1;
   display: flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 6px;
   cursor: pointer;
-  border-radius: 5px 5px 0 0;
-  font-size: calc(var(--mainFontSize, 14px) * 0.8);
+  border-radius: 5px;
+  font-size: calc(var(--mainFontSize, 14px) * 0.78);
   color: var(--SmartThemeEmColor, rgb(145,145,145));
   white-space: nowrap;
   transition: all var(--animation-duration, 0.2s);
@@ -356,12 +392,11 @@ const importData = (): void => {
 
 .stmp-tab.active {
   color: var(--SmartThemeQuoteColor, rgb(225,138,36));
-  border-bottom: 2px solid var(--SmartThemeQuoteColor, rgb(225,138,36));
-  margin-bottom: -2px;
+  background: color-mix(in srgb, var(--SmartThemeQuoteColor, rgb(225,138,36)) 15%, transparent);
 }
 
 .stmp-tab i {
-  font-size: calc(var(--mainFontSize, 14px) * 0.75);
+  font-size: calc(var(--mainFontSize, 14px) * 0.72);
 }
 
 /* ===== Tab content ===== */
@@ -372,47 +407,164 @@ const importData = (): void => {
 .stmp-tab-panel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 5px 2px;
+  gap: 12px;
+  padding: 4px 2px;
 }
 
-/* ===== Setting groups ===== */
-.stmp-setting-group {
+/* ===== Setting row (label + description on left, control on right) ===== */
+.stmp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.stmp-row-info {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-}
-
-.stmp-setting-label {
-  font-size: calc(var(--mainFontSize, 14px) * 0.8);
-  color: var(--SmartThemeEmColor, rgb(145,145,145));
-  margin: 0;
-}
-
-/* ===== Mode toggle (dock/drag/hidden) ===== */
-.stmp-mode-toggle {
-  display: flex;
-  gap: 5px;
-}
-
-.stmp-mode-btn {
+  gap: 1px;
+  min-width: 0;
   flex: 1;
-  justify-content: center;
-  margin: 0;
-  opacity: 0.5;
+}
+
+.stmp-row-title {
+  font-size: calc(var(--mainFontSize, 14px) * 0.85);
+  color: var(--SmartThemeBodyColor, #ccc);
+}
+
+.stmp-row-desc {
+  font-size: calc(var(--mainFontSize, 14px) * 0.7);
+  color: var(--SmartThemeEmColor, rgb(145,145,145));
+  line-height: 1.3;
+}
+
+.stmp-hint {
+  font-size: calc(var(--mainFontSize, 14px) * 0.7);
+  color: var(--SmartThemeEmColor, rgb(145,145,145));
+  font-style: italic;
+  margin-top: -4px;
+}
+
+/* ===== Chip group (segmented control) ===== */
+.stmp-chips {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.stmp-chip {
+  padding: 3px 7px;
+  border: 1px solid var(--SmartThemeBorderColor, rgba(0,0,0,0.5));
+  border-radius: 0;
+  margin-left: -1px;
+  cursor: pointer;
+  font-size: calc(var(--mainFontSize, 14px) * 0.75);
+  color: var(--SmartThemeEmColor, rgb(145,145,145));
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  white-space: nowrap;
   transition: all var(--animation-duration, 0.2s);
 }
 
-.stmp-mode-btn.toggled {
-  opacity: 1;
-  border-color: var(--SmartThemeQuoteColor, rgb(225,138,36));
+.stmp-chip:first-child {
+  border-radius: 5px 0 0 5px;
+  margin-left: 0;
 }
 
-/* ===== Providers ===== */
-.stmp-provider-card {
-  border: 1px solid var(--SmartThemeBorderColor, rgba(0,0,0,0.5));
-  border-radius: 5px;
-  padding: 5px;
+.stmp-chip:last-child {
+  border-radius: 0 5px 5px 0;
+}
+
+.stmp-chip:hover {
+  filter: brightness(130%);
+}
+
+.stmp-chip.active {
+  background: color-mix(in srgb, var(--SmartThemeQuoteColor, rgb(225,138,36)) 80%, transparent);
+  color: var(--SmartThemeQuoteColor, rgb(225,138,36));
+  border-color: var(--SmartThemeQuoteColor, rgb(225,138,36));
+  z-index: 1;
+}
+
+.stmp-chip i {
+  font-size: calc(var(--mainFontSize, 14px) * 0.7);
+}
+
+/* ===== Select ===== */
+.stmp-select {
+  width: auto !important;
+  margin: 0 !important;
+  font-size: calc(var(--mainFontSize, 14px) * 0.8);
+  padding: 2px 5px;
+}
+
+/* ===== Slider row ===== */
+.stmp-slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stmp-slider-label {
+  font-size: calc(var(--mainFontSize, 14px) * 0.8);
+  color: var(--SmartThemeBodyColor, #ccc);
+}
+
+.stmp-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 5px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--SmartThemeBodyColor, #ccc) 30%, transparent);
+  outline: none;
+  margin: 0;
+}
+
+.stmp-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--SmartThemeQuoteColor, rgb(225,138,36));
+  border: 2px solid var(--SmartThemeBodyColor, #ccc);
+  cursor: pointer;
+}
+
+.stmp-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--SmartThemeQuoteColor, rgb(225,138,36));
+  border: 2px solid var(--SmartThemeBodyColor, #ccc);
+  cursor: pointer;
+}
+
+/* ===== Section (grouped settings with title) ===== */
+.stmp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-top: 1px solid var(--SmartThemeBorderColor, rgba(0,0,0,0.3));
+  padding-top: 10px;
+}
+
+.stmp-section-title {
+  font-size: calc(var(--mainFontSize, 14px) * 0.78);
+  font-weight: bold;
+  color: var(--SmartThemeQuoteColor, rgb(225,138,36));
+}
+
+/* ===== Action button ===== */
+.stmp-action-btn {
+  margin: 0 !important;
+  padding: 4px 8px !important;
+  flex-shrink: 0;
+}
+
+/* ===== Provider rows ===== */
+.stmp-provider-row {
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -443,7 +595,7 @@ const importData = (): void => {
 
 .stmp-rule code {
   flex: 1;
-  font-size: calc(var(--mainFontSize, 14px) * 0.78);
+  font-size: calc(var(--mainFontSize, 14px) * 0.75);
   color: var(--SmartThemeEmColor, rgb(145,145,145));
   word-break: break-all;
 }
@@ -465,17 +617,38 @@ const importData = (): void => {
   padding: 3px 8px;
 }
 
-/* ===== Data buttons ===== */
-.stmp-data-btns {
+/* ===== About ===== */
+.stmp-about {
   display: flex;
-  flex-direction: row;
-  gap: 5px;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 20px 0;
+  text-align: center;
 }
 
-.stmp-data-btn {
-  flex: 1;
-  margin: 0;
-  justify-content: center;
-  gap: 5px;
+.stmp-about-icon {
+  font-size: calc(var(--mainFontSize, 14px) * 2);
+  color: var(--SmartThemeQuoteColor, rgb(225,138,36));
+  margin-bottom: 6px;
+}
+
+.stmp-about-name {
+  font-size: calc(var(--mainFontSize, 14px) * 1.1);
+  font-weight: bold;
+  color: var(--SmartThemeBodyColor, #ccc);
+}
+
+.stmp-about-version {
+  font-size: calc(var(--mainFontSize, 14px) * 0.78);
+  color: var(--SmartThemeEmColor, rgb(145,145,145));
+}
+
+.stmp-about-desc {
+  font-size: calc(var(--mainFontSize, 14px) * 0.78);
+  color: var(--SmartThemeEmColor, rgb(145,145,145));
+  margin-top: 4px;
+  max-width: 260px;
+  line-height: 1.4;
 }
 </style>
