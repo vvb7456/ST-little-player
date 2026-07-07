@@ -237,8 +237,10 @@ function onWidgetClick(e: MouseEvent): void {
     toggleExpand();
     return;
   }
-  // Drag mode idle (no track): click anywhere to expand
-  if (!isDock.value && !isExpanded.value && !playerStore.currentTrack) {
+  // Drag mode: tap to expand when collapsed
+  if (!isDock.value && !isExpanded.value) {
+    const target = e.target as HTMLElement;
+    if (target.closest('button, input')) return;
     toggleExpand();
   }
 }
