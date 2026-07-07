@@ -41,7 +41,7 @@ function onOpacity(e: Event): void {
 const playModes: { value: PlayMode; label: string; icon: string }[] = [
   { value: 'list', label: t('List Loop'), icon: 'fa-solid fa-repeat' },
   { value: 'random', label: t('Random'), icon: 'fa-solid fa-shuffle' },
-  { value: 'single', label: t('Single Loop'), icon: 'fa-solid fa-1' },
+  { value: 'single', label: t('Single Loop'), icon: 'fa-solid fa-repeat' },
 ];
 
 function onVolume(e: Event): void {
@@ -247,23 +247,6 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- ===== AI ===== -->
-      <div v-show="activeTab === 'ai'" class="stmp-tab-panel">
-        <!-- Auto-play -->
-        <div class="stmp-row">
-          <div class="stmp-row-info">
-            <div class="stmp-row-title">{{ t('Auto-play on new cue') }}</div>
-            <div class="stmp-row-desc">{{ t('Automatically play when a new song cue is detected') }}</div>
-          </div>
-          <ToggleSwitch
-            :model-value="settingsStore.settings.autoPlayOnNewCue"
-            @update:model-value="settingsStore.settings.autoPlayOnNewCue = $event; settingsStore.save()"
-          />
-        </div>
-
-        <div class="stmp-divider" />
 
         <!-- Providers -->
         <div class="stmp-section-title">{{ t('Providers') }}</div>
@@ -296,8 +279,21 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
             />
           </div>
         </div>
+      </div>
 
-        <div class="stmp-divider" />
+      <!-- ===== AI ===== -->
+      <div v-show="activeTab === 'ai'" class="stmp-tab-panel">
+        <!-- Auto-play -->
+        <div class="stmp-row">
+          <div class="stmp-row-info">
+            <div class="stmp-row-title">{{ t('Auto-play on new cue') }}</div>
+            <div class="stmp-row-desc">{{ t('Automatically play when a new song cue is detected') }}</div>
+          </div>
+          <ToggleSwitch
+            :model-value="settingsStore.settings.autoPlayOnNewCue"
+            @update:model-value="settingsStore.settings.autoPlayOnNewCue = $event; settingsStore.save()"
+          />
+        </div>
 
         <!-- Custom Cue Rules -->
         <div class="stmp-section-title">{{ t('Custom Cue Rules (Regex)') }}</div>
@@ -348,8 +344,6 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
             <i class="fa-solid fa-file-import" />
           </div>
         </div>
-
-        <div class="stmp-divider" />
 
         <div class="stmp-about">
           <div class="stmp-about-icon"><i class="fa-solid fa-music" /></div>
@@ -405,8 +399,8 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 }
 
 .stmp-tab.active {
-  color: var(--SmartThemeQuoteColor, rgb(225,138,36));
-  background: color-mix(in srgb, var(--SmartThemeQuoteColor, rgb(225,138,36)) 15%, transparent);
+  color: var(--SmartThemeBodyColor, #ccc);
+  background: color-mix(in srgb, var(--SmartThemeQuoteColor, rgb(225,138,36)) 20%, transparent);
 }
 
 .stmp-tab i {
@@ -556,17 +550,16 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 }
 
 /* ===== Divider (between sections) ===== */
-.stmp-divider {
-  border-top: 1px solid var(--SmartThemeBorderColor, rgba(0,0,0,0.3));
-  margin: 4px 0;
-}
+/* Not used as a standalone element — section titles get border-top instead */
 
 /* ===== Section title ===== */
 .stmp-section-title {
   font-size: var(--mainFontSize, 14px);
   font-weight: bold;
   color: var(--SmartThemeQuoteColor, rgb(225,138,36));
-  margin-top: 4px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--SmartThemeBorderColor, rgba(0,0,0,0.3));
 }
 
 /* ===== Action button ===== */
