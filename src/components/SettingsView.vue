@@ -152,25 +152,27 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
     <div class="stmp-tab-content">
       <!-- ===== 外观 ===== -->
       <div v-show="activeTab === 'appearance'" class="stmp-tab-panel">
+        <!-- Widget Mode: title + chips on same row -->
         <div class="stmp-row">
           <div class="stmp-row-info">
             <div class="stmp-row-title">{{ t('Widget Mode') }}</div>
             <div class="stmp-row-desc">{{ t('Choose how the player widget is displayed') }}</div>
           </div>
-        </div>
-        <div class="stmp-chips">
-          <div
-            v-for="mode in widgetModes"
-            :key="mode.value"
-            class="stmp-chip"
-            :class="{ active: settingsStore.settings.widgetMode === mode.value }"
-            @click="settingsStore.setWidgetMode(mode.value)"
-          >
-            <i :class="mode.icon" />
-            <span>{{ mode.label }}</span>
+          <div class="stmp-chips">
+            <div
+              v-for="mode in widgetModes"
+              :key="mode.value"
+              class="stmp-chip"
+              :class="{ active: settingsStore.settings.widgetMode === mode.value }"
+              @click="settingsStore.setWidgetMode(mode.value)"
+            >
+              <i :class="mode.icon" />
+              <span>{{ mode.label }}</span>
+            </div>
           </div>
         </div>
 
+        <!-- Dock Alignment -->
         <div v-if="settingsStore.settings.widgetMode === 'dock'" class="stmp-row">
           <div class="stmp-row-info">
             <div class="stmp-row-title">{{ t('Dock Alignment') }}</div>
@@ -190,19 +192,24 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
           </div>
         </div>
 
-        <div class="stmp-divider" />
+        <!-- Custom Opacity toggle -->
+        <div class="stmp-row">
+          <div class="stmp-row-info">
+            <div class="stmp-row-title">{{ t('Custom opacity') }}</div>
+            <div v-if="isInline()" class="stmp-row-desc">{{ t('Not available in inline mode') }}</div>
+            <div v-else class="stmp-row-desc">{{ t('Adjust the player background opacity') }}</div>
+          </div>
+          <ToggleSwitch
+            :model-value="settingsStore.settings.customOpacity && !isInline()"
+            :disabled="isInline()"
+            @update:model-value="settingsStore.setCustomOpacity"
+          />
+        </div>
 
-        <ToggleSwitch
-          :model-value="settingsStore.settings.customOpacity && !isInline()"
-          :label="t('Custom opacity')"
-          :disabled="isInline()"
-          @update:model-value="settingsStore.setCustomOpacity"
-        />
-        <div v-if="isInline()" class="stmp-hint">{{ t('Not available in inline mode') }}</div>
+        <!-- Opacity slider -->
         <div v-if="settingsStore.settings.customOpacity && !isInline()" class="stmp-row">
           <div class="stmp-row-info">
             <div class="stmp-row-title">{{ t('Opacity') }}</div>
-            <div class="stmp-row-desc">{{ t('Adjust the player background opacity') }}</div>
           </div>
           <div class="stmp-slider-wrap">
             <input type="range" class="stmp-slider" min="0" max="100" :value="settingsStore.settings.opacity" @input="onOpacity" />
@@ -244,27 +251,36 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 
       <!-- ===== AI ===== -->
       <div v-show="activeTab === 'ai'" class="stmp-tab-panel">
-        <ToggleSwitch
-          :model-value="settingsStore.settings.autoPlayOnNewCue"
-          :label="t('Auto-play on new cue')"
-          @update:model-value="settingsStore.settings.autoPlayOnNewCue = $event; settingsStore.save()"
-        />
-        <div class="stmp-hint">{{ t('Automatically play when a new song cue is detected') }}</div>
+        <!-- Auto-play -->
+        <div class="stmp-row">
+          <div class="stmp-row-info">
+            <div class="stmp-row-title">{{ t('Auto-play on new cue') }}</div>
+            <div class="stmp-row-desc">{{ t('Automatically play when a new song cue is detected') }}</div>
+          </div>
+          <ToggleSwitch
+            :model-value="settingsStore.settings.autoPlayOnNewCue"
+            @update:model-value="settingsStore.settings.autoPlayOnNewCue = $event; settingsStore.save()"
+          />
+        </div>
 
         <div class="stmp-divider" />
 
+        <!-- Providers -->
         <div class="stmp-section-title">{{ t('Providers') }}</div>
         <div class="stmp-row-desc">{{ t('Enable or disable music sources') }}</div>
         <div
           v-for="p in settingsStore.settings.providers"
           :key="p.id"
-          class="stmp-provider-row"
         >
-          <ToggleSwitch
-            :model-value="p.enabled"
-            :label="providerNames[p.id] || p.id"
-            @update:model-value="() => toggleProvider(p.id)"
-          />
+          <div class="stmp-row">
+            <div class="stmp-row-info">
+              <div class="stmp-row-title">{{ providerNames[p.id] || p.id }}</div>
+            </div>
+            <ToggleSwitch
+              :model-value="p.enabled"
+              @update:model-value="() => toggleProvider(p.id)"
+            />
+          </div>
           <div v-if="p.id === 'custom' && p.enabled" class="stmp-provider-fields">
             <input
               class="text_pole"
@@ -283,6 +299,7 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 
         <div class="stmp-divider" />
 
+        <!-- Custom Cue Rules -->
         <div class="stmp-section-title">{{ t('Custom Cue Rules (Regex)') }}</div>
         <div class="stmp-row-desc">{{ t('Additional regex patterns to detect song cues in chat') }}</div>
         <div class="stmp-rules">
@@ -404,28 +421,34 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 .stmp-tab-panel {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   padding: 4px 2px;
 }
 
-/* ===== Setting row ===== */
+/* ===== Setting row (uniform structure: title+desc left, control right) ===== */
 .stmp-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--SmartThemeBorderColor, rgba(0,0,0,0.3)) 50%, transparent);
+}
+
+.stmp-row:last-child {
+  border-bottom: none;
 }
 
 .stmp-row-info {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
   flex: 1;
 }
 
 .stmp-row-title {
   font-size: var(--mainFontSize, 14px);
+  font-weight: bold;
   color: var(--SmartThemeBodyColor, #ccc);
 }
 
@@ -435,18 +458,11 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
   line-height: 1.3;
 }
 
-.stmp-hint {
-  font-size: calc(var(--mainFontSize, 14px) * 0.85);
-  color: var(--SmartThemeEmColor, rgb(145,145,145));
-  font-style: italic;
-  margin-top: -6px;
-}
-
-/* ===== Chip group ===== */
+/* ===== Chip group (segmented control, never wraps) ===== */
 .stmp-chips {
   display: inline-flex;
   flex-shrink: 0;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0;
 }
 
@@ -456,7 +472,7 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
   border-radius: 0;
   margin-left: -1px;
   cursor: pointer;
-  font-size: var(--mainFontSize, 14px);
+  font-size: calc(var(--mainFontSize, 14px) * 0.85);
   color: var(--SmartThemeEmColor, rgb(145,145,145));
   display: flex;
   align-items: center;
@@ -484,13 +500,13 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 
 .stmp-chip.active {
   background: color-mix(in srgb, var(--SmartThemeQuoteColor, rgb(225,138,36)) 80%, transparent);
-  color: var(--SmartThemeQuoteColor, rgb(225,138,36));
+  color: var(--SmartThemeBodyColor, #ccc);
   border-color: var(--SmartThemeQuoteColor, rgb(225,138,36));
   z-index: 1;
 }
 
 .stmp-chip i {
-  font-size: calc(var(--mainFontSize, 14px) * 0.85);
+  font-size: calc(var(--mainFontSize, 14px) * 0.8);
 }
 
 /* ===== Compact slider ===== */
@@ -528,9 +544,8 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
   height: 12px;
   border-radius: 50%;
   background: var(--SmartThemeQuoteColor, rgb(225,138,36));
-  border: 2px solid var(--SmartThemeBodyColor, #ccc);
-  cursor: pointer;
   border: none;
+  cursor: pointer;
 }
 
 .stmp-slider-val {
@@ -540,10 +555,10 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
   text-align: right;
 }
 
-/* ===== Divider ===== */
+/* ===== Divider (between sections) ===== */
 .stmp-divider {
   border-top: 1px solid var(--SmartThemeBorderColor, rgba(0,0,0,0.3));
-  margin: 2px 0;
+  margin: 4px 0;
 }
 
 /* ===== Section title ===== */
@@ -551,6 +566,7 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
   font-size: var(--mainFontSize, 14px);
   font-weight: bold;
   color: var(--SmartThemeQuoteColor, rgb(225,138,36));
+  margin-top: 4px;
 }
 
 /* ===== Action button ===== */
@@ -560,18 +576,12 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
   flex-shrink: 0;
 }
 
-/* ===== Provider rows ===== */
-.stmp-provider-row {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
+/* ===== Provider fields ===== */
 .stmp-provider-fields {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding-left: 4px;
+  padding: 0 0 8px 4px;
 }
 
 /* ===== Cue rules ===== */

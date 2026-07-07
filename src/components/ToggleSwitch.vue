@@ -49,7 +49,8 @@ function onToggle(e: Event): void {
 }
 
 .stmp-switch-label {
-  font-size: calc(var(--mainFontSize, 14px) * 0.85);
+  font-size: var(--mainFontSize, 14px);
+  font-weight: bold;
   color: var(--SmartThemeBodyColor, #ccc);
 }
 
