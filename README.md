@@ -1,6 +1,6 @@
-# 半月 (ST-Little-Player)
+# 小月 (ST-Little-Player)
 
-> **半月** — 谐音「伴乐」。SillyTavern 原生情景音乐播放器扩展。
+> **小月** — 「小」通晓（Little），「月」通乐。SillyTavern 原生情景音乐播放器扩展。
 
 A SillyTavern native extension that adds a scene-aware music player. Parses song cues from chat messages, resolves and plays tracks from multiple sources, and displays time-synced lyrics — all inside a compact, theme-integrated widget.
 

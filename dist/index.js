@@ -7144,7 +7144,7 @@ const Xt = /* @__PURE__ */ yn("playlist", {
             x[9] || (x[9] = d("div", { class: "stmp-about-icon" }, [
               d("i", { class: "fa-solid fa-music" })
             ], -1)),
-            x[10] || (x[10] = d("div", { class: "stmp-about-name" }, "半月", -1)),
+            x[10] || (x[10] = d("div", { class: "stmp-about-name" }, "小月", -1)),
             d("div", Jd, K(y(L)("Version")) + " " + K(qd), 1),
             d("div", Gd, K(y(L)("A scene-aware music player extension for SillyTavern")), 1),
             d("a", {
@@ -7156,7 +7156,7 @@ const Xt = /* @__PURE__ */ yn("playlist", {
               d("i", { class: "fa-brands fa-github" }, null, -1),
               d("span", null, "GitHub", -1)
             ])]),
-            x[11] || (x[11] = d("div", { class: "stmp-about-copyright" }, "© 2024-2026 半月 (ST-Little-Player)", -1))
+            x[11] || (x[11] = d("div", { class: "stmp-about-copyright" }, "© 2024-2026 小月 (ST-Little-Player)", -1))
           ])
         ], 512), [
           [Ds, s.value === "general"]
@@ -7164,7 +7164,7 @@ const Xt = /* @__PURE__ */ yn("playlist", {
       ])
     ]));
   }
-}), Zd = /* @__PURE__ */ Et(Xd, [["__scopeId", "data-v-cecabb9e"]]);
+}), Zd = /* @__PURE__ */ Et(Xd, [["__scopeId", "data-v-a75a4638"]]);
 class Qd {
   constructor() {
     this.listeners = /* @__PURE__ */ new Map(), this.registered = [];
@@ -7314,7 +7314,7 @@ let Gt = null, ut = null, ys = null, _s = null, qt = null, en = null;
 const nh = `
 <div class="inline-drawer">
   <div class="inline-drawer-toggle inline-drawer-header">
-    <b data-i18n="半月——情景音乐播放器">半月——情景音乐播放器</b>
+    <b data-i18n="小月——情景音乐播放器">小月——情景音乐播放器</b>
     <div class="inline-drawer-icon fa-solid fa-circle-chevron-down down"></div>
   </div>
   <div class="inline-drawer-content stmp-ext-settings-content">
@@ -7390,9 +7390,9 @@ async function uh() {
     const l = SillyTavern.getContext();
     ys = () => {
       rh(o, r, s), lh(o, r, s);
-    }, l.eventSource.on(l.event_types.APP_READY, ys), console.log("[半月] 播放器加载完成");
+    }, l.eventSource.on(l.event_types.APP_READY, ys), console.log("[小月] 播放器加载完成");
   } catch (e) {
-    console.error("[半月] init failed:", e);
+    console.error("[小月] init failed:", e);
   }
 }
 function Fr() {
@@ -7422,7 +7422,7 @@ async function ah() {
     const e = SillyTavern.getContext();
     delete e.extensionSettings[vs], e.saveSettingsDebounced();
   } catch (e) {
-    console.error("[半月] clean: failed to delete settings:", e);
+    console.error("[小月] clean: failed to delete settings:", e);
   }
   try {
     const e = SillyTavern.libs?.localforage;
@@ -7433,7 +7433,7 @@ async function ah() {
       );
     }
   } catch (e) {
-    console.error("[半月] clean: failed to clear localforage:", e);
+    console.error("[小月] clean: failed to clear localforage:", e);
   }
 }
 async function dh() {

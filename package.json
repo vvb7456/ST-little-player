@@ -1,7 +1,7 @@
 {
   "name": "st-little-player",
   "version": "1.0.0",
-  "description": "半月——SillyTavern 情景音乐播放器扩展",
+  "description": "小月——SillyTavern 情景音乐播放器扩展",
   "type": "module",
   "scripts": {
     "dev": "vite build --watch",
