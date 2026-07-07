@@ -353,7 +353,7 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
             <i class="fa-brands fa-github" />
             <span>GitHub</span>
           </a>
-          <div class="stmp-about-copyright">© 2024-2026 晓乐 (ST-Little-Player)</div>
+          <div class="stmp-about-copyright"><a href="https://www.erocraft.com" target="_blank" rel="noopener">艾萝工坊</a> © 2015 - 2026</div>
         </div>
       </div>
     </div>
