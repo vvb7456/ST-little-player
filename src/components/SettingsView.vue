@@ -377,7 +377,7 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
   padding: 4px 6px;
   cursor: pointer;
   border-radius: 5px;
-  font-size: calc(var(--mainFontSize, 14px) * 0.78);
+  font-size: var(--mainFontSize, 14px);
   color: var(--SmartThemeEmColor, rgb(145,145,145));
   white-space: nowrap;
   transition: all var(--animation-duration, 0.2s);
@@ -393,7 +393,7 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 }
 
 .stmp-tab i {
-  font-size: calc(var(--mainFontSize, 14px) * 0.72);
+  font-size: calc(var(--mainFontSize, 14px) * 0.9);
 }
 
 /* ===== Tab content ===== */
@@ -425,18 +425,18 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 }
 
 .stmp-row-title {
-  font-size: calc(var(--mainFontSize, 14px) * 0.85);
+  font-size: var(--mainFontSize, 14px);
   color: var(--SmartThemeBodyColor, #ccc);
 }
 
 .stmp-row-desc {
-  font-size: calc(var(--mainFontSize, 14px) * 0.7);
+  font-size: calc(var(--mainFontSize, 14px) * 0.85);
   color: var(--SmartThemeEmColor, rgb(145,145,145));
   line-height: 1.3;
 }
 
 .stmp-hint {
-  font-size: calc(var(--mainFontSize, 14px) * 0.7);
+  font-size: calc(var(--mainFontSize, 14px) * 0.85);
   color: var(--SmartThemeEmColor, rgb(145,145,145));
   font-style: italic;
   margin-top: -6px;
@@ -456,7 +456,7 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
   border-radius: 0;
   margin-left: -1px;
   cursor: pointer;
-  font-size: calc(var(--mainFontSize, 14px) * 0.73);
+  font-size: var(--mainFontSize, 14px);
   color: var(--SmartThemeEmColor, rgb(145,145,145));
   display: flex;
   align-items: center;
@@ -490,7 +490,7 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 }
 
 .stmp-chip i {
-  font-size: calc(var(--mainFontSize, 14px) * 0.68);
+  font-size: calc(var(--mainFontSize, 14px) * 0.85);
 }
 
 /* ===== Compact slider ===== */
@@ -534,7 +534,7 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 }
 
 .stmp-slider-val {
-  font-size: calc(var(--mainFontSize, 14px) * 0.75);
+  font-size: calc(var(--mainFontSize, 14px) * 0.9);
   color: var(--SmartThemeBodyColor, #ccc);
   min-width: 28px;
   text-align: right;
@@ -548,7 +548,7 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 
 /* ===== Section title ===== */
 .stmp-section-title {
-  font-size: calc(var(--mainFontSize, 14px) * 0.78);
+  font-size: var(--mainFontSize, 14px);
   font-weight: bold;
   color: var(--SmartThemeQuoteColor, rgb(225,138,36));
 }
@@ -592,7 +592,7 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 
 .stmp-rule code {
   flex: 1;
-  font-size: calc(var(--mainFontSize, 14px) * 0.75);
+  font-size: calc(var(--mainFontSize, 14px) * 0.9);
   color: var(--SmartThemeEmColor, rgb(145,145,145));
   word-break: break-all;
 }
@@ -625,24 +625,24 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 }
 
 .stmp-about-icon {
-  font-size: calc(var(--mainFontSize, 14px) * 1.8);
+  font-size: calc(var(--mainFontSize, 14px) * 2);
   color: var(--SmartThemeQuoteColor, rgb(225,138,36));
   margin-bottom: 4px;
 }
 
 .stmp-about-name {
-  font-size: calc(var(--mainFontSize, 14px) * 1.05);
+  font-size: calc(var(--mainFontSize, 14px) * 1.1);
   font-weight: bold;
   color: var(--SmartThemeBodyColor, #ccc);
 }
 
 .stmp-about-version {
-  font-size: calc(var(--mainFontSize, 14px) * 0.73);
+  font-size: calc(var(--mainFontSize, 14px) * 0.9);
   color: var(--SmartThemeEmColor, rgb(145,145,145));
 }
 
 .stmp-about-desc {
-  font-size: calc(var(--mainFontSize, 14px) * 0.73);
+  font-size: calc(var(--mainFontSize, 14px) * 0.9);
   color: var(--SmartThemeEmColor, rgb(145,145,145));
   margin-top: 4px;
   max-width: 240px;
@@ -657,7 +657,7 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
   padding: 4px 10px;
   border: 1px solid var(--SmartThemeBorderColor, rgba(0,0,0,0.5));
   border-radius: 5px;
-  font-size: calc(var(--mainFontSize, 14px) * 0.78);
+  font-size: var(--mainFontSize, 14px);
   color: var(--SmartThemeBodyColor, #ccc);
   text-decoration: none;
   transition: all var(--animation-duration, 0.2s);
@@ -669,7 +669,7 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 }
 
 .stmp-about-copyright {
-  font-size: calc(var(--mainFontSize, 14px) * 0.65);
+  font-size: calc(var(--mainFontSize, 14px) * 0.8);
   color: var(--SmartThemeEmColor, rgb(145,145,145));
   margin-top: 6px;
 }

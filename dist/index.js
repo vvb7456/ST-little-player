@@ -7153,7 +7153,7 @@ const Xt = /* @__PURE__ */ yn("playlist", {
       ])
     ]));
   }
-}), Bd = /* @__PURE__ */ Et(jd, [["__scopeId", "data-v-31113b84"]]);
+}), Bd = /* @__PURE__ */ Et(jd, [["__scopeId", "data-v-5f6f02f6"]]);
 class Wd {
   constructor() {
     this.listeners = /* @__PURE__ */ new Map(), this.registered = [];
