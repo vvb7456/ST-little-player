@@ -171,13 +171,7 @@ function closeOverlay(): void {
           <div class="stmp-track-artist">{{ playerStore.currentTrack?.artist || '\u00A0' }}</div>
         </div>
         <div ref="lyricWindowRef" class="stmp-lyric-window">
-          <div
-            v-if="playerStore.lyrics.length === 0"
-            class="stmp-lyric-empty"
-          >
-            <Icon name="music" :size="18" />
-          </div>
-          <div v-else class="stmp-lyric-scroll" :style="{ transform: `translateY(-${lyricScrollY}px)` }">
+          <div v-if="playerStore.lyrics.length > 0" class="stmp-lyric-scroll" :style="{ transform: `translateY(-${lyricScrollY}px)` }">
             <div
               v-for="(line, i) in playerStore.lyrics"
               :key="i"

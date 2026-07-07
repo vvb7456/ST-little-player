@@ -14,7 +14,7 @@ const fe = {}, Wt = [], it = () => {
 (e.charCodeAt(2) > 122 || e.charCodeAt(2) < 97), sn = (e) => e.startsWith("onUpdate:"), Se = Object.assign, Xn = (e, t) => {
   const s = e.indexOf(t);
   s > -1 && e.splice(s, 1);
-}, Uo = Object.prototype.hasOwnProperty, le = (e, t) => Uo.call(e, t), J = Array.isArray, Kt = (e) => Ts(e) === "[object Map]", gr = (e) => Ts(e) === "[object Set]", vi = (e) => Ts(e) === "[object Date]", ee = (e) => typeof e == "function", ge = (e) => typeof e == "string", We = (e) => typeof e == "symbol", ae = (e) => e !== null && typeof e == "object", mr = (e) => (ae(e) || ee(e)) && ee(e.then) && ee(e.catch), vr = Object.prototype.toString, Ts = (e) => vr.call(e), Ho = (e) => Ts(e).slice(8, -1), yr = (e) => Ts(e) === "[object Object]", nn = (e) => ge(e) && e !== "NaN" && e[0] !== "-" && "" + parseInt(e, 10) === e, ls = /* @__PURE__ */ Yn(
+}, Uo = Object.prototype.hasOwnProperty, le = (e, t) => Uo.call(e, t), J = Array.isArray, Kt = (e) => Ts(e) === "[object Map]", gr = (e) => Ts(e) === "[object Set]", vi = (e) => Ts(e) === "[object Date]", ee = (e) => typeof e == "function", pe = (e) => typeof e == "string", We = (e) => typeof e == "symbol", ae = (e) => e !== null && typeof e == "object", mr = (e) => (ae(e) || ee(e)) && ee(e.then) && ee(e.catch), vr = Object.prototype.toString, Ts = (e) => vr.call(e), Ho = (e) => Ts(e).slice(8, -1), yr = (e) => Ts(e) === "[object Object]", nn = (e) => pe(e) && e !== "NaN" && e[0] !== "-" && "" + parseInt(e, 10) === e, ls = /* @__PURE__ */ Yn(
   // the leading comma is intentional so empty string "" is also included
   ",key,ref,ref_for,ref_key,onVnodeBeforeMount,onVnodeMounted,onVnodeBeforeUpdate,onVnodeUpdated,onVnodeBeforeUnmount,onVnodeUnmounted"
 ), rn = (e) => {
@@ -40,7 +40,7 @@ const fe = {}, Wt = [], it = () => {
   const t = parseFloat(e);
   return isNaN(t) ? e : t;
 }, Bo = (e) => {
-  const t = ge(e) ? Number(e) : NaN;
+  const t = pe(e) ? Number(e) : NaN;
   return isNaN(t) ? e : t;
 };
 let yi;
@@ -49,13 +49,13 @@ function $t(e) {
   if (J(e)) {
     const t = {};
     for (let s = 0; s < e.length; s++) {
-      const n = e[s], i = ge(n) ? qo(n) : $t(n);
+      const n = e[s], i = pe(n) ? qo(n) : $t(n);
       if (i)
         for (const r in i)
           t[r] = i[r];
     }
     return t;
-  } else if (ge(e) || ae(e))
+  } else if (pe(e) || ae(e))
     return e;
 }
 const Wo = /;(?![^(]*\))/g, Ko = /:([^]+)/, zo = /\/\*[^]*?\*\//g;
@@ -70,7 +70,7 @@ function qo(e) {
 }
 function ye(e) {
   let t = "";
-  if (ge(e))
+  if (pe(e))
     t = e;
   else if (J(e))
     for (let s = 0; s < e.length; s++) {
@@ -116,7 +116,7 @@ function Qn(e, t) {
   }
   return String(e) === String(t);
 }
-const wr = (e) => !!(e && e.__v_isRef === !0), te = (e) => ge(e) ? e : e == null ? "" : J(e) || ae(e) && (e.toString === vr || !ee(e.toString)) ? wr(e) ? te(e.value) : JSON.stringify(e, Sr, 2) : String(e), Sr = (e, t) => wr(t) ? Sr(e, t.value) : Kt(t) ? {
+const wr = (e) => !!(e && e.__v_isRef === !0), te = (e) => pe(e) ? e : e == null ? "" : J(e) || ae(e) && (e.toString === vr || !ee(e.toString)) ? wr(e) ? te(e.value) : JSON.stringify(e, Sr, 2) : String(e), Sr = (e, t) => wr(t) ? Sr(e, t.value) : Kt(t) ? {
   [`Map(${t.size})`]: [...t.entries()].reduce(
     (s, [n, i], r) => (s[wn(n, r) + " =>"] = i, s),
     {}
@@ -1221,7 +1221,7 @@ function El(e, t, s, n = !0, i = !1) {
     throw e;
   console.error(e);
 }
-const ke = [];
+const Me = [];
 let et = -1;
 const zt = [];
 let wt = null, Vt = 0;
@@ -1232,18 +1232,18 @@ function De(e) {
   return e ? t.then(this ? e.bind(this) : e) : t;
 }
 function Al(e) {
-  let t = et + 1, s = ke.length;
+  let t = et + 1, s = Me.length;
   for (; t < s; ) {
-    const n = t + s >>> 1, i = ke[n], r = xs(i);
+    const n = t + s >>> 1, i = Me[n], r = xs(i);
     r < e || r === e && i.flags & 2 ? t = n + 1 : s = n;
   }
   return t;
 }
 function li(e) {
   if (!(e.flags & 1)) {
-    const t = xs(e), s = ke[ke.length - 1];
+    const t = xs(e), s = Me[Me.length - 1];
     !s || // fast path when the job id is larger than the tail
-    !(e.flags & 2) && t >= xs(s) ? ke.push(e) : ke.splice(Al(t), 0, e), e.flags |= 1, Br();
+    !(e.flags & 2) && t >= xs(s) ? Me.push(e) : Me.splice(Al(t), 0, e), e.flags |= 1, Br();
   }
 }
 function Br() {
@@ -1253,12 +1253,12 @@ function kl(e) {
   J(e) ? zt.push(...e) : wt && e.id === -1 ? wt.splice(Vt + 1, 0, e) : e.flags & 1 || (zt.push(e), e.flags |= 1), Br();
 }
 function xi(e, t, s = et + 1) {
-  for (; s < ke.length; s++) {
-    const n = ke[s];
+  for (; s < Me.length; s++) {
+    const n = Me[s];
     if (n && n.flags & 2) {
       if (e && n.id !== e.uid)
         continue;
-      ke.splice(s, 1), s--, n.flags & 4 && (n.flags &= -2), n(), n.flags & 4 || (n.flags &= -2);
+      Me.splice(s, 1), s--, n.flags & 4 && (n.flags &= -2), n(), n.flags & 4 || (n.flags &= -2);
     }
   }
 }
@@ -1281,8 +1281,8 @@ function Wr(e) {
 const xs = (e) => e.id == null ? e.flags & 2 ? -1 : 1 / 0 : e.id;
 function Kr(e) {
   try {
-    for (et = 0; et < ke.length; et++) {
-      const t = ke[et];
+    for (et = 0; et < Me.length; et++) {
+      const t = Me[et];
       t && !(t.flags & 8) && (t.flags & 4 && (t.flags &= -2), Es(
         t,
         t.i,
@@ -1290,11 +1290,11 @@ function Kr(e) {
       ), t.flags & 4 || (t.flags &= -2));
     }
   } finally {
-    for (; et < ke.length; et++) {
-      const t = ke[et];
+    for (; et < Me.length; et++) {
+      const t = Me[et];
       t && (t.flags &= -2);
     }
-    et = -1, ke.length = 0, Wr(), Ks = null, (ke.length || zt.length) && Kr();
+    et = -1, Me.length = 0, Wr(), Ks = null, (Me.length || zt.length) && Kr();
   }
 }
 let Be = null, zr = null;
@@ -1353,10 +1353,10 @@ function Et(e, t, s, n) {
   }
 }
 function Ml(e, t) {
-  if (Re) {
-    let s = Re.provides;
-    const n = Re.parent && Re.parent.provides;
-    n === s && (s = Re.provides = Object.create(n)), s[e] = t;
+  if (Pe) {
+    let s = Pe.provides;
+    const n = Pe.parent && Pe.parent.provides;
+    n === s && (s = Pe.provides = Object.create(n)), s[e] = t;
   }
 }
 function us(e, t, s = !1) {
@@ -1389,11 +1389,11 @@ function Jr(e, t, s = fe) {
       return v.stop = it, v.resume = it, v.pause = it, v;
     }
   }
-  const c = Re;
+  const c = Pe;
   l.call = (v, C, I) => Ke(v, c, C, I);
   let h = !1;
   r === "post" ? l.scheduler = (v) => {
-    Ee(v, c && c.suspense);
+    Ae(v, c && c.suspense);
   } : r !== "sync" && (h = !0, l.scheduler = (v, C) => {
     C ? v() : li(v);
   }), l.augmentJob = (v) => {
@@ -1403,7 +1403,7 @@ function Jr(e, t, s = fe) {
   return Cs && (f ? f.push(m) : a && m()), m;
 }
 function $l(e, t, s) {
-  const n = this.proxy, i = ge(e) ? e.includes(".") ? Gr(n, e) : () => n[e] : e.bind(n, n);
+  const n = this.proxy, i = pe(e) ? e.includes(".") ? Gr(n, e) : () => n[e] : e.bind(n, n);
   let r;
   ee(t) ? r = t : (r = t.handler, s = t);
   const o = As(this), l = Jr(i, r.bind(n), s);
@@ -1420,7 +1420,7 @@ function Gr(e, t) {
 }
 const bt = /* @__PURE__ */ new WeakMap(), Yr = /* @__PURE__ */ Symbol("_vte"), Xr = (e) => e.__isTeleport, Pt = (e) => e && (e.disabled || e.disabled === ""), Ol = (e) => e && (e.defer || e.defer === ""), wi = (e) => typeof SVGElement < "u" && e instanceof SVGElement, Si = (e) => typeof MathMLElement == "function" && e instanceof MathMLElement, Un = (e, t) => {
   const s = e && e.to;
-  return ge(s) ? t ? t(s) : null : s;
+  return pe(s) ? t ? t(s) : null : s;
 }, Dl = {
   name: "Teleport",
   __isTeleport: !0,
@@ -1456,7 +1456,7 @@ const bt = /* @__PURE__ */ new WeakMap(), Yr = /* @__PURE__ */ Symbol("_vte"), X
           z(P);
         }
       };
-      bt.set(P, N), Ee(N, r);
+      bt.set(P, N), Ae(N, r);
     };
     if (e == null) {
       const P = t.el = I(""), N = t.anchor = I("");
@@ -1670,7 +1670,7 @@ const He = [Function, Array], Zr = {
       const i = t.default && so(t.default(), !0), r = i && i.length ? eo(i) : (
         // Keep explicit default-slot conditionals on the same transition path
         // as regular v-if branches, which render a comment placeholder.
-        s.subTree ? Pe() : void 0
+        s.subTree ? Te() : void 0
       );
       if (!r)
         return;
@@ -1688,20 +1688,20 @@ const He = [Function, Array], Zr = {
         // #11061, ensure enterHooks is fresh after clone
         (h) => f = h
       );
-      a.type !== Me && ws(a, f);
+      a.type !== Re && ws(a, f);
       let c = s.subTree && Ci(s.subTree);
-      if (c && c.type !== Me && !Lt(c, a) && Qr(s).type !== Me) {
+      if (c && c.type !== Re && !Lt(c, a) && Qr(s).type !== Re) {
         let h = Vn(
           c,
           o,
           n,
           s
         );
-        if (ws(c, h), l === "out-in" && a.type !== Me)
+        if (ws(c, h), l === "out-in" && a.type !== Re)
           return n.isLeaving = !0, h.afterLeave = () => {
             n.isLeaving = !1, s.job.flags & 8 || s.update(), delete h.afterLeave, c = void 0;
           }, Tn(r);
-        l === "in-out" && a.type !== Me ? h.delayLeave = (m, v, C) => {
+        l === "in-out" && a.type !== Re ? h.delayLeave = (m, v, C) => {
           const I = to(
             n,
             c
@@ -1721,7 +1721,7 @@ function eo(e) {
   let t = e[0];
   if (e.length > 1) {
     for (const s of e)
-      if (s.type !== Me) {
+      if (s.type !== Re) {
         t = s;
         break;
       }
@@ -1848,7 +1848,7 @@ function so(e, t = !1, s) {
     const l = s == null ? o.key : String(s) + String(o.key != null ? o.key : r);
     o.type === ie ? (o.patchFlag & 128 && i++, n = n.concat(
       so(o.children, t, l)
-    )) : (t || o.type !== Me) && n.push(l != null ? St(o, { key: l }) : o);
+    )) : (t || o.type !== Re) && n.push(l != null ? St(o, { key: l }) : o);
   }
   if (i > 1)
     for (let r = 0; r < n.length; r++)
@@ -1890,7 +1890,7 @@ function fs(e, t, s, n, i = !1) {
   }
   const r = n.shapeFlag & 4 ? mn(n.component) : n.el, o = i ? null : r, { i: l, r: a } = e, f = t && t.r, c = l.refs === fe ? l.refs = {} : l.refs, h = l.setupState, m = /* @__PURE__ */ oe(h), v = h === fe ? pr : (I) => Ii(c, I) ? !1 : le(m, I), C = (I, D) => !(D && Ii(c, D));
   if (f != null && f !== a) {
-    if (Ti(t), ge(f))
+    if (Ti(t), pe(f))
       c[f] = null, v(f) && (h[f] = null);
     else if (/* @__PURE__ */ me(f)) {
       const I = t;
@@ -1905,7 +1905,7 @@ function fs(e, t, s, n, i = !1) {
       ot();
     }
   } else {
-    const I = ge(a), D = /* @__PURE__ */ me(a);
+    const I = pe(a), D = /* @__PURE__ */ me(a);
     if (I || D) {
       const k = () => {
         if (e.f) {
@@ -1926,7 +1926,7 @@ function fs(e, t, s, n, i = !1) {
         const y = () => {
           k(), qs.delete(e);
         };
-        y.id = -1, qs.set(e, y), Ee(y, s);
+        y.id = -1, qs.set(e, y), Ae(y, s);
       } else
         Ti(e), k();
     }
@@ -1945,7 +1945,7 @@ function jl(e, t) {
 function Bl(e, t) {
   io(e, "da", t);
 }
-function io(e, t, s = Re) {
+function io(e, t, s = Pe) {
   const n = e.__wdc || (e.__wdc = () => {
     let i = s;
     for (; i; ) {
@@ -1973,7 +1973,7 @@ function Wl(e, t, s, n) {
     Xn(n[t], i);
   }, s);
 }
-function dn(e, t, s = Re, n = !1) {
+function dn(e, t, s = Pe, n = !1) {
   if (s) {
     const i = s[e] || (s[e] = []), r = t.__weh || (t.__weh = (...o) => {
       rt();
@@ -1983,7 +1983,7 @@ function dn(e, t, s = Re, n = !1) {
     return n ? i.unshift(r) : i.push(r), r;
   }
 }
-const vt = (e) => (t, s = Re) => {
+const vt = (e) => (t, s = Pe) => {
   (!Cs || e === "sp") && dn(e, (...n) => t(...n), s);
 }, Kl = vt("bm"), hn = vt("m"), zl = vt(
   "bu"
@@ -1992,14 +1992,14 @@ const vt = (e) => (t, s = Re) => {
 ), ro = vt("um"), Jl = vt(
   "sp"
 ), Gl = vt("rtg"), Yl = vt("rtc");
-function Xl(e, t = Re) {
+function Xl(e, t = Pe) {
   dn("ec", e, t);
 }
 const Zl = /* @__PURE__ */ Symbol.for("v-ndc");
 function je(e, t, s, n) {
   let i;
   const r = s, o = J(e);
-  if (o || ge(e)) {
+  if (o || pe(e)) {
     const l = o && /* @__PURE__ */ pt(e);
     let a = !1, f = !1;
     l && (a = !/* @__PURE__ */ Ue(e), f = /* @__PURE__ */ mt(e), e = ln(e)), i = new Array(e.length);
@@ -2232,7 +2232,7 @@ function Ai(e, t, s) {
 }
 function oo(e, t, s, n) {
   let i = n.includes(".") ? Gr(s, n) : () => s[n];
-  if (ge(e)) {
+  if (pe(e)) {
     const r = t[e];
     ee(r) && Ne(i, r);
   } else if (ee(e))
@@ -2276,20 +2276,20 @@ const sa = {
   methods: rs,
   computed: rs,
   // lifecycle
-  beforeCreate: Te,
-  created: Te,
-  beforeMount: Te,
-  mounted: Te,
-  beforeUpdate: Te,
-  updated: Te,
-  beforeDestroy: Te,
-  beforeUnmount: Te,
-  destroyed: Te,
-  unmounted: Te,
-  activated: Te,
-  deactivated: Te,
-  errorCaptured: Te,
-  serverPrefetch: Te,
+  beforeCreate: Ee,
+  created: Ee,
+  beforeMount: Ee,
+  mounted: Ee,
+  beforeUpdate: Ee,
+  updated: Ee,
+  beforeDestroy: Ee,
+  beforeUnmount: Ee,
+  destroyed: Ee,
+  unmounted: Ee,
+  activated: Ee,
+  deactivated: Ee,
+  errorCaptured: Ee,
+  serverPrefetch: Ee,
   // assets
   components: rs,
   directives: rs,
@@ -2319,7 +2319,7 @@ function Wn(e) {
   }
   return e;
 }
-function Te(e, t) {
+function Ee(e, t) {
   return e ? [...new Set([].concat(e, t))] : t;
 }
 function rs(e, t) {
@@ -2337,7 +2337,7 @@ function ia(e, t) {
   if (!t) return e;
   const s = Se(/* @__PURE__ */ Object.create(null), e);
   for (const n in t)
-    s[n] = Te(e[n], t[n]);
+    s[n] = Ee(e[n], t[n]);
   return s;
 }
 function ao() {
@@ -2431,7 +2431,7 @@ function aa(e, t, ...s) {
   const n = e.vnode.props || fe;
   let i = s;
   const r = t.startsWith("update:"), o = r && la(n, t.slice(7));
-  o && (o.trim && (i = s.map((c) => ge(c) ? c.trim() : c)), o.number && (i = s.map(Zn)));
+  o && (o.trim && (i = s.map((c) => pe(c) ? c.trim() : c)), o.number && (i = s.map(Zn)));
   let l, a = n[l = xn(t)] || // also try camelCase event handler (#2249)
   n[l = xn(qe(t))];
   !a && r && (a = n[l = xn(Ct(t))]), a && Ke(
@@ -2519,7 +2519,7 @@ function Ri(e) {
       ), y = t.props ? l : ua(l);
     }
   } catch (R) {
-    ps.length = 0, un(R, e, 1), k = ne(Me);
+    ps.length = 0, un(R, e, 1), k = ne(Re);
   }
   let H = k;
   if (y && I !== !1) {
@@ -2807,7 +2807,7 @@ const ci = (e) => e === "_" || e === "_ctx" || e === "$stable", ui = (e) => J(e)
   if (r)
     for (const l in i)
       !ci(l) && o[l] == null && delete i[l];
-}, Ee = Ca;
+}, Ae = Ca;
 function ba(e) {
   return xa(e);
 }
@@ -2836,7 +2836,7 @@ function xa(e, t) {
       case gn:
         D(u, d, g, T);
         break;
-      case Me:
+      case Re:
         k(u, d, g, T);
         break;
       case Hs:
@@ -2978,7 +2978,7 @@ function xa(e, t) {
     }
     X && Et(u, null, T, "beforeMount");
     const re = wa(S, q);
-    re && q.beforeEnter(M), n(M, d, g), ((x = G && G.onVnodeMounted) || re || X) && Ee(() => {
+    re && q.beforeEnter(M), n(M, d, g), ((x = G && G.onVnodeMounted) || re || X) && Ae(() => {
       try {
         x && Qe(x, T, u), re && q.enter(M), X && Et(u, null, T, "mounted");
       } finally {
@@ -3054,7 +3054,7 @@ function xa(e, t) {
       }
       M & 1 && u.children !== d.children && c(L, d.children);
     } else !F && x == null && Y(L, U, q, g, S);
-    ((X = q.onVnodeUpdated) || G) && Ee(() => {
+    ((X = q.onVnodeUpdated) || G) && Ae(() => {
       X && Qe(X, g, d, u), G && Et(d, u, g, "updated");
     }, T);
   }, j = (u, d, g, T, S, b, F) => {
@@ -3174,7 +3174,7 @@ function xa(e, t) {
     );
     if (fn(u) && (L.ctx.renderer = Zt), La(L, !1, F), L.asyncDep) {
       if (S && S.registerDep(L, B, F), !u.el) {
-        const M = L.subTree = ne(Me);
+        const M = L.subTree = ne(Re);
         k(null, M, d, g), u.placeholder = M.el;
       }
     } else
@@ -3205,7 +3205,7 @@ function xa(e, t) {
           const Xe = bo(u);
           if (Xe) {
             U && (U.el = ue.el, W(u, U, F)), Xe.asyncDep.then(() => {
-              Ee(() => {
+              Ae(() => {
                 u.isUnmounted || x();
               }, S);
             });
@@ -3225,7 +3225,7 @@ function xa(e, t) {
           u,
           S,
           b
-        ), U.el = Ce.el, ce === null && ha(u, Ce.el), X && Ee(X, S), (be = U.props && U.props.onVnodeUpdated) && Ee(
+        ), U.el = Ce.el, ce === null && ha(u, Ce.el), X && Ae(X, S), (be = U.props && U.props.onVnodeUpdated) && Ae(
           () => Qe(be, re, U, ue),
           S
         );
@@ -3249,14 +3249,14 @@ function xa(e, t) {
             b
           ), d.el = Xe.el;
         }
-        if (ue && Ee(ue, S), !Ye && (U = X && X.onVnodeMounted)) {
+        if (ue && Ae(ue, S), !Ye && (U = X && X.onVnodeMounted)) {
           const Xe = d;
-          Ee(
+          Ae(
             () => Qe(U, ce, Xe),
             S
           );
         }
-        (d.shapeFlag & 256 || ce && ds(ce.vnode) && ce.vnode.shapeFlag & 256) && u.a && Ee(u.a, S), u.isMounted = !0, d = g = T = null;
+        (d.shapeFlag & 256 || ce && ds(ce.vnode) && ce.vnode.shapeFlag & 256) && u.a && Ae(u.a, S), u.isMounted = !0, d = g = T = null;
       }
     };
     u.scope.on();
@@ -3498,7 +3498,7 @@ function xa(e, t) {
     }
     if (T !== 2 && x & 1 && L)
       if (T === 0)
-        L.persisted && !b[Ve] ? n(b, d, g) : (L.beforeEnter(b), n(b, d, g), Ee(() => L.enter(b), S));
+        L.persisted && !b[Ve] ? n(b, d, g) : (L.beforeEnter(b), n(b, d, g), Ae(() => L.enter(b), S));
       else {
         const { leave: U, delayLeave: q, afterLeave: X } = L, re = () => {
           u.ctx.isUnmounted ? i(b) : n(b, d, g);
@@ -3562,7 +3562,7 @@ function xa(e, t) {
       ) : (b === ie && U & 384 || !S && G & 16) && Xt(M, d, g), T && ks(u);
     }
     const Ce = re != null && X == null;
-    (ce && (be = F && F.onVnodeUnmounted) || ue || Ce) && Ee(() => {
+    (ce && (be = F && F.onVnodeUnmounted) || ue || Ce) && Ae(() => {
       be && Qe(be, d, u), ue && Et(u, null, d, "unmounted"), Ce && (u.el = null);
     }, g);
   }, ks = (u) => {
@@ -3590,7 +3590,7 @@ function xa(e, t) {
     i(d);
   }, Fo = (u, d, g) => {
     const { bum: T, scope: S, job: b, subTree: F, um: L, m: M, a: x } = u;
-    $i(M), $i(x), T && Us(T), S.stop(), b && (b.flags |= 8, Le(F, u, d, g)), L && Ee(L, d), Ee(() => {
+    $i(M), $i(x), T && Us(T), S.stop(), b && (b.flags |= 8, Le(F, u, d, g)), L && Ae(L, d), Ae(() => {
       u.isUnmounted = !0;
     }, d);
   }, Xt = (u, d, g, T = !1, S = !1, b = 0) => {
@@ -3649,7 +3649,7 @@ function fi(e, t, s = !1) {
     for (let r = 0; r < n.length; r++) {
       const o = n[r];
       let l = i[r];
-      l.shapeFlag & 1 && !l.dynamicChildren && ((l.patchFlag <= 0 || l.patchFlag === 32) && (l = i[r] = ft(i[r]), l.el = o.el), !s && l.patchFlag !== -2 && fi(o, l)), l.type === gn && (l.patchFlag === -1 && (l = i[r] = ft(l)), l.el = o.el), l.type === Me && !l.el && (l.el = o.el);
+      l.shapeFlag & 1 && !l.dynamicChildren && ((l.patchFlag <= 0 || l.patchFlag === 32) && (l = i[r] = ft(i[r]), l.el = o.el), !s && l.patchFlag !== -2 && fi(o, l)), l.type === gn && (l.patchFlag === -1 && (l = i[r] = ft(l)), l.el = o.el), l.type === Re && !l.el && (l.el = o.el);
     }
 }
 function Sa(e) {
@@ -3692,7 +3692,7 @@ const wo = (e) => e.__isSuspense;
 function Ca(e, t) {
   t && t.pendingBranch ? J(e) ? t.effects.push(...e) : t.effects.push(e) : kl(e);
 }
-const ie = /* @__PURE__ */ Symbol.for("v-fgt"), gn = /* @__PURE__ */ Symbol.for("v-txt"), Me = /* @__PURE__ */ Symbol.for("v-cmt"), Hs = /* @__PURE__ */ Symbol.for("v-stc"), ps = [];
+const ie = /* @__PURE__ */ Symbol.for("v-fgt"), gn = /* @__PURE__ */ Symbol.for("v-txt"), Re = /* @__PURE__ */ Symbol.for("v-cmt"), Hs = /* @__PURE__ */ Symbol.for("v-stc"), ps = [];
 let Fe = null;
 function A(e = !1) {
   ps.push(Fe = e ? null : []);
@@ -3742,7 +3742,7 @@ const Co = ({ key: e }) => e ?? null, Vs = ({
   ref: e,
   ref_key: t,
   ref_for: s
-}) => (typeof e == "number" && (e = "" + e), e != null ? ge(e) || /* @__PURE__ */ me(e) || ee(e) ? { i: Be, r: e, k: t, f: !!s } : e : null);
+}) => (typeof e == "number" && (e = "" + e), e != null ? pe(e) || /* @__PURE__ */ me(e) || ee(e) ? { i: Be, r: e, k: t, f: !!s } : e : null);
 function p(e, t = null, s = null, n = 0, i = null, r = e === ie ? 0 : 1, o = !1, l = !1) {
   const a = {
     __v_isVNode: !0,
@@ -3773,7 +3773,7 @@ function p(e, t = null, s = null, n = 0, i = null, r = e === ie ? 0 : 1, o = !1,
     appContext: null,
     ctx: Be
   };
-  return l ? (Xs(a, s), r & 128 && e.normalize(a)) : s && (a.shapeFlag |= ge(s) ? 8 : 16), Ss > 0 && // avoid a block node from tracking itself
+  return l ? (Xs(a, s), r & 128 && e.normalize(a)) : s && (a.shapeFlag |= pe(s) ? 8 : 16), Ss > 0 && // avoid a block node from tracking itself
   !o && // has current parent block
   Fe && // presence of a patch flag indicates this node needs patching on updates.
   // component nodes also should always be patched, because even if the
@@ -3785,7 +3785,7 @@ function p(e, t = null, s = null, n = 0, i = null, r = e === ie ? 0 : 1, o = !1,
 }
 const ne = Ta;
 function Ta(e, t = null, s = null, n = 0, i = null, r = !1) {
-  if ((!e || e === Zl) && (e = Me), Ys(e)) {
+  if ((!e || e === Zl) && (e = Re), Ys(e)) {
     const l = St(
       e,
       t,
@@ -3797,9 +3797,9 @@ function Ta(e, t = null, s = null, n = 0, i = null, r = !1) {
   if (Na(e) && (e = e.__vccOpts), t) {
     t = Ea(t);
     let { class: l, style: a } = t;
-    l && !ge(l) && (t.class = ye(l)), ae(a) && (/* @__PURE__ */ cn(a) && !J(a) && (a = Se({}, a)), t.style = $t(a));
+    l && !pe(l) && (t.class = ye(l)), ae(a) && (/* @__PURE__ */ cn(a) && !J(a) && (a = Se({}, a)), t.style = $t(a));
   }
-  const o = ge(e) ? 1 : wo(e) ? 128 : Xr(e) ? 64 : ae(e) ? 4 : ee(e) ? 2 : 0;
+  const o = pe(e) ? 1 : wo(e) ? 128 : Xr(e) ? 64 : ae(e) ? 4 : ee(e) ? 2 : 0;
   return p(
     e,
     t,
@@ -3871,11 +3871,11 @@ function Os(e, t) {
   const s = ne(Hs, null, e);
   return s.staticCount = t, s;
 }
-function Pe(e = "", t = !1) {
-  return t ? (A(), gt(Me, null, e)) : ne(Me, null, e);
+function Te(e = "", t = !1) {
+  return t ? (A(), gt(Re, null, e)) : ne(Re, null, e);
 }
 function st(e) {
-  return e == null || typeof e == "boolean" ? ne(Me) : J(e) ? ne(
+  return e == null || typeof e == "boolean" ? ne(Re) : J(e) ? ne(
     ie,
     null,
     // #3666, avoid reference pollution when reusing vnode
@@ -4017,8 +4017,8 @@ function Pa(e, t, s) {
   };
   return r.ctx = { _: r }, r.root = t ? t.root : r, r.emit = aa.bind(null, r), e.ce && e.ce(r), r;
 }
-let Re = null;
-const di = () => Re || Be;
+let Pe = null;
+const di = () => Pe || Be;
 let Zs, zn;
 {
   const e = on(), t = (s, n) => {
@@ -4029,19 +4029,19 @@ let Zs, zn;
   };
   Zs = t(
     "__VUE_INSTANCE_SETTERS__",
-    (s) => Re = s
+    (s) => Pe = s
   ), zn = t(
     "__VUE_SSR_SETTERS__",
     (s) => Cs = s
   );
 }
 const As = (e) => {
-  const t = Re;
+  const t = Pe;
   return Zs(e), e.scope.on(), () => {
     e.scope.off(), Zs(t);
   };
 }, Oi = () => {
-  Re && Re.scope.off(), Zs(null);
+  Pe && Pe.scope.off(), Zs(null);
 };
 function Io(e) {
   return e.vnode.shapeFlag & 4;
@@ -4400,11 +4400,11 @@ function ns(e, t) {
 }
 const Xa = /* @__PURE__ */ Symbol(""), Za = /(?:^|;)\s*display\s*:/;
 function Qa(e, t, s) {
-  const n = e.style, i = ge(s);
+  const n = e.style, i = pe(s);
   let r = !1;
   if (s && !i) {
     if (t)
-      if (ge(t))
+      if (pe(t))
         for (const o of t.split(";")) {
           const l = o.slice(0, o.indexOf(":")).trim();
           s[l] == null && os(n, l, "");
@@ -4418,7 +4418,7 @@ function Qa(e, t, s) {
       l != null ? tc(
         e,
         o,
-        !ge(t) && t ? t[o] : void 0,
+        !pe(t) && t ? t[o] : void 0,
         l
       ) || os(n, o, l) : os(n, o, "");
     }
@@ -4462,7 +4462,7 @@ function ec(e, t) {
   return t;
 }
 function tc(e, t, s, n) {
-  return e.tagName === "TEXTAREA" && (t === "width" || t === "height") && ge(n) && s === n;
+  return e.tagName === "TEXTAREA" && (t === "width" || t === "height") && pe(n) && s === n;
 }
 const qi = "http://www.w3.org/1999/xlink";
 function Ji(e, t, s, n, i, r = Go(t)) {
@@ -4566,7 +4566,7 @@ e.charCodeAt(2) > 96 && e.charCodeAt(2) < 123, uc = (e, t, s, n, i, r) => {
   const o = i === "svg";
   t === "class" ? Ya(e, n, o) : t === "style" ? Qa(e, s, n) : tn(t) ? sn(t) || nc(e, t, s, n, r) : (t[0] === "." ? (t = t.slice(1), !0) : t[0] === "^" ? (t = t.slice(1), !1) : fc(e, t, n, o)) ? (Gi(e, t, n), !e.tagName.includes("-") && (t === "value" || t === "checked" || t === "selected") && Ji(e, t, n, o, r, t !== "value")) : /* #11081 force set props for possible async custom element */ e._isVueCE && // #12408 check if it's declared prop or it's async custom element
   (dc(e, t) || // @ts-expect-error _def is private
-  e._def.__asyncLoader && (/[A-Z]/.test(t) || !ge(n))) ? Gi(e, qe(t), n, r, t) : (t === "true-value" ? e._trueValue = n : t === "false-value" && (e._falseValue = n), Ji(e, t, n, o));
+  e._def.__asyncLoader && (/[A-Z]/.test(t) || !pe(n))) ? Gi(e, qe(t), n, r, t) : (t === "true-value" ? e._trueValue = n : t === "false-value" && (e._falseValue = n), Ji(e, t, n, o));
 };
 function fc(e, t, s, n) {
   if (n)
@@ -4578,7 +4578,7 @@ function fc(e, t, s, n) {
     if (i === "IMG" || i === "VIDEO" || i === "CANVAS" || i === "SOURCE")
       return !1;
   }
-  return Xi(t) && ge(s) ? !1 : t in e;
+  return Xi(t) && pe(s) ? !1 : t in e;
 }
 function dc(e, t) {
   const s = (
@@ -4691,7 +4691,7 @@ function _c(e) {
     return "mathml";
 }
 function bc(e) {
-  return ge(e) ? document.querySelector(e) : e;
+  return pe(e) ? document.querySelector(e) : e;
 }
 /*!
  * pinia v2.3.1
@@ -4924,7 +4924,7 @@ function $n() {
     customCueRules: []
   };
 }
-const Ae = /* @__PURE__ */ yn("settings", {
+const ke = /* @__PURE__ */ yn("settings", {
   state: () => ({
     settings: $n(),
     storage: null
@@ -5427,7 +5427,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
       return e.list.length === 0;
     },
     playMode() {
-      return Ae().settings.playMode;
+      return ke().settings.playMode;
     }
   },
   actions: {
@@ -5436,14 +5436,14 @@ const Yt = /* @__PURE__ */ yn("playlist", {
     },
     setChatId(e) {
       this.chatId = e, this.list = this.list.filter((n) => n.source !== "chat"), this.loadFromStorage();
-      const s = Ae().storage;
+      const s = ke().storage;
       if (s) {
         const n = s.getMetadata(or);
         n && n.chatId === e && this.chatIndexer?.setCursor(e, n.lastScannedMessageId);
       }
     },
     loadFromStorage() {
-      const t = Ae().storage;
+      const t = ke().storage;
       if (!t || !this.chatId) return;
       const s = t.getMetadata(lr);
       if (s && Array.isArray(s)) {
@@ -5531,7 +5531,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
     async resolveAndPlay(e) {
       const t = this.list[e];
       if (!t) return;
-      const s = Ae(), n = s.storage;
+      const s = ke(), n = s.storage;
       if (!n) return;
       let i = null;
       const r = Do(s.settings.providers);
@@ -5552,7 +5552,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
     },
     handleNewCues(e) {
       if (e.length === 0) return;
-      const t = Ae();
+      const t = ke();
       let s = null;
       for (const n of e)
         for (const i of n.cues) {
@@ -5573,7 +5573,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
     },
     handleMessageUpdate(e) {
       if (!this.chatIndexer || !this.chatId) return;
-      const t = Ae(), s = this.chatIndexer.scanMessage(
+      const t = ke(), s = this.chatIndexer.scanMessage(
         this.chatId,
         e,
         t.settings.customCueRules
@@ -5598,7 +5598,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
         this.removeItem(s);
     },
     saveUserList() {
-      const t = Ae().storage;
+      const t = ke().storage;
       if (!t || !this.chatId) return;
       const s = this.list.filter((n) => n.source === "user" || n.source === "local");
       t.setMetadata(lr, s);
@@ -5609,7 +5609,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
     setCursor(e) {
       if (!this.chatIndexer || !this.chatId) return;
       this.chatIndexer.setCursor(this.chatId, e);
-      const s = Ae().storage;
+      const s = ke().storage;
       s && s.setMetadata(or, {
         chatId: this.chatId,
         lastScannedMessageId: e,
@@ -5665,7 +5665,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
       this.audioEngine?.seek(e);
     },
     setVolume(e) {
-      this.volume = e, this.audioEngine?.setVolume(e / 100), Ae().setVolume(e);
+      this.volume = e, this.audioEngine?.setVolume(e / 100), ke().setVolume(e);
     },
     updateLyrics(e) {
       this.lyrics = kc(e), this.currentLyricIndex = -1;
@@ -5870,7 +5870,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
         s[27] || (s[27] = Os('<line x1="12" y1="2" x2="12" y2="6" data-v-4bfc4099></line><line x1="12" y1="18" x2="12" y2="22" data-v-4bfc4099></line><line x1="4.93" y1="4.93" x2="7.76" y2="7.76" data-v-4bfc4099></line><line x1="16.24" y1="16.24" x2="19.07" y2="19.07" data-v-4bfc4099></line><line x1="2" y1="12" x2="6" y2="12" data-v-4bfc4099></line><line x1="18" y1="12" x2="22" y2="12" data-v-4bfc4099></line><line x1="4.93" y1="19.07" x2="7.76" y2="16.24" data-v-4bfc4099></line><line x1="16.24" y1="7.76" x2="19.07" y2="4.93" data-v-4bfc4099></line>', 8))
       ], 64)) : e.name === "list-music" ? (A(), O(ie, { key: 17 }, [
         s[28] || (s[28] = Os('<path d="M3 12h11" data-v-4bfc4099></path><path d="M3 6h11" data-v-4bfc4099></path><path d="M3 18h7" data-v-4bfc4099></path><path d="M16 8v13" data-v-4bfc4099></path><circle cx="14" cy="21" r="2" data-v-4bfc4099></circle><path d="M16 8l5-2v3" data-v-4bfc4099></path>', 6))
-      ], 64)) : Pe("", !0)
+      ], 64)) : Te("", !0)
     ], 8, Uc));
   }
 }), Tt = (e, t) => {
@@ -5878,7 +5878,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
   for (const [n, i] of t)
     s[n] = i;
   return s;
-}, pe = /* @__PURE__ */ Tt(Wc, [["__scopeId", "data-v-4bfc4099"]]), Kc = {
+}, ge = /* @__PURE__ */ Tt(Wc, [["__scopeId", "data-v-4bfc4099"]]), Kc = {
   key: 0,
   class: "stmp-mini stmp-mini-dock-desktop"
 }, zc = {
@@ -5986,7 +5986,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
           onError: R
         }, null, 40, qc)
       ])) : (A(), O("div", Jc, [
-        ne(pe, {
+        ne(ge, {
           name: "music",
           size: 14
         })
@@ -6015,7 +6015,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
           "aria-label": w(t).isPlaying ? w(V)("Pause") : w(V)("Play"),
           onClick: z
         }, [
-          ne(pe, {
+          ne(ge, {
             name: w(t).isPlaying ? "pause" : "play",
             size: 14
           }, null, 8, ["name"])
@@ -6025,7 +6025,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
           "aria-label": w(V)("Next"),
           onClick: Q
         }, [
-          ne(pe, {
+          ne(ge, {
             name: "next",
             size: 14
           })
@@ -6039,7 +6039,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
           onError: R
         }, null, 40, tu)
       ])) : (A(), O("div", su, [
-        ne(pe, {
+        ne(ge, {
           name: "music",
           size: 14
         })
@@ -6068,7 +6068,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
           "aria-label": w(t).isPlaying ? w(V)("Pause") : w(V)("Play"),
           onClick: z
         }, [
-          ne(pe, {
+          ne(ge, {
             name: w(t).isPlaying ? "pause" : "play",
             size: 16
           }, null, 8, ["name"])
@@ -6078,7 +6078,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
           "aria-label": w(V)("Next"),
           onClick: Q
         }, [
-          ne(pe, {
+          ne(ge, {
             name: "next",
             size: 16
           })
@@ -6095,13 +6095,13 @@ const Yt = /* @__PURE__ */ yn("playlist", {
           src: r.value,
           alt: "",
           onError: R
-        }, null, 40, fu)) : (A(), gt(pe, {
+        }, null, 40, fu)) : (A(), gt(ge, {
           key: 1,
           name: "music",
           size: 20
         })),
         p("div", du, [
-          ne(pe, {
+          ne(ge, {
             name: w(t).isPlaying ? "pause" : "play",
             size: 18
           }, null, 8, ["name"])
@@ -6127,7 +6127,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
       ])
     ])) : (A(), O("div", lu, [
       p("div", au, [
-        ne(pe, {
+        ne(ge, {
           name: "music",
           size: 20
         })
@@ -6146,7 +6146,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
 }, Tu = ["onClick"], Eu = /* @__PURE__ */ It({
   __name: "PlaylistView",
   setup(e) {
-    const t = Yt(), s = Ae(), n = $e(() => s.settings.providers.find((h) => h.id === "local")?.enabled ?? !1), i = /* @__PURE__ */ he(null), r = () => {
+    const t = Yt(), s = ke(), n = $e(() => s.settings.providers.find((h) => h.id === "local")?.enabled ?? !1), i = /* @__PURE__ */ he(null), r = () => {
       i.value?.click();
     }, o = async (h) => {
       const m = h.target;
@@ -6188,7 +6188,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
           "aria-label": w(V)("Add local file"),
           onClick: r
         }, " + " + te(w(V)("Add local file")), 9, yu)
-      ])) : Pe("", !0),
+      ])) : Te("", !0),
       w(t).isEmpty ? (A(), O("div", _u, te(w(V)("No Songs")), 1)) : (A(), O(ie, { key: 2 }, je(["chat", "user", "local"], (v) => p("div", {
         key: v,
         class: "stmp-group"
@@ -6203,19 +6203,19 @@ const Yt = /* @__PURE__ */ yn("playlist", {
             p("span", wu, te(C.index + 1), 1),
             p("div", Su, [
               p("span", Cu, te(C.item.song), 1),
-              C.item.artist ? (A(), O("span", Iu, te(C.item.artist), 1)) : Pe("", !0)
+              C.item.artist ? (A(), O("span", Iu, te(C.item.artist), 1)) : Te("", !0)
             ]),
             p("button", {
               class: "stmp-item-del",
               onClick: Bt((I) => c(C.index), ["stop"])
             }, [
-              ne(pe, {
+              ne(ge, {
                 name: "x",
                 size: 14
               })
             ], 8, Tu)
           ], 10, xu))), 128))
-        ], 64)) : Pe("", !0)
+        ], 64)) : Te("", !0)
       ])), 64))
     ]));
   }
@@ -6240,7 +6240,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
 }, ju = ["aria-label", "onClick"], Bu = /* @__PURE__ */ It({
   __name: "SearchView",
   setup(e) {
-    const t = Fc(), s = Yt(), n = Ae(), i = /* @__PURE__ */ he(t.keyword), r = /* @__PURE__ */ he(/* @__PURE__ */ new Set()), o = /* @__PURE__ */ he(null);
+    const t = Fc(), s = Yt(), n = ke(), i = /* @__PURE__ */ he(t.keyword), r = /* @__PURE__ */ he(/* @__PURE__ */ new Set()), o = /* @__PURE__ */ he(null);
     async function l() {
       t.setKeyword(i.value);
       const v = Do(n.settings.providers);
@@ -6285,12 +6285,12 @@ const Yt = /* @__PURE__ */ yn("playlist", {
           disabled: w(t).isSearching,
           onClick: l
         }, [
-          w(t).isSearching ? (A(), gt(pe, {
+          w(t).isSearching ? (A(), gt(ge, {
             key: 1,
             name: "loader",
             size: 16,
             class: "stmp-spin"
-          })) : (A(), gt(pe, {
+          })) : (A(), gt(ge, {
             key: 0,
             name: "search",
             size: 16
@@ -6304,8 +6304,8 @@ const Yt = /* @__PURE__ */ yn("playlist", {
           "aria-label": w(V)("Retry"),
           onClick: a
         }, te(w(V)("Retry")), 9, $u)
-      ])) : Pe("", !0),
-      w(t).isSearching ? (A(), O("div", Ou, te(w(V)("Searching...")), 1)) : i.value && !w(t).results.length ? (A(), O("div", Du, te(w(V)("No results")), 1)) : !i.value && !w(t).results.length ? (A(), O("div", Nu, te(w(V)("Type a song name to search")), 1)) : Pe("", !0),
+      ])) : Te("", !0),
+      w(t).isSearching ? (A(), O("div", Ou, te(w(V)("Searching...")), 1)) : i.value && !w(t).results.length ? (A(), O("div", Du, te(w(V)("No results")), 1)) : !i.value && !w(t).results.length ? (A(), O("div", Nu, te(w(V)("Type a song name to search")), 1)) : Te("", !0),
       w(t).results.length ? (A(), O("div", Fu, [
         (A(!0), O(ie, null, je(w(t).results, (I) => (A(), O("div", {
           key: I.provider + I.id,
@@ -6316,36 +6316,33 @@ const Yt = /* @__PURE__ */ yn("playlist", {
             onClick: (D) => f(I)
           }, [
             p("span", Hu, te(I.name), 1),
-            I.artist ? (A(), O("span", Vu, te(I.artist), 1)) : Pe("", !0)
+            I.artist ? (A(), O("span", Vu, te(I.artist), 1)) : Te("", !0)
           ], 8, Uu),
           p("button", {
             class: ye(["stmp-icon-btn stmp-result-add", { added: h(I) }]),
             "aria-label": h(I) ? w(V)("Added") : w(V)("Add to list"),
             onClick: Bt((D) => c(I), ["stop"])
           }, [
-            ne(pe, {
+            ne(ge, {
               name: h(I) ? "check" : "plus",
               size: 16
             }, null, 8, ["name"])
           ], 10, ju)
         ], 2))), 128))
-      ])) : Pe("", !0)
+      ])) : Te("", !0)
     ]));
   }
 }), Wu = /* @__PURE__ */ Tt(Bu, [["__scopeId", "data-v-a8d156af"]]), Ku = { class: "stmp-panel" }, zu = { class: "stmp-topbar stmp-drag-handle" }, qu = ["aria-label"], Ju = { class: "stmp-cover-large" }, Gu = ["src"], Yu = {
   key: 1,
   class: "stmp-cover-placeholder"
-}, Xu = { class: "stmp-track-name" }, Zu = { class: "stmp-track-artist" }, Qu = { class: "stmp-lyric-header" }, ef = { class: "stmp-track-name" }, tf = { class: "stmp-track-artist" }, sf = {
-  key: 0,
-  class: "stmp-lyric-empty"
-}, nf = { class: "stmp-progress" }, rf = ["value"], of = { class: "stmp-time" }, lf = { class: "stmp-controls" }, af = { class: "stmp-ctrl-side stmp-search-side" }, cf = ["aria-label"], uf = ["aria-label"], ff = ["aria-label"], df = ["aria-label"], hf = ["aria-label"], pf = ["aria-label"], gf = { class: "stmp-ctrl-side stmp-volume-side" }, mf = ["aria-label"], vf = ["value"], yf = {
+}, Xu = { class: "stmp-track-name" }, Zu = { class: "stmp-track-artist" }, Qu = { class: "stmp-lyric-header" }, ef = { class: "stmp-track-name" }, tf = { class: "stmp-track-artist" }, sf = { class: "stmp-progress" }, nf = ["value"], rf = { class: "stmp-time" }, of = { class: "stmp-controls" }, lf = { class: "stmp-ctrl-side stmp-search-side" }, af = ["aria-label"], cf = ["aria-label"], uf = ["aria-label"], ff = ["aria-label"], df = ["aria-label"], hf = ["aria-label"], pf = { class: "stmp-ctrl-side stmp-volume-side" }, gf = ["aria-label"], mf = ["value"], vf = {
   key: 0,
   class: "stmp-overlay"
-}, _f = { class: "stmp-overlay-header" }, bf = { class: "stmp-overlay-title" }, xf = ["aria-label"], wf = { class: "stmp-overlay-body" }, Sf = /* @__PURE__ */ It({
+}, yf = { class: "stmp-overlay-header" }, _f = { class: "stmp-overlay-title" }, bf = ["aria-label"], xf = { class: "stmp-overlay-body" }, wf = /* @__PURE__ */ It({
   __name: "PlayerPanel",
   emits: ["collapse"],
   setup(e) {
-    const t = Nt(), s = Yt(), n = Ae(), i = /* @__PURE__ */ he("cover"), r = /* @__PURE__ */ he(null), o = /* @__PURE__ */ he(!1), l = /* @__PURE__ */ he(!1);
+    const t = Nt(), s = Yt(), n = ke(), i = /* @__PURE__ */ he("cover"), r = /* @__PURE__ */ he(null), o = /* @__PURE__ */ he(!1), l = /* @__PURE__ */ he(!1);
     let a = null;
     const f = $e(() => t.currentTrack?.cover || ""), c = () => {
       o.value = !0;
@@ -6423,7 +6420,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
           "aria-label": w(V)("Collapse panel"),
           onClick: K[0] || (K[0] = Bt((Z) => E.$emit("collapse"), ["stop"]))
         }, [
-          ne(pe, {
+          ne(ge, {
             name: "chevron-down",
             size: 18
           })
@@ -6443,7 +6440,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
               alt: "cover",
               onError: c
             }, null, 40, Gu)) : (A(), O("div", Yu, [
-              ne(pe, {
+              ne(ge, {
                 name: "music",
                 size: 48
               })
@@ -6464,13 +6461,8 @@ const Yt = /* @__PURE__ */ yn("playlist", {
             ref: C,
             class: "stmp-lyric-window"
           }, [
-            w(t).lyrics.length === 0 ? (A(), O("div", sf, [
-              ne(pe, {
-                name: "music",
-                size: 18
-              })
-            ])) : (A(), O("div", {
-              key: 1,
+            w(t).lyrics.length > 0 ? (A(), O("div", {
+              key: 0,
               class: "stmp-lyric-scroll",
               style: $t({ transform: `translateY(-${m.value}px)` })
             }, [
@@ -6480,11 +6472,11 @@ const Yt = /* @__PURE__ */ yn("playlist", {
                 ref: (B) => I(B, _e),
                 class: ye(["stmp-lyric-line", { "stmp-lyric-active": _e === w(t).currentLyricIndex }])
               }, te(Z.text), 3))), 128))
-            ], 4))
+            ], 4)) : Te("", !0)
           ], 512)
         ], 2)
       ]),
-      p("div", nf, [
+      p("div", sf, [
         p("input", {
           type: "range",
           min: "0",
@@ -6493,76 +6485,76 @@ const Yt = /* @__PURE__ */ yn("playlist", {
           value: h.value,
           class: "stmp-range",
           onInput: y
-        }, null, 40, rf),
-        p("div", of, [
+        }, null, 40, nf),
+        p("div", rf, [
           p("span", null, te(k(w(t).currentTime)), 1),
           p("span", null, te(k(w(t).duration)), 1)
         ])
       ]),
-      p("div", lf, [
-        p("div", af, [
+      p("div", of, [
+        p("div", lf, [
           p("button", {
             class: ye(["stmp-ctrl-btn", { active: r.value === "search" }]),
             "aria-label": w(V)("Search"),
             onClick: K[2] || (K[2] = Bt((Z) => j("search"), ["stop"]))
           }, [
-            ne(pe, {
+            ne(ge, {
               name: "search",
               size: 18
             })
-          ], 10, cf)
+          ], 10, af)
         ]),
         p("button", {
           class: "stmp-ctrl-btn",
           "aria-label": w(V)("Toggle play mode"),
           onClick: z
         }, [
-          ne(pe, {
+          ne(ge, {
             name: R[w(n).settings.playMode],
             size: 18
           }, null, 8, ["name"])
-        ], 8, uf),
+        ], 8, cf),
         p("button", {
           class: "stmp-ctrl-btn",
           "aria-label": w(V)("Previous"),
           onClick: K[3] || (K[3] = (Z) => w(s).prev())
         }, [
-          ne(pe, {
+          ne(ge, {
             name: "prev",
             size: 18
           })
-        ], 8, ff),
+        ], 8, uf),
         p("button", {
           class: "stmp-ctrl-btn stmp-play-btn",
           "aria-label": w(t).isPlaying ? w(V)("Pause") : w(V)("Play"),
           onClick: K[4] || (K[4] = (Z) => w(t).togglePlay())
         }, [
-          ne(pe, {
+          ne(ge, {
             name: w(t).isPlaying ? "pause" : "play",
             size: 24
           }, null, 8, ["name"])
-        ], 8, df),
+        ], 8, ff),
         p("button", {
           class: "stmp-ctrl-btn",
           "aria-label": w(V)("Next"),
           onClick: K[5] || (K[5] = (Z) => w(s).next())
         }, [
-          ne(pe, {
+          ne(ge, {
             name: "next",
             size: 18
           })
-        ], 8, hf),
+        ], 8, df),
         p("button", {
           class: ye(["stmp-ctrl-btn", { active: r.value === "list" }]),
           "aria-label": w(V)("Playlist"),
           onClick: K[6] || (K[6] = Bt((Z) => j("list"), ["stop"]))
         }, [
-          ne(pe, {
+          ne(ge, {
             name: "list-music",
             size: 18
           })
-        ], 10, pf),
-        p("div", gf, [
+        ], 10, hf),
+        p("div", pf, [
           p("div", {
             class: "stmp-volume-container",
             onMouseenter: P,
@@ -6573,11 +6565,11 @@ const Yt = /* @__PURE__ */ yn("playlist", {
               "aria-label": w(V)("Mute / Unmute"),
               onClick: _
             }, [
-              ne(pe, {
+              ne(ge, {
                 name: w(t).volume === 0 ? "volume-mute" : "volume",
                 size: 18
               }, null, 8, ["name"])
-            ], 8, mf),
+            ], 8, gf),
             p("div", {
               class: ye(["stmp-volume-popup", { show: l.value }])
             }, [
@@ -6589,43 +6581,43 @@ const Yt = /* @__PURE__ */ yn("playlist", {
                 class: "stmp-volume-vertical",
                 orient: "vertical",
                 onInput: Q
-              }, null, 40, vf)
+              }, null, 40, mf)
             ], 2)
           ], 32)
         ])
       ]),
       ne(Ka, { name: "stmp-overlay" }, {
         default: qr(() => [
-          r.value ? (A(), O("div", yf, [
-            p("div", _f, [
-              p("span", bf, te(r.value === "list" ? w(V)("Playlist") : w(V)("Search")), 1),
+          r.value ? (A(), O("div", vf, [
+            p("div", yf, [
+              p("span", _f, te(r.value === "list" ? w(V)("Playlist") : w(V)("Search")), 1),
               p("button", {
                 class: "stmp-overlay-close",
                 "aria-label": w(V)("Close"),
                 onClick: Bt(Y, ["stop"])
               }, [
-                ne(pe, {
+                ne(ge, {
                   name: "x",
                   size: 16
                 })
-              ], 8, xf)
+              ], 8, bf)
             ]),
-            p("div", wf, [
+            p("div", xf, [
               r.value === "list" ? (A(), gt(Au, { key: 0 })) : (A(), gt(Wu, { key: 1 }))
             ])
-          ])) : Pe("", !0)
+          ])) : Te("", !0)
         ]),
         _: 1
       })
     ]));
   }
-}), cr = /* @__PURE__ */ Tt(Sf, [["__scopeId", "data-v-b6793b97"]]), Cf = {
+}), cr = /* @__PURE__ */ Tt(wf, [["__scopeId", "data-v-4bf7f7af"]]), Sf = {
   key: 1,
   class: "stmp-inline-expanded"
-}, ur = 3, If = 500, Tf = /* @__PURE__ */ It({
+}, ur = 3, Cf = 500, If = /* @__PURE__ */ It({
   __name: "App",
   setup(e) {
-    const t = Ae(), s = Nt(), n = /* @__PURE__ */ he(!1), i = /* @__PURE__ */ he(null);
+    const t = ke(), s = Nt(), n = /* @__PURE__ */ he(!1), i = /* @__PURE__ */ he(null);
     let r = null;
     const o = $e(() => t.settings.widgetMode === "dock"), l = $e(() => t.settings.widgetMode === "inline"), a = $e(() => t.settings.widgetMode === "hidden"), f = /* @__PURE__ */ he(window.innerWidth <= 768), c = /* @__PURE__ */ he(!1), h = (B) => {
       B.key === "Escape" && (n.value = !1), B.key === " " && B.target === document.body && (B.preventDefault(), s.togglePlay());
@@ -6657,7 +6649,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
         }
         return;
       }
-      if (B > If) {
+      if (B > Cf) {
         H = !0;
         return;
       }
@@ -6734,7 +6726,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
         key: 0,
         to: "#send_form"
       }, [
-        n.value ? (A(), O("div", Cf, [
+        n.value ? (A(), O("div", Sf, [
           ne(cr, { onCollapse: Z })
         ])) : (A(), O("div", {
           key: 0,
@@ -6746,8 +6738,8 @@ const Yt = /* @__PURE__ */ yn("playlist", {
             "is-mobile": !0
           })
         ]))
-      ])) : Pe("", !0)
-    ], 64)) : a.value ? Pe("", !0) : (A(), O("div", {
+      ])) : Te("", !0)
+    ], 64)) : a.value ? Te("", !0) : (A(), O("div", {
       key: 1,
       ref_key: "widgetRef",
       ref: i,
@@ -6769,10 +6761,10 @@ const Yt = /* @__PURE__ */ yn("playlist", {
       }, null, 8, ["is-dock", "is-mobile"]))
     ], 34));
   }
-}), Ef = /* @__PURE__ */ Tt(Tf, [["__scopeId", "data-v-18adfe29"]]), Af = { class: "stmp-switch-row" }, kf = {
+}), Tf = /* @__PURE__ */ Tt(If, [["__scopeId", "data-v-18adfe29"]]), Ef = { class: "stmp-switch-row" }, Af = {
   key: 0,
   class: "stmp-switch-label"
-}, Mf = { class: "stmp-switch" }, Rf = ["checked"], Pf = /* @__PURE__ */ It({
+}, kf = { class: "stmp-switch" }, Mf = ["checked"], Rf = /* @__PURE__ */ It({
   __name: "ToggleSwitch",
   props: {
     modelValue: { type: Boolean },
@@ -6785,33 +6777,33 @@ const Yt = /* @__PURE__ */ yn("playlist", {
       const r = i.target;
       s("update:modelValue", r.checked);
     }
-    return (i, r) => (A(), O("label", Af, [
-      e.label ? (A(), O("span", kf, te(e.label), 1)) : Pe("", !0),
-      p("span", Mf, [
+    return (i, r) => (A(), O("label", Ef, [
+      e.label ? (A(), O("span", Af, te(e.label), 1)) : Te("", !0),
+      p("span", kf, [
         p("input", {
           type: "checkbox",
           checked: e.modelValue,
           onChange: n
-        }, null, 40, Rf),
+        }, null, 40, Mf),
         r[0] || (r[0] = p("span", { class: "stmp-switch-track" }, [
           p("span", { class: "stmp-switch-thumb" })
         ], -1))
       ])
     ]));
   }
-}), fr = /* @__PURE__ */ Tt(Pf, [["__scopeId", "data-v-d86a29bd"]]), Lf = { class: "stmp-settings" }, $f = { class: "stmp-tab-bar" }, Of = ["onClick"], Df = { class: "stmp-tab-content" }, Nf = { class: "stmp-tab-panel" }, Ff = { class: "stmp-setting-group" }, Uf = { class: "stmp-setting-label" }, Hf = { class: "stmp-mode-toggle" }, Vf = ["onClick"], jf = {
+}), fr = /* @__PURE__ */ Tt(Rf, [["__scopeId", "data-v-d86a29bd"]]), Pf = { class: "stmp-settings" }, Lf = { class: "stmp-tab-bar" }, $f = ["onClick"], Of = { class: "stmp-tab-content" }, Df = { class: "stmp-tab-panel" }, Nf = { class: "stmp-setting-group" }, Ff = { class: "stmp-setting-label" }, Uf = { class: "stmp-mode-toggle" }, Hf = ["onClick"], Vf = {
   key: 0,
   class: "stmp-setting-group"
-}, Bf = { class: "stmp-setting-label" }, Wf = { class: "stmp-mode-toggle" }, Kf = ["onClick"], zf = { class: "stmp-setting-group" }, qf = { class: "stmp-setting-label" }, Jf = ["value"], Gf = { class: "stmp-setting-group" }, Yf = {
+}, jf = { class: "stmp-setting-label" }, Bf = { class: "stmp-mode-toggle" }, Wf = ["onClick"], Kf = { class: "stmp-setting-group" }, zf = { class: "stmp-setting-label" }, qf = ["value"], Jf = { class: "stmp-setting-group" }, Gf = {
   class: "stmp-setting-label",
   for: "stmp-playmode"
-}, Xf = ["value"], Zf = ["value"], Qf = { class: "stmp-tab-panel" }, ed = {
+}, Yf = ["value"], Xf = ["value"], Zf = { class: "stmp-tab-panel" }, Qf = {
   key: 0,
   class: "stmp-provider-fields"
-}, td = ["onUpdate:modelValue", "placeholder"], sd = ["onUpdate:modelValue", "placeholder"], nd = { class: "stmp-tab-panel" }, id = { class: "stmp-setting-group" }, rd = { class: "stmp-setting-label" }, od = { class: "stmp-rules" }, ld = ["onClick"], ad = { class: "stmp-rule-add" }, cd = ["placeholder"], ud = { class: "stmp-tab-panel" }, fd = { class: "stmp-data-btns" }, dd = /* @__PURE__ */ It({
+}, ed = ["onUpdate:modelValue", "placeholder"], td = ["onUpdate:modelValue", "placeholder"], sd = { class: "stmp-tab-panel" }, nd = { class: "stmp-setting-group" }, id = { class: "stmp-setting-label" }, rd = { class: "stmp-rules" }, od = ["onClick"], ld = { class: "stmp-rule-add" }, ad = ["placeholder"], cd = { class: "stmp-tab-panel" }, ud = { class: "stmp-data-btns" }, fd = /* @__PURE__ */ It({
   __name: "SettingsView",
   setup(e) {
-    const t = Ae(), s = /* @__PURE__ */ he("playback"), n = [
+    const t = ke(), s = /* @__PURE__ */ he("playback"), n = [
       { id: "playback", label: V("Playback"), icon: "fa-solid fa-music" },
       { id: "providers", label: V("Providers"), icon: "fa-solid fa-cloud" },
       { id: "cue", label: V("AI Cue"), icon: "fa-solid fa-wand-magic-sparkles" },
@@ -6883,8 +6875,8 @@ const Yt = /* @__PURE__ */ yn("playlist", {
         }
       }, D.click();
     };
-    return (D, k) => (A(), O("div", Lf, [
-      p("div", $f, [
+    return (D, k) => (A(), O("div", Pf, [
+      p("div", Lf, [
         (A(), O(ie, null, je(n, (y) => p("div", {
           key: y.id,
           class: ye(["stmp-tab", { active: s.value === y.id }]),
@@ -6894,13 +6886,13 @@ const Yt = /* @__PURE__ */ yn("playlist", {
             class: ye(y.icon)
           }, null, 2),
           p("span", null, te(y.label), 1)
-        ], 10, Of)), 64))
+        ], 10, $f)), 64))
       ]),
-      p("div", Df, [
-        _t(p("div", Nf, [
-          p("div", Ff, [
-            p("label", Uf, te(w(V)("Widget Mode")), 1),
-            p("div", Hf, [
+      p("div", Of, [
+        _t(p("div", Df, [
+          p("div", Nf, [
+            p("label", Ff, te(w(V)("Widget Mode")), 1),
+            p("div", Uf, [
               (A(), O(ie, null, je(r, (y) => p("div", {
                 key: y.value,
                 class: ye(["menu_button menu_button_icon stmp-mode-btn", { toggled: w(t).settings.widgetMode === y.value }]),
@@ -6910,12 +6902,12 @@ const Yt = /* @__PURE__ */ yn("playlist", {
                   class: ye(y.icon)
                 }, null, 2),
                 p("span", null, te(y.label), 1)
-              ], 10, Vf)), 64))
+              ], 10, Hf)), 64))
             ])
           ]),
-          w(t).settings.widgetMode === "dock" ? (A(), O("div", jf, [
-            p("label", Bf, te(w(V)("Dock Alignment")), 1),
-            p("div", Wf, [
+          w(t).settings.widgetMode === "dock" ? (A(), O("div", Vf, [
+            p("label", jf, te(w(V)("Dock Alignment")), 1),
+            p("div", Bf, [
               (A(), O(ie, null, je(o, (y) => p("div", {
                 key: y.value,
                 class: ye(["menu_button menu_button_icon stmp-mode-btn", { toggled: w(t).settings.dockAlign === y.value }]),
@@ -6925,21 +6917,21 @@ const Yt = /* @__PURE__ */ yn("playlist", {
                   class: ye(y.icon)
                 }, null, 2),
                 p("span", null, te(y.label), 1)
-              ], 10, Kf)), 64))
+              ], 10, Wf)), 64))
             ])
-          ])) : Pe("", !0),
-          p("div", zf, [
-            p("label", qf, te(w(V)("Default Volume")) + ": " + te(w(t).settings.volume), 1),
+          ])) : Te("", !0),
+          p("div", Kf, [
+            p("label", zf, te(w(V)("Default Volume")) + ": " + te(w(t).settings.volume), 1),
             p("input", {
               type: "range",
               min: "0",
               max: "100",
               value: w(t).settings.volume,
               onInput: l
-            }, null, 40, Jf)
+            }, null, 40, qf)
           ]),
-          p("div", Gf, [
-            p("label", Yf, te(w(V)("Default Play Mode")), 1),
+          p("div", Jf, [
+            p("label", Gf, te(w(V)("Default Play Mode")), 1),
             p("select", {
               id: "stmp-playmode",
               class: "text_pole",
@@ -6949,8 +6941,8 @@ const Yt = /* @__PURE__ */ yn("playlist", {
               (A(), O(ie, null, je(i, (y) => p("option", {
                 key: y.value,
                 value: y.value
-              }, te(y.label), 9, Zf)), 64))
-            ], 40, Xf)
+              }, te(y.label), 9, Xf)), 64))
+            ], 40, Yf)
           ]),
           ne(fr, {
             "model-value": w(t).settings.autoPlayOnNewCue,
@@ -6962,7 +6954,7 @@ const Yt = /* @__PURE__ */ yn("playlist", {
         ], 512), [
           [Ds, s.value === "playback"]
         ]),
-        _t(p("div", Qf, [
+        _t(p("div", Zf, [
           (A(!0), O(ie, null, je(w(t).settings.providers, (y) => (A(), O("div", {
             key: y.id,
             class: "stmp-provider-card"
@@ -6972,13 +6964,13 @@ const Yt = /* @__PURE__ */ yn("playlist", {
               label: f[y.id] || y.id,
               "onUpdate:modelValue": () => c(y.id)
             }, null, 8, ["model-value", "label", "onUpdate:modelValue"]),
-            y.id === "custom" && y.enabled ? (A(), O("div", ed, [
+            y.id === "custom" && y.enabled ? (A(), O("div", Qf, [
               _t(p("input", {
                 class: "text_pole",
                 "onUpdate:modelValue": (H) => y.config.searchURL = H,
                 placeholder: w(V)("Search URL"),
                 onChange: k[1] || (k[1] = (H) => w(t).save())
-              }, null, 40, td), [
+              }, null, 40, ed), [
                 [js, y.config.searchURL]
               ]),
               _t(p("input", {
@@ -6986,18 +6978,18 @@ const Yt = /* @__PURE__ */ yn("playlist", {
                 "onUpdate:modelValue": (H) => y.config.resolveURL = H,
                 placeholder: w(V)("Resolve URL"),
                 onChange: k[2] || (k[2] = (H) => w(t).save())
-              }, null, 40, sd), [
+              }, null, 40, td), [
                 [js, y.config.resolveURL]
               ])
-            ])) : Pe("", !0)
+            ])) : Te("", !0)
           ]))), 128))
         ], 512), [
           [Ds, s.value === "providers"]
         ]),
-        _t(p("div", nd, [
-          p("div", id, [
-            p("label", rd, te(w(V)("Custom Cue Rules (Regex)")), 1),
-            p("div", od, [
+        _t(p("div", sd, [
+          p("div", nd, [
+            p("label", id, te(w(V)("Custom Cue Rules (Regex)")), 1),
+            p("div", rd, [
               (A(!0), O(ie, null, je(w(t).settings.customCueRules, (y, H) => (A(), O("div", {
                 key: H,
                 class: "stmp-rule"
@@ -7008,16 +7000,16 @@ const Yt = /* @__PURE__ */ yn("playlist", {
                   onClick: (R) => v(H)
                 }, [...k[4] || (k[4] = [
                   p("i", { class: "fa-solid fa-xmark" }, null, -1)
-                ])], 8, ld)
+                ])], 8, od)
               ]))), 128))
             ]),
-            p("div", ad, [
+            p("div", ld, [
               _t(p("input", {
                 "onUpdate:modelValue": k[3] || (k[3] = (y) => h.value = y),
                 class: "text_pole",
                 placeholder: w(V)("Add regex rule..."),
                 onKeydown: Mo(m, ["enter"])
-              }, null, 40, cd), [
+              }, null, 40, ad), [
                 [js, h.value]
               ]),
               p("div", {
@@ -7031,8 +7023,8 @@ const Yt = /* @__PURE__ */ yn("playlist", {
         ], 512), [
           [Ds, s.value === "cue"]
         ]),
-        _t(p("div", ud, [
-          p("div", fd, [
+        _t(p("div", cd, [
+          p("div", ud, [
             p("div", {
               class: "menu_button menu_button_icon stmp-data-btn",
               onClick: C
@@ -7054,8 +7046,8 @@ const Yt = /* @__PURE__ */ yn("playlist", {
       ])
     ]));
   }
-}), hd = /* @__PURE__ */ Tt(dd, [["__scopeId", "data-v-0a41a45c"]]);
-class pd {
+}), dd = /* @__PURE__ */ Tt(fd, [["__scopeId", "data-v-0a41a45c"]]);
+class hd {
   constructor() {
     this.listeners = /* @__PURE__ */ new Map(), this.registered = [];
   }
@@ -7117,10 +7109,10 @@ function Fs(e) {
   const t = typeof e == "number" ? e : parseInt(String(e), 10);
   return Number.isFinite(t) ? t : void 0;
 }
-function gd() {
-  return new pd();
+function pd() {
+  return new hd();
 }
-const md = [
+const gd = [
   /<bgm>当前bgm[:：](.+?) - (.+?)<\/bgm>/g,
   /<bgm>当前bgm[:：](.+?)<\/bgm>/g,
   /<bgm>(.+?) - (.+?)<\/bgm>/g,
@@ -7148,7 +7140,7 @@ function hr(e, t = []) {
   const s = /* @__PURE__ */ new Map(), n = (i) => {
     s.has(i.index) || s.set(i.index, i);
   };
-  for (const i of md)
+  for (const i of gd)
     for (const r of dr(i, e)) n(r);
   for (const i of t)
     try {
@@ -7158,7 +7150,7 @@ function hr(e, t = []) {
     }
   return [...s.values()].sort((i, r) => i.index - r.index).map((i) => i.cue);
 }
-class vd {
+class md {
   constructor(t) {
     this.cursors = /* @__PURE__ */ new Map(), this.getChatMessage = t;
   }
@@ -7201,7 +7193,7 @@ class vd {
   }
 }
 let qt = null, ut = null, vs = null, ys = null, Jt = null, en = null;
-const yd = `
+const vd = `
 <div class="inline-drawer">
   <div class="inline-drawer-toggle inline-drawer-header">
     <b data-i18n="悬浮音乐播放器">悬浮音乐播放器</b>
@@ -7212,17 +7204,17 @@ const yd = `
   </div>
 </div>
 `;
-function _d() {
+function yd() {
   const e = $("#extensions_settings2");
-  if (!e || !e.length || (e.append(yd), ys = e.children(".inline-drawer").last()[0] ?? null, !ys)) return;
+  if (!e || !e.length || (e.append(vd), ys = e.children(".inline-drawer").last()[0] ?? null, !ys)) return;
   const t = ys.querySelector("#stmp-settings-mount");
-  t && en && (Jt = Ro(hd), Jt.use(en), Jt.mount(t));
+  t && en && (Jt = Ro(dd), Jt.use(en), Jt.mount(t));
 }
-function bd() {
+function _d() {
   Jt && (Jt.unmount(), Jt = null), ys?.remove(), ys = null;
 }
-function xd(e, t, s) {
-  ut = gd(), ut.on("chat-changed", () => {
+function bd(e, t, s) {
+  ut = pd(), ut.on("chat-changed", () => {
     const n = SillyTavern.getContext(), i = n.chatId ?? String(Date.now());
     if (t.setChatId(i), t.getCursor() < 0 && n.chat.length > 0) {
       const r = e.scanIncremental(
@@ -7253,7 +7245,7 @@ function xd(e, t, s) {
     n.messageId !== void 0 && t.handleMessageUpdate(n.messageId);
   }), ut.start();
 }
-function wd(e, t, s) {
+function xd(e, t, s) {
   const n = SillyTavern.getContext();
   if (n.chatId && n.chat.length > 0 && (t.setChatId(n.chatId), t.getCursor() < 0)) {
     const i = e.scanIncremental(
@@ -7265,21 +7257,21 @@ function wd(e, t, s) {
     t.handleNewCues(i), t.setCursor(n.chat.length - 1);
   }
 }
-async function Id() {
+async function Cd() {
   try {
     const e = document.createElement("div");
     e.id = "st-music-player-root", document.documentElement.appendChild(e);
     const t = xc();
-    en = t, qt = Ro(Ef), qt.use(t), qt.mount(e);
-    const s = Ae(), n = Rc();
+    en = t, qt = Ro(Tf), qt.use(t), qt.mount(e);
+    const s = ke(), n = Rc();
     s.init(n);
     const i = Nt();
     i.init(), i.setVolume(s.settings.volume);
-    const r = new vd((a) => SillyTavern.getContext().chat[a]?.mes), o = Yt();
-    o.init(r), _d();
+    const r = new md((a) => SillyTavern.getContext().chat[a]?.mes), o = Yt();
+    o.init(r), yd();
     const l = SillyTavern.getContext();
     vs = () => {
-      xd(r, o, s), wd(r, o, s);
+      bd(r, o, s), xd(r, o, s);
     }, l.eventSource.on(l.event_types.APP_READY, vs), console.log("[ST-Music-Player] 播放器加载完成");
   } catch (e) {
     console.error("[ST-Music-Player] init failed:", e);
@@ -7302,12 +7294,12 @@ function No() {
     qt.unmount(), qt = null;
   }
   const e = document.getElementById("st-music-player-root");
-  e && e.remove(), bd(), en = null;
+  e && e.remove(), _d(), en = null;
 }
-function Td() {
+function Id() {
   No();
 }
-async function Sd() {
+async function wd() {
   try {
     const e = SillyTavern.getContext();
     delete e.extensionSettings[ms], e.saveSettingsDebounced();
@@ -7326,13 +7318,13 @@ async function Sd() {
     console.error("[ST-Music-Player] clean: failed to clear localforage:", e);
   }
 }
-async function Ed() {
-  await Sd(), No();
+async function Td() {
+  await wd(), No();
 }
 export {
-  Sd as clean,
-  Ed as delete,
+  wd as clean,
+  Td as delete,
   No as destroy,
-  Td as disable,
-  Id as init
+  Id as disable,
+  Cd as init
 };
