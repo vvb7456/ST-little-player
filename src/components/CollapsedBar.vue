@@ -175,7 +175,7 @@ onMounted(() => {
     <div class="stmp-mini-cover stmp-mini-cover-placeholder" v-else>
       <Icon name="music" :size="14" />
     </div>
-    <div ref="dockWindowRef2" class="stmp-mini-dock-text">
+    <div ref="dockWindowRef" class="stmp-mini-dock-text">
       <div v-if="playerStore.lyrics.length > 0" class="stmp-mini-dock-scroll"
         :style="{ transform: `translateY(-${dockScrollY}px)` }"
       >
