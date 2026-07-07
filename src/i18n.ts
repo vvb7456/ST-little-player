@@ -36,6 +36,7 @@ const zhCN: Record<string, string> = {
   'Dock': '吸附',
   'Drag': '拖动',
   'Hidden': '隐藏',
+  'Inline': '集成',
   'Dock Alignment': '吸附对齐',
   'Left': '左对齐',
   'Right': '右对齐',

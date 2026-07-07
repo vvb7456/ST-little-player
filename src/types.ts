@@ -69,7 +69,7 @@ export interface ScanCursor {
 
 // ===== Settings =====
 
-export type WidgetMode = 'dock' | 'drag' | 'hidden';
+export type WidgetMode = 'dock' | 'drag' | 'hidden' | 'inline';
 export type DockAlign = 'left' | 'right';
 
 export interface ExtensionSettings {

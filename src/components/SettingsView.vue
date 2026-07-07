@@ -27,6 +27,7 @@ const playModes: { value: PlayMode; label: string }[] = [
 const widgetModes: { value: WidgetMode; label: string; icon: string }[] = [
   { value: 'dock', label: t('Dock'), icon: 'fa-solid fa-grip-lines' },
   { value: 'drag', label: t('Drag'), icon: 'fa-solid fa-up-down-left-right' },
+  { value: 'inline', label: t('Inline'), icon: 'fa-solid fa-puzzle-piece' },
   { value: 'hidden', label: t('Hidden'), icon: 'fa-solid fa-eye-slash' },
 ];
 
