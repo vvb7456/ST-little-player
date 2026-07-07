@@ -5131,7 +5131,7 @@ class Mc {
 function Rc() {
   return new Mc();
 }
-const vs = "st-music-player", ao = "stmp_cursor", co = "stmp_userlist";
+const vs = "st-little-player", ao = "stmp_cursor", co = "stmp_userlist";
 class Pc {
   constructor(t) {
     this.providers = t;
@@ -6886,7 +6886,7 @@ const Xt = /* @__PURE__ */ yn("playlist", {
     }
     const T = () => {
       const U = JSON.stringify(t.settings, null, 2), x = new Blob([U], { type: "application/json" }), C = URL.createObjectURL(x), k = document.createElement("a");
-      k.href = C, k.download = "st-music-player-settings.json", k.click(), URL.revokeObjectURL(C);
+      k.href = C, k.download = "st-little-player-settings.json", k.click(), URL.revokeObjectURL(C);
     }, z = () => {
       const U = document.createElement("input");
       U.type = "file", U.accept = ".json", U.onchange = async (x) => {
@@ -7164,7 +7164,7 @@ const Xt = /* @__PURE__ */ yn("playlist", {
       ])
     ]));
   }
-}), Zd = /* @__PURE__ */ Et(Xd, [["__scopeId", "data-v-c25c6f4d"]]);
+}), Zd = /* @__PURE__ */ Et(Xd, [["__scopeId", "data-v-cecabb9e"]]);
 class Qd {
   constructor() {
     this.listeners = /* @__PURE__ */ new Map(), this.registered = [];
@@ -7378,7 +7378,7 @@ function lh(e, t, s) {
 async function uh() {
   try {
     const e = document.createElement("div");
-    e.id = "st-music-player-root", document.documentElement.appendChild(e);
+    e.id = "st-little-player-root", document.documentElement.appendChild(e);
     const t = xc();
     en = t, Gt = Pr(Tf), Gt.use(t), Gt.mount(e);
     const s = Me(), n = Rc();
@@ -7411,7 +7411,7 @@ function Fr() {
     }
     Gt.unmount(), Gt = null;
   }
-  const e = document.getElementById("st-music-player-root");
+  const e = document.getElementById("st-little-player-root");
   e && e.remove(), oh(), en = null;
 }
 function fh() {

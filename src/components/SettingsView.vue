@@ -84,7 +84,7 @@ const exportData = (): void => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'st-music-player-settings.json';
+  a.download = 'st-little-player-settings.json';
   a.click();
   URL.revokeObjectURL(url);
 };

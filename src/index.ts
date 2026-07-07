@@ -139,7 +139,7 @@ function scanCurrentChat(
 export async function init(): Promise<void> {
   try {
     const container = document.createElement('div');
-    container.id = 'st-music-player-root';
+    container.id = 'st-little-player-root';
     // Attach to <html> instead of <body> to escape ST's mobile body{position:fixed;overflow:hidden}
     document.documentElement.appendChild(container);
 
@@ -203,7 +203,7 @@ export function destroy(): void {
     app = null;
   }
 
-  const root = document.getElementById('st-music-player-root');
+  const root = document.getElementById('st-little-player-root');
   if (root) root.remove();
 
   removeSettingsEntry();
