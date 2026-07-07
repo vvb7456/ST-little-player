@@ -80,6 +80,9 @@ const zhCN: Record<string, string> = {
   'Version': '版本',
   'A floating music player extension for SillyTavern': 'SillyTavern 悬浮音乐播放器扩展',
   'GitHub': 'GitHub',
+  'Repository': '仓库',
+  'MIT License': 'MIT 许可证',
+  'Copyright': '版权',
 };
 
 let currentLang: string | null = null;
