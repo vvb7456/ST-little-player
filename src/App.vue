@@ -32,6 +32,10 @@ let widgetStartX = 0;
 let widgetStartY = 0;
 let dragMoved = false;
 let isDragging = false;
+let dragStartTime = 0;
+let suppressClick = false;
+const DRAG_THRESHOLD = 3;
+const LONG_PRESS_MS = 500;
 let boundOnDrag: ((e: PointerEvent) => void) | null = null;
 let boundStopDrag: (() => void) | null = null;
 
@@ -64,6 +68,8 @@ function startDrag(e: PointerEvent): void {
   widgetStartY = rect.top;
   dragMoved = false;
   isDragging = true;
+  dragStartTime = Date.now();
+  suppressClick = false;
 
   if (widgetRef.value) {
     widgetRef.value.style.left = rect.left + 'px';
@@ -83,7 +89,7 @@ function onDrag(e: PointerEvent): void {
   if (!widgetRef.value || !isDragging) return;
   const dx = e.clientX - dragStartX;
   const dy = e.clientY - dragStartY;
-  if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+  if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
     dragMoved = true;
   }
   let newX = widgetStartX + dx;
@@ -105,18 +111,29 @@ function stopDrag(): void {
   boundOnDrag = null;
   boundStopDrag = null;
 
-  if (!dragMoved) {
-    toggleExpand();
+  const heldMs = Date.now() - dragStartTime;
+
+  if (dragMoved) {
+    // Suppress the click event that follows pointerup after a drag
+    suppressClick = true;
+    if (widgetRef.value) {
+      const rect = widgetRef.value.getBoundingClientRect();
+      settingsStore.setPosition({ x: rect.left, y: rect.top });
+      if (isExpanded.value) {
+        nextTick(() => clampToViewport());
+      }
+    }
     return;
   }
 
-  if (widgetRef.value) {
-    const rect = widgetRef.value.getBoundingClientRect();
-    settingsStore.setPosition({ x: rect.left, y: rect.top });
-    if (isExpanded.value) {
-      nextTick(() => clampToViewport());
-    }
+  // No movement — distinguish tap vs long-press
+  if (heldMs > LONG_PRESS_MS) {
+    // Long-press without movement: suppress expand (user was reading/resting)
+    suppressClick = true;
+    return;
   }
+
+  // Quick tap: let onWidgetClick handle the expand
 }
 
 function clampToViewport(): void {
@@ -207,6 +224,11 @@ function restoreDragPosition(): void {
 }
 
 function onWidgetClick(e: MouseEvent): void {
+  // Suppress click after drag or long-press
+  if (suppressClick) {
+    suppressClick = false;
+    return;
+  }
   // Dock mode: only toggle expand when collapsed (clicking to open).
   // When expanded, only the collapse button (in PlayerPanel) closes it.
   if (isDock.value && !isExpanded.value) {
@@ -366,7 +388,7 @@ onBeforeUnmount(() => {
   --stmp-radius: 16px;
 
   position: fixed;
-  z-index: 21000;
+  z-index: 2050;
   border-radius: 16px;
   background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1a1a2e) 75%, transparent);
   backdrop-filter: var(--stmp-blur);
