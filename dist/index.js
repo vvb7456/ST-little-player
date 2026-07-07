@@ -6704,7 +6704,7 @@ const Xt = /* @__PURE__ */ yn("playlist", {
     function E() {
       if (!i.value || r.value) return;
       const H = t.settings.position;
-      H ? (i.value.style.left = H.x + "px", i.value.style.top = H.y + "px", i.value.style.right = "auto", i.value.style.bottom = "auto", window.innerWidth <= 768 && Ne(() => j())) : (i.value.style.right = "16px", i.value.style.top = "16px", i.value.style.left = "auto", i.value.style.bottom = "auto");
+      H ? (i.value.style.left = H.x + "px", i.value.style.top = H.y + "px", i.value.style.right = "auto", i.value.style.bottom = "auto", window.innerWidth <= 768 && Ne(() => j())) : (i.value.style.left = window.innerWidth - i.value.offsetWidth - 16 + "px", i.value.style.top = "16px", i.value.style.right = "auto", i.value.style.bottom = "auto");
     }
     function W(H) {
       if (k) {
@@ -6788,7 +6788,7 @@ const Xt = /* @__PURE__ */ yn("playlist", {
       }, null, 8, ["is-dock", "is-mobile"]))
     ], 38));
   }
-}), Tf = /* @__PURE__ */ Et(If, [["__scopeId", "data-v-1eadddfd"]]), Ef = {
+}), Tf = /* @__PURE__ */ Et(If, [["__scopeId", "data-v-d5fd077e"]]), Ef = {
   key: 0,
   class: "stmp-switch-label"
 }, Af = { class: "stmp-switch" }, kf = ["checked", "disabled"], Mf = /* @__PURE__ */ Tt({
@@ -7385,7 +7385,7 @@ function lh(e, t, s) {
 async function uh() {
   try {
     const e = document.createElement("div");
-    e.id = "st-little-player-root", document.documentElement.appendChild(e);
+    e.id = "st-little-player-root", document.body.appendChild(e);
     const t = xc();
     en = t, Gt = Lr(Tf), Gt.use(t), Gt.mount(e);
     const s = Me(), n = Rc();

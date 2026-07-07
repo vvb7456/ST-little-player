@@ -223,10 +223,11 @@ function restoreDragPosition(): void {
       nextTick(() => clampToViewport());
     }
   } else {
-    // Default: top-right
-    widgetRef.value.style.right = '16px';
+    // Default: top-right (use JS coords since body{position:fixed} on mobile
+    // would make CSS right/top relative to body, not viewport)
+    widgetRef.value.style.left = (window.innerWidth - widgetRef.value.offsetWidth - 16) + 'px';
     widgetRef.value.style.top = '16px';
-    widgetRef.value.style.left = 'auto';
+    widgetRef.value.style.right = 'auto';
     widgetRef.value.style.bottom = 'auto';
   }
 }

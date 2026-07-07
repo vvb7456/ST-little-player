@@ -140,8 +140,9 @@ export async function init(): Promise<void> {
   try {
     const container = document.createElement('div');
     container.id = 'st-little-player-root';
-    // Attach to <html> instead of <body> to escape ST's mobile body{position:fixed;overflow:hidden}
-    document.documentElement.appendChild(container);
+    // Attach to <body> so the widget participates in ST's stacking context
+    // (a child of <html> would always paint above <body> regardless of z-index).
+    document.body.appendChild(container);
 
     const pinia = createPinia();
     piniaInstance = pinia;
