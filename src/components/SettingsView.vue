@@ -248,9 +248,6 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
           </div>
         </div>
 
-        <!-- Providers -->
-        <div class="stmp-section-title">{{ t('Providers') }}</div>
-        <div class="stmp-row-desc">{{ t('Enable or disable music sources') }}</div>
         <div
           v-for="p in settingsStore.settings.providers"
           :key="p.id"
@@ -258,6 +255,7 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
           <div class="stmp-row">
             <div class="stmp-row-info">
               <div class="stmp-row-title">{{ providerNames[p.id] || p.id }}</div>
+              <div class="stmp-row-desc">{{ t('Enable or disable music sources') }}</div>
             </div>
             <ToggleSwitch
               :model-value="p.enabled"
@@ -283,7 +281,6 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 
       <!-- ===== AI ===== -->
       <div v-show="activeTab === 'ai'" class="stmp-tab-panel">
-        <!-- Auto-play -->
         <div class="stmp-row">
           <div class="stmp-row-info">
             <div class="stmp-row-title">{{ t('Auto-play on new cue') }}</div>
@@ -295,9 +292,12 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
           />
         </div>
 
-        <!-- Custom Cue Rules -->
-        <div class="stmp-section-title">{{ t('Custom Cue Rules (Regex)') }}</div>
-        <div class="stmp-row-desc">{{ t('Additional regex patterns to detect song cues in chat') }}</div>
+        <div class="stmp-row">
+          <div class="stmp-row-info">
+            <div class="stmp-row-title">{{ t('Custom Cue Rules (Regex)') }}</div>
+            <div class="stmp-row-desc">{{ t('Additional regex patterns to detect song cues in chat') }}</div>
+          </div>
+        </div>
         <div class="stmp-rules">
           <div
             v-for="(rule, i) in settingsStore.settings.customCueRules"
@@ -325,7 +325,6 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 
       <!-- ===== 通用 ===== -->
       <div v-show="activeTab === 'general'" class="stmp-tab-panel">
-        <div class="stmp-section-title">{{ t('Data') }}</div>
         <div class="stmp-row">
           <div class="stmp-row-info">
             <div class="stmp-row-title">{{ t('Export data') }}</div>
@@ -552,16 +551,6 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 /* ===== Divider (between sections) ===== */
 /* Not used as a standalone element — section titles get border-top instead */
 
-/* ===== Section title ===== */
-.stmp-section-title {
-  font-size: var(--mainFontSize, 14px);
-  font-weight: bold;
-  color: var(--SmartThemeQuoteColor, rgb(225,138,36));
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--SmartThemeBorderColor, rgba(0,0,0,0.3));
-}
-
 /* ===== Action button ===== */
 .stmp-action-btn {
   margin: 0 !important;
@@ -623,7 +612,7 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  padding: 12px 0 4px;
+  padding: 20px 0 4px;
   text-align: center;
 }
 

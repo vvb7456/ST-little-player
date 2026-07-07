@@ -6834,10 +6834,10 @@ const Xt = /* @__PURE__ */ yn("playlist", {
 }, Qf = {
   key: 1,
   class: "stmp-row"
-}, ed = { class: "stmp-row-info" }, td = { class: "stmp-row-title" }, sd = { class: "stmp-slider-wrap" }, nd = ["value"], id = { class: "stmp-slider-val" }, od = { class: "stmp-tab-panel" }, rd = { class: "stmp-row" }, ld = { class: "stmp-row-info" }, ad = { class: "stmp-row-title" }, cd = { class: "stmp-slider-wrap" }, ud = ["value"], fd = { class: "stmp-slider-val" }, dd = { class: "stmp-row" }, hd = { class: "stmp-row-info" }, pd = { class: "stmp-row-title" }, gd = { class: "stmp-chips" }, md = ["onClick"], vd = { class: "stmp-section-title" }, yd = { class: "stmp-row-desc" }, _d = { class: "stmp-row" }, bd = { class: "stmp-row-info" }, xd = { class: "stmp-row-title" }, wd = {
+}, ed = { class: "stmp-row-info" }, td = { class: "stmp-row-title" }, sd = { class: "stmp-slider-wrap" }, nd = ["value"], id = { class: "stmp-slider-val" }, od = { class: "stmp-tab-panel" }, rd = { class: "stmp-row" }, ld = { class: "stmp-row-info" }, ad = { class: "stmp-row-title" }, cd = { class: "stmp-slider-wrap" }, ud = ["value"], fd = { class: "stmp-slider-val" }, dd = { class: "stmp-row" }, hd = { class: "stmp-row-info" }, pd = { class: "stmp-row-title" }, gd = { class: "stmp-chips" }, md = ["onClick"], vd = { class: "stmp-row" }, yd = { class: "stmp-row-info" }, _d = { class: "stmp-row-title" }, bd = { class: "stmp-row-desc" }, xd = {
   key: 0,
   class: "stmp-provider-fields"
-}, Sd = ["onUpdate:modelValue", "placeholder"], Cd = ["onUpdate:modelValue", "placeholder"], Td = { class: "stmp-tab-panel" }, Id = { class: "stmp-row" }, Ed = { class: "stmp-row-info" }, Ad = { class: "stmp-row-title" }, kd = { class: "stmp-row-desc" }, Md = { class: "stmp-section-title" }, Rd = { class: "stmp-row-desc" }, Pd = { class: "stmp-rules" }, Ld = ["onClick"], $d = { class: "stmp-rule-add" }, Od = ["placeholder"], Dd = { class: "stmp-tab-panel" }, Nd = { class: "stmp-section-title" }, Fd = { class: "stmp-row" }, Ud = { class: "stmp-row-info" }, Hd = { class: "stmp-row-title" }, Vd = { class: "stmp-row-desc" }, jd = { class: "stmp-row" }, Bd = { class: "stmp-row-info" }, Wd = { class: "stmp-row-title" }, Kd = { class: "stmp-row-desc" }, zd = { class: "stmp-about" }, Jd = { class: "stmp-about-version" }, Gd = { class: "stmp-about-desc" }, qd = "1.0.0", Yd = "https://github.com/vvb7456/ST-little-player", Xd = /* @__PURE__ */ It({
+}, wd = ["onUpdate:modelValue", "placeholder"], Sd = ["onUpdate:modelValue", "placeholder"], Cd = { class: "stmp-tab-panel" }, Td = { class: "stmp-row" }, Id = { class: "stmp-row-info" }, Ed = { class: "stmp-row-title" }, Ad = { class: "stmp-row-desc" }, kd = { class: "stmp-row" }, Md = { class: "stmp-row-info" }, Rd = { class: "stmp-row-title" }, Pd = { class: "stmp-row-desc" }, Ld = { class: "stmp-rules" }, $d = ["onClick"], Od = { class: "stmp-rule-add" }, Dd = ["placeholder"], Nd = { class: "stmp-tab-panel" }, Fd = { class: "stmp-row" }, Ud = { class: "stmp-row-info" }, Hd = { class: "stmp-row-title" }, Vd = { class: "stmp-row-desc" }, jd = { class: "stmp-row" }, Bd = { class: "stmp-row-info" }, Wd = { class: "stmp-row-title" }, Kd = { class: "stmp-row-desc" }, zd = { class: "stmp-about" }, Jd = { class: "stmp-about-version" }, Gd = { class: "stmp-about-desc" }, qd = "1.0.0", Yd = "https://github.com/vvb7456/ST-little-player", Xd = /* @__PURE__ */ It({
   __name: "SettingsView",
   setup(e) {
     const t = Me(), s = /* @__PURE__ */ he("appearance"), n = [
@@ -7028,27 +7028,26 @@ const Xt = /* @__PURE__ */ yn("playlist", {
               ], 10, md)), 64))
             ])
           ]),
-          d("div", vd, K(y(L)("Providers")), 1),
-          d("div", yd, K(y(L)("Enable or disable music sources")), 1),
           (M(!0), O(se, null, Be(y(t).settings.providers, (C) => (M(), O("div", {
             key: C.id
           }, [
-            d("div", _d, [
-              d("div", bd, [
-                d("div", xd, K(c[C.id] || C.id), 1)
+            d("div", vd, [
+              d("div", yd, [
+                d("div", _d, K(c[C.id] || C.id), 1),
+                d("div", bd, K(y(L)("Enable or disable music sources")), 1)
               ]),
               te(Dn, {
                 "model-value": C.enabled,
                 "onUpdate:modelValue": () => p(C.id)
               }, null, 8, ["model-value", "onUpdate:modelValue"])
             ]),
-            C.id === "custom" && C.enabled ? (M(), O("div", wd, [
+            C.id === "custom" && C.enabled ? (M(), O("div", xd, [
               _t(d("input", {
                 class: "text_pole",
                 "onUpdate:modelValue": (k) => C.config.searchURL = k,
                 placeholder: y(L)("Search URL"),
                 onChange: x[0] || (x[0] = (k) => y(t).save())
-              }, null, 40, Sd), [
+              }, null, 40, wd), [
                 [js, C.config.searchURL]
               ]),
               _t(d("input", {
@@ -7056,7 +7055,7 @@ const Xt = /* @__PURE__ */ yn("playlist", {
                 "onUpdate:modelValue": (k) => C.config.resolveURL = k,
                 placeholder: y(L)("Resolve URL"),
                 onChange: x[1] || (x[1] = (k) => y(t).save())
-              }, null, 40, Cd), [
+              }, null, 40, Sd), [
                 [js, C.config.resolveURL]
               ])
             ])) : Ie("", !0)
@@ -7064,11 +7063,11 @@ const Xt = /* @__PURE__ */ yn("playlist", {
         ], 512), [
           [Ds, s.value === "playback"]
         ]),
-        _t(d("div", Td, [
-          d("div", Id, [
-            d("div", Ed, [
-              d("div", Ad, K(y(L)("Auto-play on new cue")), 1),
-              d("div", kd, K(y(L)("Automatically play when a new song cue is detected")), 1)
+        _t(d("div", Cd, [
+          d("div", Td, [
+            d("div", Id, [
+              d("div", Ed, K(y(L)("Auto-play on new cue")), 1),
+              d("div", Ad, K(y(L)("Automatically play when a new song cue is detected")), 1)
             ]),
             te(Dn, {
               "model-value": y(t).settings.autoPlayOnNewCue,
@@ -7077,9 +7076,13 @@ const Xt = /* @__PURE__ */ yn("playlist", {
               })
             }, null, 8, ["model-value"])
           ]),
-          d("div", Md, K(y(L)("Custom Cue Rules (Regex)")), 1),
-          d("div", Rd, K(y(L)("Additional regex patterns to detect song cues in chat")), 1),
-          d("div", Pd, [
+          d("div", kd, [
+            d("div", Md, [
+              d("div", Rd, K(y(L)("Custom Cue Rules (Regex)")), 1),
+              d("div", Pd, K(y(L)("Additional regex patterns to detect song cues in chat")), 1)
+            ])
+          ]),
+          d("div", Ld, [
             (M(!0), O(se, null, Be(y(t).settings.customCueRules, (C, k) => (M(), O("div", {
               key: k,
               class: "stmp-rule"
@@ -7090,16 +7093,16 @@ const Xt = /* @__PURE__ */ yn("playlist", {
                 onClick: (B) => T(k)
               }, [...x[4] || (x[4] = [
                 d("i", { class: "fa-solid fa-xmark" }, null, -1)
-              ])], 8, Ld)
+              ])], 8, $d)
             ]))), 128))
           ]),
-          d("div", $d, [
+          d("div", Od, [
             _t(d("input", {
               "onUpdate:modelValue": x[3] || (x[3] = (C) => m.value = C),
               class: "text_pole",
               placeholder: y(L)("Add regex rule..."),
               onKeydown: Rr(v, ["enter"])
-            }, null, 40, Od), [
+            }, null, 40, Dd), [
               [js, m.value]
             ]),
             d("div", {
@@ -7112,8 +7115,7 @@ const Xt = /* @__PURE__ */ yn("playlist", {
         ], 512), [
           [Ds, s.value === "ai"]
         ]),
-        _t(d("div", Dd, [
-          d("div", Nd, K(y(L)("Data")), 1),
+        _t(d("div", Nd, [
           d("div", Fd, [
             d("div", Ud, [
               d("div", Hd, K(y(L)("Export data")), 1),
@@ -7162,7 +7164,7 @@ const Xt = /* @__PURE__ */ yn("playlist", {
       ])
     ]));
   }
-}), Zd = /* @__PURE__ */ Et(Xd, [["__scopeId", "data-v-43ba665b"]]);
+}), Zd = /* @__PURE__ */ Et(Xd, [["__scopeId", "data-v-c9b2f83d"]]);
 class Qd {
   constructor() {
     this.listeners = /* @__PURE__ */ new Map(), this.registered = [];
