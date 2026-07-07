@@ -16,7 +16,6 @@ const isInline = computed(() => settingsStore.settings.widgetMode === 'inline');
 const isHidden = computed(() => settingsStore.settings.widgetMode === 'hidden');
 const isMobile = ref(window.innerWidth <= 768);
 const sendFormReady = ref(false);
-const inlinePopupRef = ref<HTMLElement | null>(null);
 
 const onKeyDown = (e: KeyboardEvent): void => {
   if (e.key === 'Escape') isExpanded.value = false;
@@ -222,7 +221,7 @@ function onWidgetClick(e: MouseEvent): void {
   }
 }
 
-/** Inline mode collapsed bar click: expand to popup */
+/** Inline mode collapsed bar click: expand */
 function onInlineClick(e: MouseEvent): void {
   if (isExpanded.value) return;
   const target = e.target as HTMLElement;
@@ -230,51 +229,17 @@ function onInlineClick(e: MouseEvent): void {
   toggleExpand();
 }
 
-/**
- * Inline mode expanded: position popup above #send_form.
- * Desktop: fixed width, aligned left to #send_form.
- * Mobile: full width matching #send_form.
- */
-function positionInlinePopup(): void {
-  if (!inlinePopupRef.value) return;
-  const sendForm = document.querySelector('#send_form');
-  if (!sendForm) return;
-
-  const formRect = sendForm.getBoundingClientRect();
-  const popup = inlinePopupRef.value;
-  const popupH = popup.offsetHeight || 400;
-
-  const maxH = Math.max(80, formRect.top - 8);
-  popup.style.maxHeight = maxH + 'px';
-
-  let top = formRect.top - Math.min(popupH, maxH);
-  if (top < 4) top = 4;
-
-  if (window.innerWidth <= 768) {
-    popup.style.left = formRect.left + 'px';
-    popup.style.width = formRect.width + 'px';
-  } else {
-    popup.style.left = formRect.left + 'px';
-    popup.style.width = '';
-  }
-
-  popup.style.top = top + 'px';
-  popup.style.right = 'auto';
-  popup.style.bottom = 'auto';
-}
-
 function toggleExpand(): void {
   isExpanded.value = !isExpanded.value;
   nextTick(() => {
-    if (isInline.value) {
-      if (isExpanded.value) positionInlinePopup();
-    } else if (isDock.value) {
+    if (isDock.value) {
       dockToInput();
-    } else {
+    } else if (!isInline.value) {
       if (settingsStore.settings.position) {
         clampToViewport();
       }
     }
+    // inline mode: CSS handles layout, no JS positioning needed
   });
 }
 
@@ -290,14 +255,6 @@ watch(() => settingsStore.settings.widgetMode, (mode) => {
     widgetRef.value.style.bottom = '';
     widgetRef.value.style.maxHeight = '';
   }
-  if (inlinePopupRef.value) {
-    inlinePopupRef.value.style.width = '';
-    inlinePopupRef.value.style.left = '';
-    inlinePopupRef.value.style.top = '';
-    inlinePopupRef.value.style.right = '';
-    inlinePopupRef.value.style.bottom = '';
-    inlinePopupRef.value.style.maxHeight = '';
-  }
   if (mode === 'inline') {
     sendFormReady.value = !!document.querySelector('#send_form');
   }
@@ -307,7 +264,6 @@ watch(() => settingsStore.settings.widgetMode, (mode) => {
     } else if (mode === 'drag') {
       restoreDragPosition();
     }
-    // inline mode: CSS handles collapsed layout, no JS positioning needed
   });
 });
 
@@ -343,11 +299,9 @@ onMounted(() => {
 
 function onResize(): void {
   isMobile.value = window.innerWidth <= 768;
-  if (isInline.value) {
-    if (isExpanded.value) nextTick(() => positionInlinePopup());
-  } else if (isDock.value) {
+  if (isDock.value) {
     nextTick(() => dockToInput());
-  } else {
+  } else if (!isInline.value) {
     // Drag mode: always clamp on resize (e.g. orientation change, mobile)
     nextTick(() => clampToViewport());
   }
@@ -365,20 +319,18 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <!-- ===== Inline mode: collapsed bar in #send_form, expanded popup fixed ===== -->
+  <!-- ===== Inline mode: both collapsed and expanded inside #send_form ===== -->
   <template v-if="isInline">
     <Teleport v-if="sendFormReady" to="#send_form">
+      <!-- Collapsed: compact bar -->
       <div v-if="!isExpanded" class="stmp-inline-bar" @click="onInlineClick">
         <CollapsedBar :is-dock="true" :is-mobile="true" />
       </div>
+      <!-- Expanded: full player panel inline -->
+      <div v-else class="stmp-inline-expanded">
+        <PlayerPanel @collapse="toggleExpand" />
+      </div>
     </Teleport>
-    <div
-      v-if="isExpanded"
-      ref="inlinePopupRef"
-      class="stmp-widget stmp-expanded stmp-inline-popup"
-    >
-      <PlayerPanel @collapse="toggleExpand" />
-    </div>
   </template>
 
   <!-- ===== Dock / Drag / Hidden modes ===== -->
@@ -454,19 +406,24 @@ onBeforeUnmount(() => {
   border-bottom: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.08));
 }
 
-/* Inline expanded popup: fixed, positioned by JS above #send_form */
-.stmp-inline-popup {
-  border-radius: 10px 10px 0 0;
-  border: 1px solid var(--stmp-border);
-  border-bottom: none;
-  box-shadow: none;
-  padding: 10px;
-}
+/* Inline expanded: full player panel inside #send_form */
+.stmp-inline-expanded {
+  --stmp-accent: var(--SmartThemeQuoteColor, #7e57c2);
+  --stmp-text: var(--SmartThemeBodyColor, #ccc);
+  --stmp-text-dim: var(--SmartThemeEmColor, #999);
+  --stmp-bg: var(--SmartThemeBlurTintColor, #1a1a2e);
+  --stmp-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.08));
+  --stmp-blur: blur(var(--SmartThemeBlurStrength, 10px));
+  --stmp-hover: color-mix(in srgb, var(--SmartThemeBodyColor, #ccc) 8%, transparent);
+  --stmp-track: color-mix(in srgb, var(--SmartThemeBodyColor, #ccc) 15%, transparent);
+  --stmp-shadow: 0 4px 24px var(--SmartThemeShadowColor, rgba(0, 0, 0, 0.4));
+  --stmp-radius: 0;
 
-@media (min-width: 769px) {
-  .stmp-inline-popup {
-    width: min(360px, calc(100vw - 16px));
-  }
+  order: 1;
+  width: 100%;
+  max-height: min(50vh, 400px);
+  overflow-y: auto;
+  border-bottom: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.08));
 }
 
 /* Desktop dock collapsed: match expanded width, single row */
