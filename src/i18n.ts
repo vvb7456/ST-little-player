@@ -14,8 +14,6 @@ const zhCN: Record<string, string> = {
   'No results': '无结果',
   'Type a song name to search': '输入歌名进行搜索',
   'No Songs': '暂无歌曲',
-  'From Chat': '来自聊天',
-  'My List': '我的列表',
   'Local Files': '本地文件',
   'Network': '网络',
   'Upload': '上传',

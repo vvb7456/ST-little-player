@@ -1,6 +1,7 @@
 import type { SearchResult } from '@/types';
 import { useSettingsStore } from '@/stores/settings';
 import { usePlayerStore } from '@/stores/player';
+import { usePlaylistStore } from '@/stores/playlist';
 import { createDefaultProviders } from '@/provider';
 import { addBgmHistory } from '@/ai/BgmHistory';
 import { buildChatContext } from '@/ai/ContextBuilder';
@@ -27,7 +28,6 @@ import {
   FC_TOOL_SEARCH_RESULT,
   FC_TOOL_PLAY_MISSING_ID,
   FC_TOOL_PLAY_INVALID_ID,
-  FC_TOOL_PLAY_RESOLVE_FAILED,
   FC_TOOL_PLAY_SUCCESS,
   FC_TOOL_STOP_SUCCESS,
   FC_TOOL_STOP_NOTHING,
@@ -174,31 +174,18 @@ export class FunctionCallMode {
           return FC_TOOL_PLAY_INVALID_ID.replace('{id}', result_id);
         }
 
-        const settingsStore = useSettingsStore();
-        const mgr = createDefaultProviders(settingsStore.settings.providers);
-        const track = await mgr.resolve(searchResult.id, searchResult.provider, searchResult.picId);
-
-        if (!track) {
-          return FC_TOOL_PLAY_RESOLVE_FAILED
-            .replace('{name}', searchResult.name)
-            .replace('{artist}', searchResult.artist ? ' - ' + searchResult.artist : '');
-        }
-
-        track.name = searchResult.name;
-        track.artist = searchResult.artist;
-
-        const player = usePlayerStore();
-        await player.loadAndPlay(track);
+        const playlistStore = usePlaylistStore();
+        playlistStore.addFromAi(searchResult, true);
         addBgmHistory(searchResult.name, searchResult.artist);
 
         if (typeof toastr !== 'undefined') {
           toastr.success(`${t('AI selected:')} ${searchResult.name}`);
         }
 
-        console.log('[晓乐] play_music success:', track.name, '-', track.artist);
+        console.log('[晓乐] play_music success:', searchResult.name, '-', searchResult.artist);
         return FC_TOOL_PLAY_SUCCESS
-          .replace('{name}', track.name)
-          .replace('{artist}', track.artist ? ' - ' + track.artist : '');
+          .replace('{name}', searchResult.name)
+          .replace('{artist}', searchResult.artist ? ' - ' + searchResult.artist : '');
       },
       formatMessage: ({ result_id }: { result_id?: string }) =>
         FC_TOOL_PLAY_FORMAT.replace('{song}', result_id ?? '').replace('{artist}', ''),

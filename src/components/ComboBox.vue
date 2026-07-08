@@ -13,12 +13,14 @@ const emit = defineEmits<{
   'update:modelValue': [value: string];
 }>();
 
+const rootRef = ref<HTMLElement | null>(null);
 const inputRef = ref<HTMLInputElement | null>(null);
 const open = ref(false);
 const hoverIndex = ref(-1);
 const dropdownStyle = ref<Record<string, string>>({});
 
 const filtered = computed(() => props.options);
+const isReadOnly = computed(() => props.options.length > 0);
 
 function updatePosition(): void {
   const el = inputRef.value;
@@ -33,7 +35,7 @@ function updatePosition(): void {
   };
 }
 
-function onFocus(): void {
+function openDropdown(): void {
   if (props.options.length === 0) return;
   open.value = true;
   hoverIndex.value = -1;
@@ -43,6 +45,11 @@ function onFocus(): void {
 function close(): void {
   open.value = false;
   hoverIndex.value = -1;
+}
+
+function toggle(): void {
+  if (open.value) close();
+  else openDropdown();
 }
 
 function onSelect(value: string): void {
@@ -83,7 +90,7 @@ function onKeyDown(e: KeyboardEvent): void {
 
 function onDocClick(e: MouseEvent): void {
   const target = e.target as Node;
-  if (inputRef.value?.contains(target)) return;
+  if (rootRef.value?.contains(target)) return;
   const dropdown = document.getElementById('stmp-combobox-dropdown');
   if (dropdown?.contains(target)) return;
   close();
@@ -93,16 +100,20 @@ function onScroll(): void {
   if (open.value) close();
 }
 
+function onResize(): void {
+  if (open.value) nextTick(updatePosition);
+}
+
 onMounted(() => {
   document.addEventListener('mousedown', onDocClick, true);
   window.addEventListener('scroll', onScroll, true);
-  window.addEventListener('resize', onScroll);
+  window.addEventListener('resize', onResize);
 });
 
 onBeforeUnmount(() => {
   document.removeEventListener('mousedown', onDocClick, true);
   window.removeEventListener('scroll', onScroll, true);
-  window.removeEventListener('resize', onScroll);
+  window.removeEventListener('resize', onResize);
 });
 
 watch(() => props.modelValue, (v) => {
@@ -113,19 +124,25 @@ watch(() => props.modelValue, (v) => {
 </script>
 
 <template>
-  <div class="stmp-combobox" :class="{ 'has-options': options.length > 0 }">
+  <div ref="rootRef" class="stmp-combobox" :class="{ 'has-options': options.length > 0 }">
     <input
       ref="inputRef"
       class="text_pole"
       type="text"
       :value="modelValue"
       :placeholder="placeholder"
+      :readonly="isReadOnly"
       autocomplete="off"
-      @focus="onFocus"
+      @focus="openDropdown"
       @input="onInput"
       @keydown="onKeyDown"
     />
-    <i v-if="options.length > 0" class="fa-solid fa-chevron-down stmp-combobox-arrow" @mousedown.prevent="inputRef?.focus()" />
+    <i
+      v-if="options.length > 0"
+      class="fa-solid fa-chevron-down stmp-combobox-arrow"
+      :class="{ rotated: open }"
+      @mousedown.prevent="toggle"
+    />
     <Teleport to="body">
       <div
         v-if="open && filtered.length > 0"
@@ -162,6 +179,7 @@ watch(() => props.modelValue, (v) => {
 
 .stmp-combobox.has-options input.text_pole {
   padding-right: 24px;
+  cursor: pointer;
 }
 
 .stmp-combobox-arrow {
@@ -178,6 +196,10 @@ watch(() => props.modelValue, (v) => {
 
 .stmp-combobox-arrow:hover {
   color: var(--SmartThemeBodyColor, #ccc);
+}
+
+.stmp-combobox-arrow.rotated {
+  transform: translateY(-50%) rotate(180deg);
 }
 
 .stmp-combobox-dropdown {

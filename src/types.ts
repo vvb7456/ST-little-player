@@ -33,7 +33,6 @@ export interface PlaylistItem {
   song: string;
   artist?: string;
   source: 'network' | 'server' | 'chat';
-  messageId?: number;
   providerId?: string;
   providerTrackId?: string;
   providerPicId?: string;
@@ -43,28 +42,12 @@ export interface PlaylistItem {
 
 export type PlayMode = 'list' | 'random' | 'single';
 
-// ===== Cue Parser Types =====
-
-export interface Cue {
-  song: string;
-  artist?: string;
-  raw: string;
-}
-
 // ===== Lyric Types =====
 
 export interface LyricLine {
   time: number;
   text: string;
   next?: LyricLine;
-}
-
-// ===== Scan Cursor =====
-
-export interface ScanCursor {
-  chatId: string;
-  lastScannedMessageId: number;
-  updatedAt: number;
 }
 
 // ===== Settings =====
@@ -103,17 +86,6 @@ export interface ProviderConfig {
   priority: number;
   config?: Record<string, string>;
 }
-
-// ===== Internal Events =====
-
-export type InternalEvent =
-  | 'chat-changed'
-  | 'message-generated'
-  | 'message-updated'
-  | 'message-deleted'
-  | 'message-swiped';
-
-export type InternalEventListener = (payload: { chatId?: string; messageId?: number }) => void;
 
 // ===== AI BGM =====
 

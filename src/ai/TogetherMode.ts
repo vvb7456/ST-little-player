@@ -3,7 +3,7 @@ import { parseJsonSafe } from '@/ai/JsonRepair';
 import { buildTogetherPrompt, MARKER_START, MARKER_END } from '@/ai/PromptBuilder';
 import { addBgmHistory } from '@/ai/BgmHistory';
 import { useSettingsStore } from '@/stores/settings';
-import { usePlayerStore } from '@/stores/player';
+import { usePlaylistStore } from '@/stores/playlist';
 import { createDefaultProviders } from '@/provider';
 import { t } from '@/i18n';
 
@@ -98,13 +98,15 @@ export class TogetherMode {
         console.log('[晓乐] Together: searching for:', recommendation.song, recommendation.artist);
         const settingsStore = useSettingsStore();
         const mgr = createDefaultProviders(settingsStore.settings.providers);
-        const track = await mgr.searchAndResolve(recommendation.song, recommendation.artist);
+        const results = await mgr.searchAll(recommendation.artist
+          ? `${recommendation.song} ${recommendation.artist}`
+          : recommendation.song);
 
-        if (track) {
-          const player = usePlayerStore();
-          await player.loadAndPlay(track);
+        if (results.length > 0) {
+          const playlistStore = usePlaylistStore();
+          playlistStore.addFromAi(results[0], true);
           addBgmHistory(recommendation.song, recommendation.artist, actualId);
-          console.log('[晓乐] Together: playing:', track.name, '-', track.artist);
+          console.log('[晓乐] Together: playing:', results[0].name, '-', results[0].artist);
           if (typeof toastr !== 'undefined') {
             toastr.success(t('AI selected:') + ' ' + recommendation.song);
           }

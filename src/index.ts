@@ -5,17 +5,13 @@ import AppVue from './App.vue';
 import SettingsView from './components/SettingsView.vue';
 import { useSettingsStore, usePlayerStore, usePlaylistStore } from './stores';
 import { createSTStorageAdapter } from './storage/STStorageAdapter';
-import { createSTEventBridge } from './tavern/STEventBridge';
-import { ChatIndexer } from './tavern/ChatIndexer';
-import type { STEventBridge } from './tavern/STEventBridge';
 import { BgmController } from './ai/BgmController';
 import { registerMacros, unregisterMacros } from './tavern/Macros';
 import { registerSlashCommands, unregisterSlashCommands } from './tavern/SlashCommands';
-import { MODULE_NAME, CURSOR_KEY, BGM_HISTORY_KEY } from '@/storage';
+import { MODULE_NAME, BGM_HISTORY_KEY } from '@/storage';
 import { deleteFile } from '@/storage/STFileClient';
 
 let app: App<Element> | null = null;
-let eventBridge: STEventBridge | null = null;
 let appReadyHandler: (() => void) | null = null;
 let settingsEntry: HTMLElement | null = null;
 let settingsApp: App<Element> | null = null;
@@ -41,7 +37,6 @@ function addSettingsEntry(): void {
   settingsEntry = $container.children('.inline-drawer').last()[0] ?? null;
   if (!settingsEntry) return;
 
-  // Mount SettingsView into the settings panel, sharing the same Pinia instance
   const mount = settingsEntry.querySelector('#stmp-settings-mount');
   if (mount && piniaInstance) {
     settingsApp = createApp(SettingsView);
@@ -59,91 +54,10 @@ function removeSettingsEntry(): void {
   settingsEntry = null;
 }
 
-function setupEventBridge(
-  indexer: ChatIndexer,
-  playlistStore: ReturnType<typeof usePlaylistStore>,
-): void {
-  eventBridge = createSTEventBridge();
-
-  eventBridge.on('chat-changed', () => {
-    const ctx = SillyTavern.getContext();
-    const chatId = ctx.chatId ?? String(Date.now());
-    playlistStore.setChatId(chatId);
-    if (playlistStore.getCursor() < 0 && ctx.chat.length > 0) {
-      const cues = indexer.scanIncremental(
-        chatId,
-        0,
-        ctx.chat.length - 1,
-      );
-      console.log('[晓乐] chat-changed: scanned', ctx.chat.length, 'messages, found', cues.length, 'cues');
-      playlistStore.handleNewCues(cues);
-      playlistStore.setCursor(ctx.chat.length - 1);
-    }
-  });
-
-  eventBridge.on('message-generated', (payload) => {
-    const ctx = SillyTavern.getContext();
-    const chatId = playlistStore.chatId ?? ctx.chatId ?? '';
-    if (!chatId || payload.messageId === undefined) return;
-    const fromId = playlistStore.getCursor() + 1;
-    const toId = payload.messageId;
-    if (toId < fromId) return;
-    const cues = indexer.scanIncremental(
-      chatId,
-      fromId,
-      toId,
-    );
-    console.log('[晓乐] message-generated: scanned', fromId, '-', toId, 'found', cues.length, 'cues');
-    playlistStore.handleNewCues(cues);
-    playlistStore.setCursor(toId);
-  });
-
-  eventBridge.on('message-updated', (payload) => {
-    if (payload.messageId !== undefined) {
-      playlistStore.handleMessageUpdate(payload.messageId);
-    }
-  });
-
-  eventBridge.on('message-deleted', (payload) => {
-    if (payload.messageId !== undefined) {
-      playlistStore.handleMessageDelete(payload.messageId);
-    }
-  });
-
-  eventBridge.on('message-swiped', (payload) => {
-    if (payload.messageId !== undefined) {
-      playlistStore.handleMessageUpdate(payload.messageId);
-    }
-  });
-
-  eventBridge.start();
-}
-
-function scanCurrentChat(
-  indexer: ChatIndexer,
-  playlistStore: ReturnType<typeof usePlaylistStore>,
-): void {
-  const ctx = SillyTavern.getContext();
-  if (ctx.chatId && ctx.chat.length > 0) {
-    playlistStore.setChatId(ctx.chatId);
-    if (playlistStore.getCursor() < 0) {
-      const cues = indexer.scanIncremental(
-        ctx.chatId,
-        0,
-        ctx.chat.length - 1,
-      );
-      playlistStore.handleNewCues(cues);
-      playlistStore.setCursor(ctx.chat.length - 1);
-    }
-  }
-}
-
 export async function init(): Promise<void> {
   try {
     const container = document.createElement('div');
     container.id = 'st-little-player-root';
-    // Attach to <body> so the widget participates in ST's stacking context
-    // (a child of <html> would always paint above <body> regardless of z-index).
     document.body.appendChild(container);
 
     const pinia = createPinia();
@@ -160,20 +74,13 @@ export async function init(): Promise<void> {
     playerStore.init();
     playerStore.setVolume(settingsStore.settings.volume);
 
-    const indexer = new ChatIndexer((index: number): string | undefined => {
-      const ctx = SillyTavern.getContext();
-      return ctx.chat[index]?.mes;
-    });
-
     const playlistStore = usePlaylistStore();
-    playlistStore.init(indexer);
+    playlistStore.init();
 
     addSettingsEntry();
 
     const ctx = SillyTavern.getContext();
     appReadyHandler = () => {
-      setupEventBridge(indexer, playlistStore);
-      scanCurrentChat(indexer, playlistStore);
       registerMacros();
       registerSlashCommands();
       bgmController = new BgmController();
@@ -196,9 +103,6 @@ export function destroy(): void {
     }
     appReadyHandler = null;
   }
-
-  eventBridge?.stop();
-  eventBridge = null;
 
   unregisterMacros();
   unregisterSlashCommands();
@@ -251,8 +155,8 @@ export async function clean(): Promise<void> {
     // 3. Clean chatMetadata keys for the current chat
     const meta = ctx.chatMetadata;
     if (meta && typeof meta === 'object') {
-      delete meta[CURSOR_KEY];
       delete meta[BGM_HISTORY_KEY];
+      delete meta['stmp_cursor']; // legacy scan cursor (removed in 0.1.0)
       await ctx.saveMetadata();
     }
   } catch (err) {

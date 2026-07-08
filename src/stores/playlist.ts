@@ -1,14 +1,10 @@
 import { defineStore } from 'pinia';
 import type {
-  Cue,
   PlaylistItem,
   PlayMode,
   ResolvedTrack,
-  ScanCursor,
   SearchResult,
 } from '@/types';
-import type { ChatIndexer } from '@/tavern/ChatIndexer';
-import { CURSOR_KEY } from '@/storage';
 import { createDefaultProviders } from '@/provider';
 import { useSettingsStore } from './settings';
 import { usePlayerStore } from './player';
@@ -34,8 +30,6 @@ export const usePlaylistStore = defineStore('playlist', {
     activeTab: 'network' as PlaylistTab,
     currentList: 'network' as PlaylistTab,
     currentIndex: -1,
-    chatIndexer: null as ChatIndexer | null,
-    chatId: null as string | null,
   }),
 
   getters: {
@@ -58,22 +52,8 @@ export const usePlaylistStore = defineStore('playlist', {
   },
 
   actions: {
-    init(indexer: ChatIndexer): void {
-      this.chatIndexer = indexer;
+    init(): void {
       this.loadFromStorage();
-    },
-
-    setChatId(chatId: string): void {
-      this.chatId = chatId;
-      this.chatList = [];
-      const settingsStore = useSettingsStore();
-      const storage = settingsStore.storage;
-      if (storage) {
-        const cursor = storage.getMetadata<ScanCursor>(CURSOR_KEY);
-        if (cursor && cursor.chatId === chatId) {
-          this.chatIndexer?.setCursor(chatId, cursor.lastScannedMessageId);
-        }
-      }
     },
 
     loadFromStorage(): void {
@@ -131,20 +111,7 @@ export const usePlaylistStore = defineStore('playlist', {
       }
     },
 
-    addFromCue(cue: Cue, messageId: number): void {
-      const item: PlaylistItem = {
-        id: genId(),
-        song: cue.song,
-        artist: cue.artist,
-        source: 'chat',
-        messageId,
-        addedAt: Date.now(),
-      };
-      this.chatList.push(item);
-    },
-
     addFromSearch(result: SearchResult, autoplay: boolean = true): boolean {
-      // Dedup by providerTrackId
       const existingIdx = this.networkList.findIndex(
         (item) => item.providerId === result.provider && item.providerTrackId === result.id,
       );
@@ -173,6 +140,35 @@ export const usePlaylistStore = defineStore('playlist', {
         this.play('network', this.networkList.length - 1);
       }
       return true;
+    },
+
+    addFromAi(result: SearchResult, autoplay: boolean = true): void {
+      const existingIdx = this.chatList.findIndex(
+        (item) => item.providerId === result.provider && item.providerTrackId === result.id,
+      );
+      this.activeTab = 'chat';
+      if (existingIdx >= 0) {
+        if (autoplay) {
+          this.currentList = 'chat';
+          this.play('chat', existingIdx);
+        }
+        return;
+      }
+      const item: PlaylistItem = {
+        id: genId(),
+        song: result.name,
+        artist: result.artist,
+        source: 'chat',
+        providerId: result.provider,
+        providerTrackId: result.id,
+        providerPicId: result.picId,
+        addedAt: Date.now(),
+      };
+      this.chatList.push(item);
+      if (autoplay) {
+        this.currentList = 'chat';
+        this.play('chat', this.chatList.length - 1);
+      }
     },
 
     async addServerFile(name: string, file: File): Promise<void> {
@@ -242,9 +238,7 @@ export const usePlaylistStore = defineStore('playlist', {
       if (!item) return;
 
       let resolved: ResolvedTrack | null = null;
-      const mgr = createDefaultProviders(useSettingsStore().settings.providers);
 
-      // Server file: use stored path as URL
       if (item.source === 'server' && item.serverPath) {
         resolved = {
           url: item.serverPath,
@@ -252,18 +246,17 @@ export const usePlaylistStore = defineStore('playlist', {
           artist: item.artist ?? '',
           source: 'server',
         };
-      }
-
-      // Network/chat: search + resolve
-      if (!resolved && item.song) {
-        resolved = await mgr.searchAndResolve(item.song, item.artist);
+      } else if (item.providerId && item.providerTrackId) {
+        const mgr = createDefaultProviders(useSettingsStore().settings.providers);
+        resolved = await mgr.resolve(item.providerTrackId, item.providerId, item.providerPicId);
         if (resolved) {
-          item.providerId = resolved.source;
+          resolved.name = item.song;
+          resolved.artist = item.artist ?? '';
         }
       }
 
       if (!resolved) {
-        console.warn(`[playlist] resolve failed for "${item.song}"`);
+        console.warn(`[playlist] track unavailable (possibly delisted): "${item.song}"`);
         if (typeof toastr !== 'undefined') {
           toastr.warning(`${t('Cannot play')}: ${item.song}`);
         }
@@ -272,112 +265,6 @@ export const usePlaylistStore = defineStore('playlist', {
 
       const playerStore = usePlayerStore();
       await playerStore.loadAndPlay(resolved);
-    },
-
-    handleNewCues(cues: { messageId: number; cues: Cue[] }[]): void {
-      if (cues.length === 0) return;
-      let latestItem: PlaylistItem | null = null;
-      for (const batch of cues) {
-        for (const cue of batch.cues) {
-          console.log('[晓乐] cue found:', cue.song, cue.artist ?? '', 'from message', batch.messageId);
-          const item: PlaylistItem = {
-            id: genId(),
-            song: cue.song,
-            artist: cue.artist,
-            source: 'chat',
-            messageId: batch.messageId,
-            addedAt: Date.now(),
-          };
-          this.chatList.push(item);
-          latestItem = item;
-        }
-      }
-      if (latestItem) {
-        const idx = this.chatList.indexOf(latestItem);
-        if (idx >= 0) {
-          this.currentList = 'chat';
-          this.activeTab = 'chat';
-          this.play('chat', idx);
-        }
-      }
-    },
-
-    handleMessageUpdate(messageId: number): void {
-      if (!this.chatIndexer || !this.chatId) return;
-      const result = this.chatIndexer.scanMessage(
-        this.chatId,
-        messageId,
-      );
-      const indices = this.chatList
-        .map((item, i) => (item.messageId === messageId ? i : -1))
-        .filter((i) => i >= 0);
-
-      if (indices.length === 0) {
-        if (result.cue) {
-          this.addFromCue(result.cue, messageId);
-        }
-        return;
-      }
-
-      if (!result.cue) {
-        for (const idx of [...indices].reverse()) {
-          this.chatList.splice(idx, 1);
-        }
-        if (this.currentList === 'chat') {
-          for (const idx of [...indices].reverse()) {
-            if (idx === this.currentIndex) this.currentIndex = -1;
-            else if (idx < this.currentIndex) this.currentIndex--;
-          }
-        }
-        return;
-      }
-
-      const firstIdx = indices[0];
-      const item = this.chatList[firstIdx];
-      item.song = result.cue.song;
-      item.artist = result.cue.artist;
-      for (const idx of [...indices].reverse()) {
-        if (idx !== firstIdx) this.chatList.splice(idx, 1);
-      }
-      if (this.currentList === 'chat') {
-        const removedBefore = indices.filter((idx) => idx !== firstIdx && idx < this.currentIndex).length;
-        this.currentIndex -= removedBefore;
-        if (this.currentIndex < 0) this.currentIndex = -1;
-      }
-    },
-
-    handleMessageDelete(messageId: number): void {
-      const indices = this.chatList
-        .map((item, i) => (item.messageId === messageId ? i : -1))
-        .filter((i) => i >= 0);
-      for (const idx of [...indices].reverse()) {
-        this.chatList.splice(idx, 1);
-      }
-      if (this.currentList === 'chat') {
-        for (const idx of [...indices].reverse()) {
-          if (idx === this.currentIndex) this.currentIndex = -1;
-          else if (idx < this.currentIndex) this.currentIndex--;
-        }
-      }
-    },
-
-    getCursor(): number {
-      if (!this.chatIndexer || !this.chatId) return -1;
-      return this.chatIndexer.getCursor(this.chatId);
-    },
-
-    setCursor(msgId: number): void {
-      if (!this.chatIndexer || !this.chatId) return;
-      this.chatIndexer.setCursor(this.chatId, msgId);
-      const settingsStore = useSettingsStore();
-      const storage = settingsStore.storage;
-      if (storage) {
-        storage.setMetadata(CURSOR_KEY, {
-          chatId: this.chatId,
-          lastScannedMessageId: msgId,
-          updatedAt: Date.now(),
-        });
-      }
     },
 
     setActiveTab(tab: PlaylistTab): void {
