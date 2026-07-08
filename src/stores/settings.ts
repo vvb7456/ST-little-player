@@ -3,13 +3,14 @@ import type {
   ExtensionSettings,
   PlayMode,
   ProviderConfig,
+  AiMode,
 } from '@/types';
 import type { StorageAdapter } from '@/storage/StorageAdapter';
 
 function defaultProviders(): ProviderConfig[] {
   return [
     { id: 'netease', enabled: true, priority: 0, config: { baseURL: '' } },
-    { id: 'local', enabled: true, priority: 1, config: {} },
+    { id: 'local', enabled: false, priority: 1, config: {} },
     { id: 'custom', enabled: false, priority: 2, config: { searchURL: '', resolveURL: '' } },
   ];
 }
@@ -20,12 +21,24 @@ function defaultSettings(): ExtensionSettings {
     playMode: 'list',
     position: null,
     widgetMode: 'dock',
-    dockAlign: 'left',
-    autoPlayOnNewCue: true,
+    dockAlign: 'bottom-left',
+    showDragMiniText: true,
+
     providers: defaultProviders(),
-    customCueRules: [],
     customOpacity: false,
     opacity: 75,
+    aiMode: 'off',
+    aiUseCustomApi: false,
+    aiContextMessages: 8,
+    aiApiUrl: '',
+    aiApiKey: '',
+    aiModel: '',
+    aiAutoTrigger: true,
+    aiTriggerOnGreeting: false,
+    aiCooldownMs: 3000,
+    togetherPromptRole: 'system',
+    togetherCustomPromptEnabled: false,
+    togetherCustomPrompt: '',
   };
 }
 
@@ -62,7 +75,6 @@ export const useSettingsStore = defineStore('settings', {
                 ? { ...existing, config: existing.config ?? d.config ?? {} }
                 : d;
             }),
-            customCueRules: stored.customCueRules ?? defaults.customCueRules,
           };
         }
       } else {
@@ -105,13 +117,8 @@ export const useSettingsStore = defineStore('settings', {
       this.save();
     },
 
-    addCustomCueRule(rule: string): void {
-      this.settings.customCueRules.push(rule);
-      this.save();
-    },
-
-    removeCustomCueRule(index: number): void {
-      this.settings.customCueRules.splice(index, 1);
+    setShowDragMiniText(enabled: boolean): void {
+      this.settings.showDragMiniText = enabled;
       this.save();
     },
 
@@ -121,7 +128,64 @@ export const useSettingsStore = defineStore('settings', {
         cfg.enabled = enabled;
         this.save();
       }
-    },    save(): void {
+    },
+
+    setAiMode(mode: AiMode): void {
+      this.settings.aiMode = mode;
+      this.save();
+    },
+
+    setAiUseCustomApi(enabled: boolean): void {
+      this.settings.aiUseCustomApi = enabled;
+      this.save();
+    },
+
+    setAiContextMessages(n: number): void {
+      this.settings.aiContextMessages = n;
+      this.save();
+    },
+
+    setAiAutoTrigger(enabled: boolean): void {
+      this.settings.aiAutoTrigger = enabled;
+      this.save();
+    },
+
+    setAiTriggerOnGreeting(enabled: boolean): void {
+      this.settings.aiTriggerOnGreeting = enabled;
+      this.save();
+    },
+
+    setAiApiUrl(url: string): void {
+      this.settings.aiApiUrl = url;
+      this.save();
+    },
+
+    setAiApiKey(key: string): void {
+      this.settings.aiApiKey = key;
+      this.save();
+    },
+
+    setAiModel(model: string): void {
+      this.settings.aiModel = model;
+      this.save();
+    },
+
+    setTogetherPromptRole(role: 'system' | 'user'): void {
+      this.settings.togetherPromptRole = role;
+      this.save();
+    },
+
+    setTogetherCustomPromptEnabled(enabled: boolean): void {
+      this.settings.togetherCustomPromptEnabled = enabled;
+      this.save();
+    },
+
+    setTogetherCustomPrompt(prompt: string): void {
+      this.settings.togetherCustomPrompt = prompt;
+      this.save();
+    },
+
+    save(): void {
       if (!this.storage) return;
       void this.storage.setSettings(this.settings);
     },

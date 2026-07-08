@@ -44,4 +44,6 @@ declare global {
     getContext(): any;
     libs: Record<string, any>;
   };
+
+  const __APP_VERSION__: string;
 }

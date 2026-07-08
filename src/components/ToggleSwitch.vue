@@ -1,5 +1,7 @@
 <script setup lang="ts">
-defineProps<{
+import { ref, nextTick } from 'vue';
+
+const props = defineProps<{
   modelValue: boolean;
   label?: string;
   disabled?: boolean;
@@ -9,9 +11,18 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean];
 }>();
 
-function onToggle(e: Event): void {
-  const target = e.target as HTMLInputElement;
-  emit('update:modelValue', target.checked);
+const inputRef = ref<HTMLInputElement | null>(null);
+
+function onToggle(): void {
+  const prev = props.modelValue;
+  emit('update:modelValue', !prev);
+  // If parent doesn't update modelValue (e.g. async confirm cancelled),
+  // force the checkbox DOM back to match the unchanged value.
+  nextTick(() => {
+    if (inputRef.value && props.modelValue === prev && inputRef.value.checked !== prev) {
+      inputRef.value.checked = prev;
+    }
+  });
 }
 </script>
 
@@ -20,6 +31,7 @@ function onToggle(e: Event): void {
     <span v-if="label" class="stmp-switch-label">{{ label }}</span>
     <span class="stmp-switch">
       <input
+        ref="inputRef"
         type="checkbox"
         :checked="modelValue"
         :disabled="disabled"
@@ -105,5 +117,13 @@ function onToggle(e: Event): void {
 .stmp-switch input:focus-visible ~ .stmp-switch-track {
   outline: 2px solid var(--SmartThemeQuoteColor, #e18a24);
   outline-offset: 2px;
+}
+
+.stmp-switch input:disabled {
+  cursor: not-allowed;
+}
+
+.stmp-switch input:disabled ~ .stmp-switch-track {
+  opacity: 0.4;
 }
 </style>

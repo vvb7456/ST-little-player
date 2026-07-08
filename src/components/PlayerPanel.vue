@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, watch, nextTick } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { usePlayerStore, usePlaylistStore, useSettingsStore } from '@/stores/index';
+import { useVerticalLyricScroll } from "@/composables/useVerticalLyricScroll";
 import type { PlayMode } from '@/types';
 import Icon from './Icon.vue';
 import PlaylistView from './PlaylistView.vue';
@@ -13,11 +14,17 @@ const playerStore = usePlayerStore();
 const playlistStore = usePlaylistStore();
 const settingsStore = useSettingsStore();
 
+const isDockTop = computed(() =>
+  settingsStore.settings.widgetMode === 'dock' &&
+  settingsStore.settings.dockAlign.startsWith('top-'),
+);
+
 const viewMode = ref<'cover' | 'lyric'>('cover');
 const activeOverlay = ref<'list' | 'search' | null>(null);
 const coverError = ref(false);
 const showVolumeSlider = ref(false);
 let volumeHoverTimer: ReturnType<typeof setTimeout> | null = null;
+let preMuteVolume = 0;
 
 const coverUrl = computed(() => playerStore.currentTrack?.cover || '');
 
@@ -37,38 +44,7 @@ const progressPercent = computed(() =>
 );
 
 // Lyric scroll: render full list, translateY to center current line
-const lyricScrollY = ref(0);
-const lyricLineRefs = ref<HTMLElement[]>([]);
-const lyricWindowRef = ref<HTMLElement | null>(null);
-
-function setLyricRef(el: any, idx: number): void {
-  if (el) lyricLineRefs.value[idx] = el as HTMLElement;
-}
-
-async function updateLyricScroll(): Promise<void> {
-  await nextTick();
-  const idx = playerStore.currentLyricIndex;
-  const win = lyricWindowRef.value;
-  if (!win || idx < 0) {
-    lyricScrollY.value = 0;
-    return;
-  }
-  const lineEl = lyricLineRefs.value[idx];
-  if (!lineEl) return;
-  // offsetTop is relative to offsetParent (the scroll container),
-  // unaffected by CSS transform — exactly what we need
-  const lineTop = lineEl.offsetTop;
-  const lineH = lineEl.offsetHeight;
-  const winH = win.clientHeight;
-  // Translate so that the line center is at the window center
-  lyricScrollY.value = lineTop - winH / 2 + lineH / 2;
-}
-
-watch(() => playerStore.currentLyricIndex, updateLyricScroll);
-watch(() => playerStore.lyrics, () => {
-  lyricLineRefs.value = [];
-  updateLyricScroll();
-});
+const { scrollY: lyricScrollY, windowRef: lyricWindowRef, setLineRef: setLyricRef } = useVerticalLyricScroll();
 
 function formatTime(s: number): string {
   const m = Math.floor(s / 60);
@@ -113,9 +89,10 @@ function onVolumeLeave(): void {
 
 function toggleMute(): void {
   if (playerStore.volume > 0) {
+    preMuteVolume = playerStore.volume;
     playerStore.setVolume(0);
   } else {
-    playerStore.setVolume(65);
+    playerStore.setVolume(preMuteVolume || settingsStore.settings.volume);
   }
 }
 
@@ -142,7 +119,7 @@ function closeOverlay(): void {
         :aria-label="t('Collapse panel')"
         @click.stop="$emit('collapse')"
       >
-        <Icon name="chevron-down" :size="18" />
+        <Icon :name="isDockTop ? 'chevron-up' : 'chevron-down'" :size="18" />
       </button>
     </div>
 
@@ -162,13 +139,13 @@ function closeOverlay(): void {
           </div>
         </div>
         <div class="stmp-track-name">{{ playerStore.currentTrack?.name || t('No Song') }}</div>
-        <div class="stmp-track-artist">{{ playerStore.currentTrack?.artist || '\u00A0' }}</div>
+        <div class="stmp-track-artist">{{ (playerStore.currentTrack?.artist || '').trim() || '\u00A0' }}</div>
       </div>
       <!-- Lyric mode: track name + artist fixed, 6-line scrolling lyrics -->
       <div class="stmp-lyric-mode" :class="{ hidden: viewMode !== 'lyric' }">
         <div class="stmp-lyric-header">
           <div class="stmp-track-name">{{ playerStore.currentTrack?.name || t('No Song') }}</div>
-          <div class="stmp-track-artist">{{ playerStore.currentTrack?.artist || '\u00A0' }}</div>
+          <div class="stmp-track-artist">{{ (playerStore.currentTrack?.artist || '').trim() || '\u00A0' }}</div>
         </div>
         <div ref="lyricWindowRef" class="stmp-lyric-window">
           <div v-if="playerStore.lyrics.length > 0" class="stmp-lyric-scroll" :style="{ transform: `translateY(-${lyricScrollY}px)` }">
@@ -219,7 +196,7 @@ function closeOverlay(): void {
 
       <!-- Left cluster -->
       <button class="stmp-ctrl-btn" :aria-label="t('Toggle play mode')" @click="cyclePlayMode">
-        <Icon :name="playModeIcon[settingsStore.settings.playMode]" :size="18" />
+        <Icon :name="playModeIcon[settingsStore.settings.playMode]" :size="16" />
       </button>
       <button class="stmp-ctrl-btn" :aria-label="t('Previous')" @click="playlistStore.prev()">
         <Icon name="prev" :size="18" />
@@ -244,7 +221,7 @@ function closeOverlay(): void {
         :aria-label="t('Playlist')"
         @click.stop="toggleOverlay('list')"
       >
-        <Icon name="list-music" :size="18" />
+        <Icon name="list" :size="16" />
       </button>
 
       <!-- Volume (rightmost) -->
@@ -362,9 +339,11 @@ function closeOverlay(): void {
 }
 
 .stmp-cover-large img {
+  display: block;
+  vertical-align: top;
   width: 180px;
   height: 180px;
-  border-radius: 16px;
+  border-radius: 14px;
   object-fit: cover;
   box-shadow: 0 4px 16px var(--SmartThemeShadowColor, rgba(0, 0, 0, 0.35));
 }
@@ -372,7 +351,7 @@ function closeOverlay(): void {
 .stmp-cover-placeholder {
   width: 180px;
   height: 180px;
-  border-radius: 16px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -389,6 +368,8 @@ function closeOverlay(): void {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  line-height: 1.2;
+  min-height: calc(var(--mainFontSize, 14px) * 1.2);
   color: var(--stmp-text);
 }
 
@@ -400,6 +381,8 @@ function closeOverlay(): void {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  line-height: 1.2;
+  min-height: calc(var(--mainFontSize, 14px) * 0.96);
   color: var(--stmp-text-dim);
 }
 
@@ -654,20 +637,22 @@ function closeOverlay(): void {
   cursor: pointer;
 }
 
-/* Overlay panel */
+/* Overlay panel: negative inset covers parent's padding.
+   --stmp-pad-x/y set by each mode in App.vue.
+   Parent's overflow:hidden clips the transition. */
 .stmp-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: calc(-1 * var(--stmp-pad-y, 0px));
+  left: calc(-1 * var(--stmp-pad-x, 0px));
+  right: calc(-1 * var(--stmp-pad-x, 0px));
+  bottom: calc(-1 * var(--stmp-pad-y, 0px));
   background: color-mix(in srgb, var(--stmp-bg) 90%, transparent);
   backdrop-filter: var(--stmp-blur);
   -webkit-backdrop-filter: var(--stmp-blur);
   border-radius: var(--stmp-radius, 16px);
   display: flex;
   flex-direction: column;
-  padding: 10px;
+  padding: calc(var(--stmp-pad-y, 8px) + 8px) calc(var(--stmp-pad-x, 10px) + 10px);
   gap: 8px;
   z-index: 10;
 }

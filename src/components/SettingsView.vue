@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { useSettingsStore } from '@/stores/index';
-import type { PlayMode, WidgetMode, DockAlign } from '@/types';
+import { useSettingsStore, usePlaylistStore } from '@/stores/index';
+import type { PlayMode, WidgetMode, DockAlign, AiMode } from '@/types';
 import { t } from '@/i18n';
+import { getBgmController } from '@/ai/BgmController';
+import { fetchCustomModels } from '@/ai/CustomApiClient';
+import { TOGETHER_INTERCEPTOR } from '@/ai/prompts';
 import ToggleSwitch from './ToggleSwitch.vue';
+import ComboBox from './ComboBox.vue';
 
 const settingsStore = useSettingsStore();
+const playlistStore = usePlaylistStore();
 
 type TabId = 'appearance' | 'playback' | 'ai' | 'general';
 const activeTab = ref<TabId>('appearance');
@@ -26,11 +31,13 @@ const widgetModes: { value: WidgetMode; label: string; icon: string }[] = [
 ];
 
 const dockAligns: { value: DockAlign; label: string; icon: string }[] = [
-  { value: 'left', label: t('Left'), icon: 'fa-solid fa-align-left' },
-  { value: 'right', label: t('Right'), icon: 'fa-solid fa-align-right' },
+  { value: 'top-left', label: t('Top Left'), icon: 'fa-solid fa-arrow-up-from-left' },
+  { value: 'top-right', label: t('Top Right'), icon: 'fa-solid fa-arrow-up-from-right' },
+  { value: 'bottom-left', label: t('Bottom Left'), icon: 'fa-solid fa-arrow-down-from-left' },
+  { value: 'bottom-right', label: t('Bottom Right'), icon: 'fa-solid fa-arrow-down-from-right' },
 ];
 
-const isInline = () => settingsStore.settings.widgetMode === 'inline';
+const hasOpacity = () => settingsStore.settings.widgetMode === 'dock' || settingsStore.settings.widgetMode === 'drag';
 
 function onOpacity(e: Event): void {
   const target = e.target as HTMLInputElement;
@@ -49,38 +56,104 @@ function onVolume(e: Event): void {
   settingsStore.setVolume(Number(target.value));
 }
 
-// ===== AI =====
 const providerNames: Record<string, string> = {
-  netease: t('NetEase'),
-  local: t('Local Files'),
+  netease: t('Network'),
+  local: t('Upload'),
   custom: t('Custom API'),
 };
 
-function toggleProvider(id: string): void {
-  const cfg = settingsStore.settings.providers.find((p) => p.id === id);
-  if (cfg) {
-    cfg.enabled = !cfg.enabled;
-    settingsStore.save();
+const providerDescs: Record<string, string> = {
+  netease: t('Search and play songs from the network'),
+  local: t('Upload and play songs from the server'),
+  custom: t('Search and play songs from a custom API'),
+};
+
+const aiModes: { value: AiMode; label: string; icon: string }[] = [
+  { value: 'together', label: t('Together'), icon: 'fa-solid fa-link' },
+  { value: 'function_call', label: t('Function Call'), icon: 'fa-solid fa-screwdriver-wrench' },
+];
+
+function onAiMode(mode: AiMode): void {
+  settingsStore.setAiMode(mode);
+  getBgmController()?.setMode(mode);
+}
+
+function onUseCustomApi(enabled: boolean): void {
+  settingsStore.setAiUseCustomApi(enabled);
+  getBgmController()?.resetFunctionCall();
+}
+
+function onAiMasterToggle(enabled: boolean): void {
+  const mode: AiMode = enabled ? 'function_call' : 'off';
+  settingsStore.setAiMode(mode);
+  getBgmController()?.setMode(mode);
+}
+
+function onAiContextMessages(e: Event): void {
+  const target = e.target as HTMLInputElement;
+  settingsStore.setAiContextMessages(Number(target.value));
+}
+
+const modelList = ref<string[]>([]);
+const fetchingModels = ref(false);
+
+async function onFetchModels(): Promise<void> {
+  if (fetchingModels.value) return;
+  const settings = settingsStore.settings;
+  if (!settings.aiApiUrl) {
+    if (typeof toastr !== 'undefined') toastr.warning(t('Please fill API URL'));
+    return;
+  }
+  fetchingModels.value = true;
+  try {
+    const models = await fetchCustomModels();
+    modelList.value = models;
+    if (models.length === 0) {
+      if (typeof toastr !== 'undefined') toastr.info(t('No models returned by endpoint'));
+    } else {
+      if (typeof toastr !== 'undefined') toastr.success(`${models.length} ${t('models found')}`);
+    }
+  } catch (err: any) {
+    console.error('[晓乐] Failed to fetch models:', err);
+    if (typeof toastr !== 'undefined') toastr.error(t('Failed to fetch models'));
+  } finally {
+    fetchingModels.value = false;
   }
 }
 
-const newRule = ref('');
-
-function addRule(): void {
-  const rule = newRule.value.trim();
-  if (!rule) return;
-  settingsStore.addCustomCueRule(rule);
-  newRule.value = '';
-}
-
-function removeRule(index: number): void {
-  settingsStore.removeCustomCueRule(index);
+function toggleProvider(id: string): void {
+  const cfg = settingsStore.settings.providers.find((p) => p.id === id);
+  if (!cfg) return;
+  if (!cfg.enabled && id === 'local') {
+    const ctx = SillyTavern.getContext();
+    if (ctx?.callGenericPopup && ctx?.POPUP_TYPE) {
+      void ctx.callGenericPopup(
+        t('Upload warning text'),
+        ctx.POPUP_TYPE.CONFIRM,
+        '',
+        { okButton: t('Confirm'), cancelButton: t('Cancel') },
+      ).then((result: number) => {
+        if (result === 1) {
+          cfg.enabled = true;
+          settingsStore.save();
+        }
+      });
+      return;
+    }
+  }
+  cfg.enabled = !cfg.enabled;
+  settingsStore.save();
 }
 
 // ===== General =====
+const EXPORT_EXCLUDE_KEYS = ['aiApiUrl', 'aiApiKey', 'aiModel'];
+
 const exportData = (): void => {
-  const data = JSON.stringify(settingsStore.settings, null, 2);
-  const blob = new Blob([data], { type: 'application/json' });
+  const data: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(settingsStore.settings)) {
+    if (!EXPORT_EXCLUDE_KEYS.includes(k)) data[k] = v;
+  }
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -100,7 +173,7 @@ const importData = (): void => {
     try {
       const data = JSON.parse(text);
       if (typeof data !== 'object' || data === null) throw new Error('Not an object');
-      const validKeys = ['volume', 'playMode', 'position', 'widgetMode', 'autoPlayOnNewCue', 'providers', 'customCueRules', 'customOpacity', 'opacity'];
+      const validKeys = ['volume', 'playMode', 'position', 'widgetMode', 'dockAlign', 'providers', 'customOpacity', 'opacity', 'aiMode', 'aiUseCustomApi', 'aiContextMessages', 'aiAutoTrigger', 'aiTriggerOnGreeting', 'aiCooldownMs', 'togetherPromptRole', 'togetherCustomPromptEnabled', 'togetherCustomPrompt'];
       const filtered: Record<string, unknown> = {};
       for (const key of validKeys) {
         if (key in data) filtered[key] = data[key];
@@ -114,22 +187,92 @@ const importData = (): void => {
       if (filtered.providers && !Array.isArray(filtered.providers)) {
         throw new Error('Invalid providers');
       }
-      if (filtered.customCueRules && !Array.isArray(filtered.customCueRules)) {
-        throw new Error('Invalid customCueRules');
-      }
       Object.assign(settingsStore.settings, filtered);
       settingsStore.save();
-      toastr.success(t('Data imported'));
+      if (typeof toastr !== 'undefined') toastr.success(t('Data imported'));
     } catch (err) {
       console.error('Import failed', err);
-      toastr.error(t('Import failed') + ': ' + (err instanceof Error ? err.message : t('Invalid JSON')));
+      if (typeof toastr !== 'undefined') toastr.error(t('Import failed') + ': ' + (err instanceof Error ? err.message : t('Invalid JSON')));
     }
   };
   input.click();
 };
 
-const EXT_VERSION = '1.0.0';
+const EXT_VERSION = __APP_VERSION__;
 const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
+
+// ===== Playlist import/export (network list only) =====
+const exportPlaylist = (): void => {
+  const data = playlistStore.networkList.map(item => ({
+    song: item.song,
+    artist: item.artist,
+    providerId: item.providerId,
+    providerTrackId: item.providerTrackId,
+    providerPicId: item.providerPicId,
+  }));
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'st-little-player-playlist.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  if (typeof toastr !== 'undefined') toastr.success(t('Data exported'));
+};
+
+const importPlaylist = (): void => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = async (e: Event): Promise<void> => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    const text = await file.text();
+    try {
+      const data = JSON.parse(text);
+      if (!Array.isArray(data)) throw new Error('Not an array');
+      const items = data
+        .filter((item: any) => item && typeof item.song === 'string')
+        .map((item: any) => ({
+          id: `stmp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+          song: item.song,
+          artist: item.artist,
+          source: 'network' as const,
+          providerId: item.providerId,
+          providerTrackId: item.providerTrackId,
+          providerPicId: item.providerPicId,
+          addedAt: Date.now(),
+        }));
+      playlistStore.networkList = items;
+      playlistStore.savePlaylistData();
+      if (typeof toastr !== 'undefined') toastr.success(t('Data imported'));
+    } catch (err) {
+      console.error('Playlist import failed', err);
+      if (typeof toastr !== 'undefined') toastr.error(t('Import failed') + ': ' + (err instanceof Error ? err.message : t('Invalid JSON')));
+    }
+  };
+  input.click();
+};
+
+// ===== Prompt Editor (uses ST native callPopup) =====
+async function openPromptEditor(): Promise<void> {
+  const ctx = SillyTavern.getContext();
+  const current = settingsStore.settings.togetherCustomPrompt || TOGETHER_INTERCEPTOR;
+  const macroList = ['{{xiaoyueCurrentSong}}', '{{xiaoyueCurrentArtist}}', '{{xiaoyueIsPlaying}}', '{{xiaoyueHasTrack}}', '{{xiaoyueRecentPlayed}}'];
+  const markerHint = `<div style="margin-bottom:6px;font-size:0.85em;opacity:0.8">${t('The prompt must contain the markers')} <code class="stmp-macro-hint">&lt;!--XY_BGM_START--&gt;</code> / <code class="stmp-macro-hint">&lt;!--XY_BGM_END--&gt;</code> ${t('for BGM control to work.')}</div>`;
+  const macroHtml = macroList.map(m => `<code class="stmp-macro-hint">${m}</code>`).join(' ');
+  const macroHint = `<div style="margin-bottom:8px;font-size:0.85em;opacity:0.7">${t('Available macros:')} ${macroHtml}</div>`;
+  const desc = markerHint + macroHint;
+
+  // Fix ST bug: Cancel button gets display:inline-block which causes vertical stacking
+  $('#dialogue_popup_cancel').css('display', 'flex');
+  $('#dialogue_popup_controls .menu_button').css('width', 'unset');
+
+  const result = await ctx.callPopup(desc, 'input', current, { wide: true, rows: 20, okButton: t('Save') });
+  if (result !== false) {
+    settingsStore.setTogetherCustomPrompt(String(result).trim());
+  }
+}
 </script>
 
 <template>
@@ -176,7 +319,7 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
         <div v-if="settingsStore.settings.widgetMode === 'dock'" class="stmp-row">
           <div class="stmp-row-info">
             <div class="stmp-row-title">{{ t('Dock Alignment') }}</div>
-            <div class="stmp-row-desc">{{ t('Align the docked player to the left or right of the input bar') }}</div>
+            <div class="stmp-row-desc">{{ t('Align the docked player to a corner of the screen') }}</div>
           </div>
           <div class="stmp-chips">
             <div
@@ -192,22 +335,32 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
           </div>
         </div>
 
-        <!-- Custom Opacity toggle -->
-        <div class="stmp-row">
+        <!-- Drag mini text toggle -->
+        <div v-if="settingsStore.settings.widgetMode === 'drag'" class="stmp-row">
           <div class="stmp-row-info">
-            <div class="stmp-row-title">{{ t('Custom opacity') }}</div>
-            <div v-if="isInline()" class="stmp-row-desc">{{ t('Not available in inline mode') }}</div>
-            <div v-else class="stmp-row-desc">{{ t('Adjust the player background opacity') }}</div>
+            <div class="stmp-row-title">{{ t('Show track info in drag mini') }}</div>
+            <div class="stmp-row-desc">{{ t('Show song title and lyrics in the compact drag widget') }}</div>
           </div>
           <ToggleSwitch
-            :model-value="settingsStore.settings.customOpacity && !isInline()"
-            :disabled="isInline()"
+            :model-value="settingsStore.settings.showDragMiniText"
+            @update:model-value="settingsStore.setShowDragMiniText"
+          />
+        </div>
+
+        <!-- Custom Opacity toggle (only for dock/drag modes) -->
+        <div v-if="hasOpacity()" class="stmp-row">
+          <div class="stmp-row-info">
+            <div class="stmp-row-title">{{ t('Custom opacity') }}</div>
+            <div class="stmp-row-desc">{{ t('Adjust the player background opacity') }}</div>
+          </div>
+          <ToggleSwitch
+            :model-value="settingsStore.settings.customOpacity"
             @update:model-value="settingsStore.setCustomOpacity"
           />
         </div>
 
         <!-- Opacity slider -->
-        <div v-if="settingsStore.settings.customOpacity && !isInline()" class="stmp-row">
+        <div v-if="settingsStore.settings.customOpacity" class="stmp-row">
           <div class="stmp-row-info">
             <div class="stmp-row-title">{{ t('Opacity') }}</div>
           </div>
@@ -255,7 +408,7 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
           <div class="stmp-row">
             <div class="stmp-row-info">
               <div class="stmp-row-title">{{ providerNames[p.id] || p.id }}</div>
-              <div class="stmp-row-desc">{{ t('Enable or disable music sources') }}</div>
+              <div class="stmp-row-desc">{{ providerDescs[p.id] }}</div>
             </div>
             <ToggleSwitch
               :model-value="p.enabled"
@@ -277,50 +430,212 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
             />
           </div>
         </div>
+
+        <div class="stmp-separator" />
+        <div class="stmp-row">
+          <div class="stmp-row-info">
+            <div class="stmp-row-title">{{ t('Export playlist') }}</div>
+            <div class="stmp-row-desc">{{ t('Save network playlist to a JSON file') }}</div>
+          </div>
+          <div class="menu_button menu_button_icon stmp-action-btn" @click="exportPlaylist">
+            <i class="fa-solid fa-file-export" />
+          </div>
+        </div>
+        <div class="stmp-row">
+          <div class="stmp-row-info">
+            <div class="stmp-row-title">{{ t('Import playlist') }}</div>
+            <div class="stmp-row-desc">{{ t('Load network playlist from a JSON file') }}</div>
+          </div>
+          <div class="menu_button menu_button_icon stmp-action-btn" @click="importPlaylist">
+            <i class="fa-solid fa-file-import" />
+          </div>
+        </div>
       </div>
 
       <!-- ===== AI ===== -->
       <div v-show="activeTab === 'ai'" class="stmp-tab-panel">
+        <!-- Master switch -->
         <div class="stmp-row">
           <div class="stmp-row-info">
-            <div class="stmp-row-title">{{ t('Auto-play on new cue') }}</div>
-            <div class="stmp-row-desc">{{ t('Automatically play when a new song cue is detected') }}</div>
+            <div class="stmp-row-title">{{ t('AI BGM') }}</div>
+            <div class="stmp-row-desc">{{ t('Enable AI-driven background music selection') }}</div>
           </div>
           <ToggleSwitch
-            :model-value="settingsStore.settings.autoPlayOnNewCue"
-            @update:model-value="settingsStore.settings.autoPlayOnNewCue = $event; settingsStore.save()"
+            :model-value="settingsStore.settings.aiMode !== 'off'"
+            @update:model-value="onAiMasterToggle($event)"
           />
         </div>
 
-        <div class="stmp-row">
-          <div class="stmp-row-info">
-            <div class="stmp-row-title">{{ t('Custom Cue Rules (Regex)') }}</div>
-            <div class="stmp-row-desc">{{ t('Additional regex patterns to detect song cues in chat') }}</div>
-          </div>
-        </div>
-        <div class="stmp-rules">
-          <div
-            v-for="(rule, i) in settingsStore.settings.customCueRules"
-            :key="i"
-            class="stmp-rule"
-          >
-            <code>{{ rule }}</code>
-            <div class="menu_button menu_button_icon stmp-rule-del" @click="removeRule(i)">
-              <i class="fa-solid fa-xmark" />
+        <template v-if="settingsStore.settings.aiMode !== 'off'">
+          <!-- Mode selection -->
+          <div class="stmp-row">
+            <div class="stmp-row-info">
+              <div class="stmp-row-title">{{ t('AI Mode') }}</div>
+              <div class="stmp-row-desc">{{ t('Choose how AI selects background music') }}</div>
+            </div>
+            <div class="stmp-chips">
+              <div
+                v-for="m in aiModes"
+                :key="m.value"
+                class="stmp-chip"
+                :class="{ active: settingsStore.settings.aiMode === m.value }"
+                @click="onAiMode(m.value)"
+              >
+                <i :class="m.icon" />
+                <span>{{ m.label }}</span>
+              </div>
             </div>
           </div>
-        </div>
-        <div class="stmp-rule-add">
-          <input
-            v-model="newRule"
-            class="text_pole"
-            :placeholder="t('Add regex rule...')"
-            @keydown.enter="addRule"
-          />
-          <div class="menu_button menu_button_icon stmp-rule-add-btn" @click="addRule">
-            <i class="fa-solid fa-plus" />
-          </div>
-        </div>
+
+          <!-- Function Call mode settings -->
+          <template v-if="settingsStore.settings.aiMode === 'function_call'">
+            <!-- Custom API toggle -->
+            <div class="stmp-row">
+              <div class="stmp-row-info">
+                <div class="stmp-row-title">{{ t('Custom API') }}</div>
+                <div class="stmp-row-desc">{{ t('Use a separate API endpoint for BGM agent loop instead of main API function calling') }}</div>
+              </div>
+              <ToggleSwitch
+                :model-value="settingsStore.settings.aiUseCustomApi"
+                @update:model-value="onUseCustomApi"
+              />
+            </div>
+
+            <!-- Custom API settings (only when useCustomApi is on) -->
+            <template v-if="settingsStore.settings.aiUseCustomApi">
+              <div class="stmp-row">
+                <div class="stmp-row-info">
+                  <div class="stmp-row-title">{{ t('API URL') }}</div>
+                  <div class="stmp-row-desc">{{ t('OpenAI-compatible endpoint that supports tool calling') }}</div>
+                </div>
+                <input
+                  class="text_pole stmp-text-input"
+                  :value="settingsStore.settings.aiApiUrl"
+                  placeholder=""
+                  @change="settingsStore.setAiApiUrl(($event.target as HTMLInputElement).value.trim())"
+                />
+              </div>
+              <div class="stmp-row">
+                <div class="stmp-row-info">
+                  <div class="stmp-row-title">{{ t('API Key') }}</div>
+                  <div class="stmp-row-desc">{{ t('Bearer token for the custom endpoint') }}</div>
+                </div>
+                <input
+                  type="password"
+                  class="text_pole stmp-text-input"
+                  :value="settingsStore.settings.aiApiKey"
+                  placeholder=""
+                  @change="settingsStore.setAiApiKey(($event.target as HTMLInputElement).value.trim())"
+                />
+              </div>
+              <div class="stmp-row">
+                <div class="stmp-row-info">
+                  <div class="stmp-row-title">{{ t('Model') }}</div>
+                  <div class="stmp-row-desc">{{ t('Model that supports tool calling') }}</div>
+                </div>
+                <div class="stmp-model-wrap">
+                  <ComboBox
+                    :model-value="settingsStore.settings.aiModel"
+                    :options="modelList"
+                    placeholder=""
+                    @update:model-value="settingsStore.setAiModel($event)"
+                  />
+                  <div
+                    class="menu_button menu_button_icon stmp-model-fetch"
+                    :class="{ 'stmp-spin': fetchingModels }"
+                    :title="t('Connect')"
+                    @click="onFetchModels"
+                  >
+                    <i class="fa-solid fa-plug" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="stmp-row">
+                <div class="stmp-row-info">
+                  <div class="stmp-row-title">{{ t('Context Messages') }}</div>
+                  <div class="stmp-row-desc">{{ t('Number of recent chat messages to send to AI') }}</div>
+                </div>
+                <div class="stmp-slider-wrap">
+                  <input type="range" class="stmp-slider" min="2" max="20" :value="settingsStore.settings.aiContextMessages" @input="onAiContextMessages" />
+                  <span class="stmp-slider-val">{{ settingsStore.settings.aiContextMessages }}</span>
+                </div>
+              </div>
+
+              <div class="stmp-row">
+                <div class="stmp-row-info">
+                  <div class="stmp-row-title">{{ t('Auto Trigger') }}</div>
+                  <div class="stmp-row-desc">{{ t('Automatically analyze new messages and select music') }}</div>
+                </div>
+                <ToggleSwitch
+                  :model-value="settingsStore.settings.aiAutoTrigger"
+                  @update:model-value="settingsStore.setAiAutoTrigger($event)"
+                />
+              </div>
+
+              <div v-if="settingsStore.settings.aiAutoTrigger" class="stmp-row">
+                <div class="stmp-row-info">
+                  <div class="stmp-row-title">{{ t('Trigger on Greeting') }}</div>
+                  <div class="stmp-row-desc">{{ t('Analyze BGM when loading a character card (first message)') }}</div>
+                </div>
+                <ToggleSwitch
+                  :model-value="settingsStore.settings.aiTriggerOnGreeting"
+                  @update:model-value="settingsStore.setAiTriggerOnGreeting($event)"
+                />
+              </div>
+            </template>
+          </template>
+
+          <!-- Together mode settings -->
+          <template v-if="settingsStore.settings.aiMode === 'together'">
+            <div class="stmp-row">
+              <div class="stmp-row-info">
+                <div class="stmp-row-title">{{ t('Prompt Role') }}</div>
+                <div class="stmp-row-desc">{{ t('Role used when injecting BGM instructions into the main AI') }}</div>
+              </div>
+              <div class="stmp-chips">
+                <div
+                  v-for="r in [{v:'system',l:t('System')},{v:'user',l:t('User')}]"
+                  :key="r.v"
+                  class="stmp-chip"
+                  :class="{ active: settingsStore.settings.togetherPromptRole === r.v }"
+                  @click="settingsStore.setTogetherPromptRole(r.v as 'system' | 'user')"
+                >
+                  <span>{{ r.l }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="stmp-row">
+              <div class="stmp-row-info">
+                <div class="stmp-row-title">{{ t('Custom Prompt') }}</div>
+                <div class="stmp-row-desc">
+                  {{ t('Edit the BGM instruction prompt. Use macros like ') }}
+                  <code v-pre>{{xiaoyueCurrentSong}}</code>
+                  {{ t(' for dynamic values.') }}
+                </div>
+              </div>
+              <ToggleSwitch
+                :model-value="settingsStore.settings.togetherCustomPromptEnabled"
+                @update:model-value="settingsStore.setTogetherCustomPromptEnabled"
+              />
+            </div>
+
+            <div v-if="settingsStore.settings.togetherCustomPromptEnabled" class="stmp-row">
+              <div class="stmp-row-info">
+                <div class="stmp-row-title">{{ t('Edit Prompt') }}</div>
+                <div class="stmp-row-desc">{{ t('Click to edit the BGM instruction prompt') }}</div>
+              </div>
+              <div
+                class="menu_button menu_button_icon stmp-action-btn"
+                :title="t('Edit Prompt')"
+                @click="openPromptEditor"
+              >
+                <i class="fa-solid fa-pen-to-square" />
+              </div>
+            </div>
+          </template>
+        </template>
       </div>
 
       <!-- ===== 通用 ===== -->
@@ -549,7 +864,11 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
 }
 
 /* ===== Divider (between sections) ===== */
-/* Not used as a standalone element — section titles get border-top instead */
+.stmp-separator {
+  height: 1px;
+  background: var(--stmp-border);
+  margin: 8px 0;
+}
 
 /* ===== Action button ===== */
 .stmp-action-btn {
@@ -566,44 +885,38 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
   padding: 0 0 8px 4px;
 }
 
-/* ===== Cue rules ===== */
-.stmp-rules {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+.stmp-text-input {
+  flex: 0 0 240px;
+  max-width: 240px;
+  font-size: var(--mainFontSize, 14px);
 }
 
-.stmp-rule {
+.stmp-model-wrap {
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 2px 5px;
-  border-radius: 5px;
-  background-color: var(--black30a, rgba(0,0,0,0.3));
+  flex: 0 0 240px;
+  max-width: 240px;
 }
 
-.stmp-rule code {
-  flex: 1;
-  font-size: calc(var(--mainFontSize, 14px) * 0.9);
-  color: var(--SmartThemeEmColor, rgb(145,145,145));
-  word-break: break-all;
-}
-
-.stmp-rule-del {
+.stmp-model-fetch {
   margin: 0;
-  padding: 2px 5px;
-  color: var(--fullred, rgb(255,0,0));
+  padding: 5px 8px;
+  flex-shrink: 0;
+  cursor: pointer;
 }
 
-.stmp-rule-add {
-  display: flex;
-  gap: 5px;
-  align-items: center;
+.stmp-spin {
+  pointer-events: none;
+  opacity: 0.6;
 }
 
-.stmp-rule-add-btn {
-  margin: 0;
-  padding: 3px 8px;
+.stmp-spin i {
+  animation: stmp-spin 0.8s linear infinite;
+}
+
+@keyframes stmp-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ===== About ===== */
@@ -664,5 +977,16 @@ const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
   font-size: calc(var(--mainFontSize, 14px) * 0.8);
   color: var(--SmartThemeEmColor, rgb(145,145,145));
   margin-top: 6px;
+}
+
+/* ===== Macro hint in callPopup ===== */
+.stmp-macro-hint {
+  display: inline-block;
+  padding: 1px 4px;
+  margin: 1px;
+  border-radius: 3px;
+  background: rgba(0,0,0,0.3);
+  color: var(--SmartThemeQuoteColor, rgb(225,138,36));
+  font-size: 0.9em;
 }
 </style>

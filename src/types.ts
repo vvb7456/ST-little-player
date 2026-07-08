@@ -32,12 +32,12 @@ export interface PlaylistItem {
   id: string;
   song: string;
   artist?: string;
-  source: 'chat' | 'user' | 'local';
+  source: 'network' | 'server' | 'chat';
   messageId?: number;
   providerId?: string;
   providerTrackId?: string;
   providerPicId?: string;
-  localBlobKey?: string;
+  serverPath?: string;
   addedAt: number;
 }
 
@@ -70,7 +70,7 @@ export interface ScanCursor {
 // ===== Settings =====
 
 export type WidgetMode = 'dock' | 'drag' | 'hidden' | 'inline';
-export type DockAlign = 'left' | 'right';
+export type DockAlign = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 
 export interface ExtensionSettings {
   volume: number;
@@ -78,11 +78,23 @@ export interface ExtensionSettings {
   position: { x: number; y: number } | null;
   widgetMode: WidgetMode;
   dockAlign: DockAlign;
-  autoPlayOnNewCue: boolean;
+  showDragMiniText: boolean;
   providers: ProviderConfig[];
-  customCueRules: string[];
   customOpacity: boolean;
   opacity: number;
+  // AI BGM
+  aiMode: AiMode;
+  aiUseCustomApi: boolean;
+  aiContextMessages: number;
+  aiApiUrl: string;
+  aiApiKey: string;
+  aiModel: string;
+  aiAutoTrigger: boolean;
+  aiTriggerOnGreeting: boolean;
+  aiCooldownMs: number;
+  togetherPromptRole: 'system' | 'user';
+  togetherCustomPromptEnabled: boolean;
+  togetherCustomPrompt: string;
 }
 
 export interface ProviderConfig {
@@ -102,3 +114,20 @@ export type InternalEvent =
   | 'message-swiped';
 
 export type InternalEventListener = (payload: { chatId?: string; messageId?: number }) => void;
+
+// ===== AI BGM =====
+
+export type AiMode = 'off' | 'together' | 'function_call';
+
+export interface BgmRecommendation {
+  action: 'play' | 'keep';
+  song?: string;
+  artist?: string;
+}
+
+export interface BgmHistoryEntry {
+  song: string;
+  artist?: string;
+  messageId?: number;
+  playedAt: number;
+}

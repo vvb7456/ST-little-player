@@ -1,4 +1,14 @@
 node_modules/
 *.log
+*.tgz
+.env
+.env.*
 .DS_Store
+.vscode/
+.idea/
+docs/
+
+# Root-level stale build artifacts (real output is in dist/)
+/*.js
+/*.css
 

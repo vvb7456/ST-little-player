@@ -1,18 +1,35 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { usePlaylistStore, useSettingsStore } from '@/stores/index';
 import type { PlaylistItem } from '@/types';
+import type { PlaylistTab } from '@/stores/playlist';
 import Icon from './Icon.vue';
 import { t } from '@/i18n';
 
 const playlistStore = usePlaylistStore();
 const settingsStore = useSettingsStore();
 
-const localProviderEnabled = computed(() => {
-  return settingsStore.settings.providers.find((p) => p.id === 'local')?.enabled ?? false;
+const tabs = computed((): { value: PlaylistTab; label: string }[] => {
+  const result: { value: PlaylistTab; label: string }[] = [
+    { value: 'network', label: t('Network') },
+  ];
+  const localEnabled = settingsStore.settings.providers.find((p) => p.id === 'local')?.enabled;
+  if (localEnabled) {
+    result.push({ value: 'server', label: t('Upload') });
+  }
+  result.push({ value: 'chat', label: t('Chat') });
+  return result;
+});
+
+// If active tab disappears, fall back to network
+watch(tabs, (newTabs) => {
+  if (!newTabs.some((tab) => tab.value === playlistStore.activeTab)) {
+    playlistStore.setActiveTab('network');
+  }
 });
 
 const fileInputRef = ref<HTMLInputElement | null>(null);
+const uploading = ref(false);
 
 const triggerUpload = (): void => {
   fileInputRef.value?.click();
@@ -22,47 +39,56 @@ const onFileSelect = async (e: Event): Promise<void> => {
   const input = e.target as HTMLInputElement;
   if (!input.files || !input.files[0]) return;
   const file = input.files[0];
-  const blobKey = `stmp:audio:${Date.now()}-${file.name}`;
-  const storage = settingsStore.storage;
-  if (storage) {
-    await storage.setBlob(blobKey, file);
-    playlistStore.addLocalFile(file.name, blobKey);
+  uploading.value = true;
+  try {
+    await playlistStore.addServerFile(file.name, file);
+    if (typeof toastr !== 'undefined') toastr.success(t('Added'));
+  } catch (err) {
+    console.error('[stmp] upload failed', err);
+    if (typeof toastr !== 'undefined') toastr.error(t('Cannot play') + ': ' + file.name);
+  } finally {
+    uploading.value = false;
   }
   input.value = '';
 };
 
-const groups = computed(() => {
-  const map: Record<string, { index: number; item: PlaylistItem }[]> = {
-    chat: [],
-    user: [],
-    local: [],
-  };
-  playlistStore.list.forEach((item, index) => {
-    if (map[item.source]) {
-      map[item.source].push({ index, item });
-    }
-  });
-  return map;
+const tabItems = computed((): { index: number; item: PlaylistItem }[] => {
+  const list = playlistStore.getListByTab(playlistStore.activeTab);
+  return list.map((item, index) => ({ index, item }));
 });
 
-const groupLabels: Record<string, string> = {
-  chat: t('From Chat'),
-  user: t('My List'),
-  local: t('Local Files'),
-};
+const isEmpty = computed(() => tabItems.value.length === 0);
 
 function play(index: number): void {
-  playlistStore.play(index);
+  playlistStore.play(playlistStore.activeTab, index);
 }
 
 function remove(index: number): void {
-  playlistStore.removeItem(index);
+  playlistStore.removeItem(playlistStore.activeTab, index);
+}
+
+function onTabClick(tab: PlaylistTab): void {
+  playlistStore.setActiveTab(tab);
 }
 </script>
 
 <template>
   <div class="stmp-playlist">
-    <div class="stmp-upload-area" v-if="localProviderEnabled">
+    <!-- Tabs -->
+    <div class="stmp-tabs">
+      <div
+        v-for="tab in tabs"
+        :key="tab.value"
+        class="stmp-tab"
+        :class="{ active: playlistStore.activeTab === tab.value }"
+        @click="onTabClick(tab.value)"
+      >
+        {{ tab.label }}
+      </div>
+    </div>
+
+    <!-- Upload button (only in server tab) -->
+    <div v-if="playlistStore.activeTab === 'server'" class="stmp-upload-area">
       <input
         type="file"
         accept="audio/*"
@@ -70,32 +96,29 @@ function remove(index: number): void {
         @change="onFileSelect"
         style="display:none"
       />
-      <button class="stmp-upload-btn" :aria-label="t('Add local file')" @click="triggerUpload">
-        + {{ t('Add local file') }}
+      <button class="stmp-upload-btn" :disabled="uploading" @click="triggerUpload">
+        {{ uploading ? '...' : '+ ' + t('Upload audio file') }}
       </button>
     </div>
-    <div v-if="playlistStore.isEmpty" class="stmp-empty">{{ t('No Songs') }}</div>
+
+    <!-- Song list -->
+    <div v-if="isEmpty" class="stmp-empty">{{ t('No Songs') }}</div>
     <template v-else>
-      <div v-for="src in ['chat', 'user', 'local']" :key="src" class="stmp-group">
-        <template v-if="groups[src].length">
-          <div class="stmp-group-label">{{ groupLabels[src] }}</div>
-          <div
-            v-for="entry in groups[src]"
-            :key="entry.item.id"
-            class="stmp-item"
-            :class="{ active: entry.index === playlistStore.currentIndex }"
-            @click="play(entry.index)"
-          >
-            <span class="stmp-item-index">{{ entry.index + 1 }}</span>
-            <div class="stmp-item-info">
-              <span class="stmp-item-song">{{ entry.item.song }}</span>
-              <span v-if="entry.item.artist" class="stmp-item-artist">{{ entry.item.artist }}</span>
-            </div>
-            <button class="stmp-item-del" @click.stop="remove(entry.index)">
-              <Icon name="x" :size="14" />
-            </button>
-          </div>
-        </template>
+      <div
+        v-for="entry in tabItems"
+        :key="entry.item.id"
+        class="stmp-item"
+        :class="{ active: playlistStore.activeTab === playlistStore.currentList && entry.index === playlistStore.currentIndex }"
+        @click="play(entry.index)"
+      >
+        <span class="stmp-item-index">{{ entry.index + 1 }}</span>
+        <div class="stmp-item-info">
+          <span class="stmp-item-song">{{ entry.item.song }}</span>
+          <span v-if="entry.item.artist" class="stmp-item-artist">{{ entry.item.artist }}</span>
+        </div>
+        <button class="stmp-item-del" @click.stop="remove(entry.index)">
+          <Icon name="x" :size="14" />
+        </button>
       </div>
     </template>
   </div>
@@ -105,14 +128,46 @@ function remove(index: number): void {
 .stmp-playlist {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
 }
 
+/* ===== Tabs ===== */
+.stmp-tabs {
+  display: flex;
+  gap: 0;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--stmp-border);
+  margin-bottom: 2px;
+}
+
+.stmp-tab {
+  flex: 1;
+  text-align: center;
+  padding: 5px 4px;
+  cursor: pointer;
+  font-size: calc(var(--mainFontSize, 14px) * 0.82);
+  color: var(--stmp-text-dim);
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  user-select: none;
+}
+
+.stmp-tab:hover {
+  color: var(--stmp-text);
+}
+
+.stmp-tab.active {
+  color: var(--stmp-accent);
+  border-bottom-color: var(--stmp-accent);
+}
+
+/* ===== Upload area ===== */
 .stmp-upload-area {
-  padding: 2px 0 6px;
+  padding: 2px 0 4px;
+  flex-shrink: 0;
 }
 
 .stmp-upload-btn {
@@ -133,6 +188,12 @@ function remove(index: number): void {
   opacity: 1;
 }
 
+.stmp-upload-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ===== Empty state ===== */
 .stmp-empty {
   text-align: center;
   padding: 24px 0;
@@ -141,15 +202,7 @@ function remove(index: number): void {
   font-size: calc(var(--mainFontSize, 14px) * 0.9);
 }
 
-.stmp-group-label {
-  font-size: calc(var(--mainFontSize, 14px) * 0.75);
-  opacity: 0.5;
-  padding: 6px 4px 2px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--stmp-text-dim);
-}
-
+/* ===== Song items ===== */
 .stmp-item {
   display: flex;
   align-items: center;

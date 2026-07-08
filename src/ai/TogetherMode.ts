@@ -1,0 +1,132 @@
+import type { BgmRecommendation } from '@/types';
+import { parseJsonSafe } from '@/ai/JsonRepair';
+import { buildTogetherPrompt, MARKER_START, MARKER_END } from '@/ai/PromptBuilder';
+import { addBgmHistory } from '@/ai/BgmHistory';
+import { useSettingsStore } from '@/stores/settings';
+import { usePlayerStore } from '@/stores/player';
+import { createDefaultProviders } from '@/provider';
+import { t } from '@/i18n';
+
+const MARKER_REGEX = /<!--XY_BGM_START-->[\s\S]*?<!--XY_BGM_END-->/g;
+
+export class TogetherMode {
+  private interceptor: ((chat: any[], contextSize: number, abort: Function, type: string) => void) | null = null;
+
+  private onGenerationEndedBound = (messageId: number): void => {
+    void this.onGenerationEnded(messageId);
+  };
+
+  init(): void {
+    this.interceptor = (chat: any[], _contextSize: number, _abort: Function, _type: string): void => {
+      const stCtx = SillyTavern.getContext();
+      const settings = stCtx.extensionSettings['st-little-player'];
+      if (!settings || settings.aiMode !== 'together') return;
+
+      const settingsStore = useSettingsStore();
+      const prompt = buildTogetherPrompt(
+        settingsStore.settings.togetherCustomPromptEnabled,
+        settingsStore.settings.togetherCustomPrompt,
+      );
+
+      const role = settings.togetherPromptRole || 'system';
+      const isSystem = role === 'system';
+
+      chat.splice(Math.max(0, chat.length - 1), 0, {
+        is_user: !isSystem,
+        is_system: isSystem,
+        name: '晓乐',
+        mes: prompt,
+        extra: { isSmallSys: isSystem },
+      });
+    };
+
+    (globalThis as any).xiaoyueInterceptor = this.interceptor;
+
+    const ctx = SillyTavern.getContext();
+    ctx.eventSource.on(ctx.event_types.GENERATION_ENDED, this.onGenerationEndedBound);
+  }
+
+  destroy(): void {
+    const ctx = SillyTavern.getContext();
+    ctx.eventSource.removeListener(ctx.event_types.GENERATION_ENDED, this.onGenerationEndedBound);
+
+    delete (globalThis as any).xiaoyueInterceptor;
+    this.interceptor = null;
+  }
+
+  async onGenerationEnded(messageId: number): Promise<void> {
+    try {
+      const ctx = SillyTavern.getContext();
+      // GENERATION_ENDED passes chat.length, not the array index.
+      // The last message is at chat.length - 1.
+      const actualId = messageId > 0 ? messageId - 1 : 0;
+      const msg = ctx.chat[actualId];
+      if (!msg) {
+        console.log('[晓乐] Together: GENERATION_ENDED but msg not found', { messageId, actualId, chatLen: ctx.chat.length });
+        return;
+      }
+
+      const text = msg.mes ?? '';
+      const startIdx = text.indexOf(MARKER_START);
+      if (startIdx === -1) return;
+      console.log('[晓乐] Together: marker found in message', actualId);
+
+      const endIdx = text.indexOf(MARKER_END, startIdx);
+      if (endIdx === -1) {
+        console.warn('[晓乐] Together: MARKER_END not found, marker may be truncated');
+        return;
+      }
+
+      const extracted = text.slice(startIdx + MARKER_START.length, endIdx).trim();
+      console.log('[晓乐] Together: extracted marker content:', extracted);
+
+      const recommendation = parseJsonSafe(extracted) as BgmRecommendation | null;
+      console.log('[晓乐] Together: parsed recommendation:', recommendation);
+
+      if (!recommendation) {
+        this.cleanupMarker(actualId, msg);
+        return;
+      }
+
+      if (recommendation.action === 'keep') {
+        console.log('[晓乐] Together: action=keep, no change');
+        this.cleanupMarker(actualId, msg);
+        return;
+      }
+
+      if (recommendation.action === 'play' && recommendation.song) {
+        console.log('[晓乐] Together: searching for:', recommendation.song, recommendation.artist);
+        const settingsStore = useSettingsStore();
+        const mgr = createDefaultProviders(settingsStore.settings.providers);
+        const track = await mgr.searchAndResolve(recommendation.song, recommendation.artist);
+
+        if (track) {
+          const player = usePlayerStore();
+          await player.loadAndPlay(track);
+          addBgmHistory(recommendation.song, recommendation.artist, actualId);
+          console.log('[晓乐] Together: playing:', track.name, '-', track.artist);
+          if (typeof toastr !== 'undefined') {
+            toastr.success(t('AI selected:') + ' ' + recommendation.song);
+          }
+        } else {
+          console.warn('[晓乐] Together: track not found:', recommendation.song);
+          if (typeof toastr !== 'undefined') {
+            toastr.warning(t('Cannot play') + ': ' + recommendation.song);
+          }
+        }
+      }
+
+      this.cleanupMarker(actualId, msg);
+    } catch (err) {
+      console.error('[晓乐] Together: onGenerationEnded error:', err);
+    }
+  }
+
+  private cleanupMarker(messageId: number, msg: any): void {
+    msg.mes = (msg.mes ?? '').replace(MARKER_REGEX, '').trim();
+    const ctx = SillyTavern.getContext();
+    if (typeof ctx.updateMessageBlock === 'function') {
+      ctx.updateMessageBlock(messageId, msg);
+    }
+  }
+}

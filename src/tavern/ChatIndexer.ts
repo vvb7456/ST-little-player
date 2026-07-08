@@ -3,7 +3,7 @@ import { parseCue } from '@/parser/CueParser';
 
 export type GetChatMessage = (index: number) => string | undefined;
 
-export interface ScanHit {
+interface ScanHit {
   messageId: number;
   cues: Cue[];
 }
@@ -25,13 +25,12 @@ export class ChatIndexer {
     chatId: string,
     fromId: number,
     toId: number,
-    customRules: string[] = [],
   ): ScanHit[] {
     const hits: ScanHit[] = [];
     for (let id = fromId; id <= toId; id++) {
       const text = this.getChatMessage(id);
       if (text === undefined) continue;
-      const cues = parseCue(text, customRules);
+      const cues = parseCue(text);
       if (cues.length === 0) continue;
       const last = cues.at(-1)!;
       hits.push({ messageId: id, cues: [last] });
@@ -47,14 +46,13 @@ export class ChatIndexer {
   scanMessage(
     chatId: string,
     messageId: number,
-    customRules: string[] = [],
   ): SingleScanResult {
     void chatId;
     const text = this.getChatMessage(messageId);
     if (text === undefined) {
       return { messageId, cue: null };
     }
-    const cues = parseCue(text, customRules);
+    const cues = parseCue(text);
     const last = cues.length > 0 ? cues.at(-1)! : null;
     return { messageId, cue: last };
   }

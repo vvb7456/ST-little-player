@@ -3,7 +3,6 @@ import type { LyricLine, ResolvedTrack } from '@/types';
 import { AudioEngine } from '@/engine/AudioEngine';
 import type { AudioEngineEvent } from '@/engine/AudioEngine';
 import { parseLyric, getActiveLine } from '@/engine/LyricEngine';
-import { useSettingsStore } from './settings';
 import { usePlaylistStore } from './playlist';
 
 export const usePlayerStore = defineStore('player', {
@@ -89,17 +88,11 @@ export const usePlayerStore = defineStore('player', {
     setVolume(vol: number): void {
       this.volume = vol;
       this.audioEngine?.setVolume(vol / 100);
-      const settingsStore = useSettingsStore();
-      settingsStore.setVolume(vol);
     },
 
     updateLyrics(lrc: string): void {
       this.lyrics = parseLyric(lrc);
       this.currentLyricIndex = -1;
-    },
-
-    getActiveLyric(): LyricLine | null {
-      return getActiveLine(this.lyrics, this.currentTime);
     },
 
     destroy(): void {

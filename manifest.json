@@ -7,14 +7,14 @@
     "js": "dist/index.js",
     "css": "dist/style.css",
     "author": "opencode",
-    "version": "1.0.0",
+    "version": "0.1.0-beta",
     "homePage": "https://github.com/vvb7456/ST-little-player",
-    "auto_update": false,
+    "auto_update": true,
     "minimum_client_version": "1.0.0",
+    "generate_interceptor": "xiaoyueInterceptor",
     "hooks": {
         "activate": "init",
         "disable": "disable",
-        "delete": "delete",
         "clean": "clean"
     }
 }

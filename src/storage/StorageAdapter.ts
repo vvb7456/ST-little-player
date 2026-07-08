@@ -13,16 +13,15 @@ export interface StorageAdapter {
   /** Writes the object to this extension's settings slot and persists. */
   setSettings<T>(value: T): void;
 
+  /** Reads the object stored under this extension's playlist slot. */
+  getPlaylistData<T>(): T | null;
+  /** Writes the object to this extension's playlist slot and persists. */
+  setPlaylistData<T>(value: T): void;
+
   // ===== ST chatMetadata (per-chat metadata, persisted to chat file) =====
 
   /** Reads a value from the current chat's metadata by key. */
   getMetadata<T>(key: string): T | null;
   /** Writes a value to the current chat's metadata by key and persists. */
   setMetadata<T>(key: string, value: T): void;
-
-  // ===== localforage (IndexedDB) for large blobs =====
-
-  getBlob(key: string): Promise<Blob | null>;
-  setBlob(key: string, value: Blob): Promise<void>;
-  removeBlob(key: string): Promise<void>;
 }

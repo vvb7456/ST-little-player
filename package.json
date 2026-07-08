@@ -1,10 +1,11 @@
 {
   "name": "st-little-player",
-  "version": "1.0.0",
+  "version": "0.1.0-beta",
   "description": "晓乐 - SillyTavern 情景音乐播放器扩展",
   "type": "module",
   "scripts": {
     "dev": "vite build --watch",
+    "prebuild": "node scripts/sync-version.mjs",
     "build": "vite build",
     "test": "vitest run",
     "test:watch": "vitest",

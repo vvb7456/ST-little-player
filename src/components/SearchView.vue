@@ -11,7 +11,6 @@ const playlistStore = usePlaylistStore();
 const settingsStore = useSettingsStore();
 
 const keyword = ref(searchStore.keyword);
-const addedIds = ref<Set<string>>(new Set());
 const playingId = ref<string | null>(null);
 
 async function doSearch(): Promise<void> {
@@ -24,31 +23,42 @@ const retrySearch = (): void => {
   void doSearch();
 };
 
+function isInPlaylist(result: SearchResult): boolean {
+  return playlistStore.networkList.some(
+    (item) => item.providerId === result.provider && item.providerTrackId === result.id,
+  );
+}
+
+function findPlaylistIndex(result: SearchResult): number {
+  return playlistStore.networkList.findIndex(
+    (item) => item.providerId === result.provider && item.providerTrackId === result.id,
+  );
+}
+
 function addAndPlay(result: SearchResult): void {
   const key = result.provider + result.id;
-  if (playingId.value === key) return; // prevent double-click
-  playingId.value = key;
-  const beforeLen = playlistStore.list.length;
-  playlistStore.addFromSearch(result);
-  const newIdx = playlistStore.list.length - 1;
-  if (newIdx >= beforeLen) {
-    playlistStore.play(newIdx);
+  if (playingId.value === key) return;
+  // If already in playlist, just play it
+  const existingIdx = findPlaylistIndex(result);
+  if (existingIdx >= 0) {
+    playlistStore.play('network', existingIdx);
+    playingId.value = key;
+    setTimeout(() => { playingId.value = null; }, 600);
+    return;
   }
-  setTimeout(() => {
-    addedIds.value.add(key);
-    playingId.value = null;
-  }, 600);
-}
-
-function addToList(result: SearchResult): void {
-  const key = result.provider + result.id;
-  if (addedIds.value.has(key)) return;
+  playingId.value = key;
   playlistStore.addFromSearch(result);
-  addedIds.value.add(key);
+  setTimeout(() => { playingId.value = null; }, 600);
 }
 
-function isAdded(result: SearchResult): boolean {
-  return addedIds.value.has(result.provider + result.id);
+function onAddButtonClick(result: SearchResult): void {
+  // If already added, play it; otherwise add to list
+  if (isInPlaylist(result)) {
+    const idx = findPlaylistIndex(result);
+    if (idx >= 0) playlistStore.play('network', idx);
+    return;
+  }
+  playlistStore.addFromSearch(result, false);
 }
 
 function isPlaying(result: SearchResult): boolean {
@@ -99,11 +109,11 @@ function isPlaying(result: SearchResult): boolean {
         </div>
         <button
           class="stmp-icon-btn stmp-result-add"
-          :class="{ added: isAdded(result) }"
-          :aria-label="isAdded(result) ? t('Added') : t('Add to list')"
-          @click.stop="addToList(result)"
+          :class="{ added: isInPlaylist(result) }"
+          :aria-label="isInPlaylist(result) ? t('Added') : t('Add to list')"
+          @click.stop="onAddButtonClick(result)"
         >
-          <Icon :name="isAdded(result) ? 'check' : 'plus'" :size="16" />
+          <Icon :name="isInPlaylist(result) ? 'check' : 'plus'" :size="16" />
         </button>
       </div>
     </div>

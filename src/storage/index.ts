@@ -7,5 +7,5 @@ export const MODULE_NAME = 'st-little-player';
 /** chatMetadata key for the incremental scan cursor. */
 export const CURSOR_KEY = 'stmp_cursor';
 
-/** chatMetadata key for the user-curated playlist. */
-export const USERLIST_KEY = 'stmp_userlist';
+/** chatMetadata key for BGM play history. */
+export const BGM_HISTORY_KEY = 'stmp_bgm_history';

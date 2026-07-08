@@ -8,7 +8,11 @@ import { createSTStorageAdapter } from './storage/STStorageAdapter';
 import { createSTEventBridge } from './tavern/STEventBridge';
 import { ChatIndexer } from './tavern/ChatIndexer';
 import type { STEventBridge } from './tavern/STEventBridge';
-import { MODULE_NAME } from '@/storage';
+import { BgmController } from './ai/BgmController';
+import { registerMacros, unregisterMacros } from './tavern/Macros';
+import { registerSlashCommands, unregisterSlashCommands } from './tavern/SlashCommands';
+import { MODULE_NAME, CURSOR_KEY, BGM_HISTORY_KEY } from '@/storage';
+import { deleteFile } from '@/storage/STFileClient';
 
 let app: App<Element> | null = null;
 let eventBridge: STEventBridge | null = null;
@@ -16,6 +20,7 @@ let appReadyHandler: (() => void) | null = null;
 let settingsEntry: HTMLElement | null = null;
 let settingsApp: App<Element> | null = null;
 let piniaInstance: Pinia | null = null;
+let bgmController: BgmController | null = null;
 
 const SETTINGS_HTML = `
 <div class="inline-drawer">
@@ -57,7 +62,6 @@ function removeSettingsEntry(): void {
 function setupEventBridge(
   indexer: ChatIndexer,
   playlistStore: ReturnType<typeof usePlaylistStore>,
-  settingsStore: ReturnType<typeof useSettingsStore>,
 ): void {
   eventBridge = createSTEventBridge();
 
@@ -70,8 +74,8 @@ function setupEventBridge(
         chatId,
         0,
         ctx.chat.length - 1,
-        settingsStore.settings.customCueRules,
       );
+      console.log('[晓乐] chat-changed: scanned', ctx.chat.length, 'messages, found', cues.length, 'cues');
       playlistStore.handleNewCues(cues);
       playlistStore.setCursor(ctx.chat.length - 1);
     }
@@ -88,8 +92,8 @@ function setupEventBridge(
       chatId,
       fromId,
       toId,
-      settingsStore.settings.customCueRules,
     );
+    console.log('[晓乐] message-generated: scanned', fromId, '-', toId, 'found', cues.length, 'cues');
     playlistStore.handleNewCues(cues);
     playlistStore.setCursor(toId);
   });
@@ -118,7 +122,6 @@ function setupEventBridge(
 function scanCurrentChat(
   indexer: ChatIndexer,
   playlistStore: ReturnType<typeof usePlaylistStore>,
-  settingsStore: ReturnType<typeof useSettingsStore>,
 ): void {
   const ctx = SillyTavern.getContext();
   if (ctx.chatId && ctx.chat.length > 0) {
@@ -128,7 +131,6 @@ function scanCurrentChat(
         ctx.chatId,
         0,
         ctx.chat.length - 1,
-        settingsStore.settings.customCueRules,
       );
       playlistStore.handleNewCues(cues);
       playlistStore.setCursor(ctx.chat.length - 1);
@@ -170,8 +172,12 @@ export async function init(): Promise<void> {
 
     const ctx = SillyTavern.getContext();
     appReadyHandler = () => {
-      setupEventBridge(indexer, playlistStore, settingsStore);
-      scanCurrentChat(indexer, playlistStore, settingsStore);
+      setupEventBridge(indexer, playlistStore);
+      scanCurrentChat(indexer, playlistStore);
+      registerMacros();
+      registerSlashCommands();
+      bgmController = new BgmController();
+      bgmController.init();
     };
     ctx.eventSource.on(ctx.event_types.APP_READY, appReadyHandler);
 
@@ -193,6 +199,12 @@ export function destroy(): void {
 
   eventBridge?.stop();
   eventBridge = null;
+
+  unregisterMacros();
+  unregisterSlashCommands();
+
+  bgmController?.destroy();
+  bgmController = null;
 
   if (app) {
     try {
@@ -218,30 +230,32 @@ export function disable(): void {
 export async function clean(): Promise<void> {
   try {
     const ctx = SillyTavern.getContext();
+
+    // 1. Delete uploaded server files in parallel before wiping playlist data
+    const playlistData = ctx.extensionSettings[`${MODULE_NAME}-playlist`];
+    if (playlistData && typeof playlistData === 'object') {
+      const serverList = (playlistData as { server?: { serverPath?: string }[] }).server;
+      if (Array.isArray(serverList)) {
+        const paths = serverList.map((item) => item?.serverPath).filter((p): p is string => !!p);
+        await Promise.all(paths.map((p) => deleteFile(p).catch((err) => {
+          console.warn('[晓乐] clean: failed to delete file:', p, err);
+        })));
+      }
+    }
+
+    // 2. Delete extensionSettings keys
     delete ctx.extensionSettings[MODULE_NAME];
+    delete ctx.extensionSettings[`${MODULE_NAME}-playlist`];
     ctx.saveSettingsDebounced();
+
+    // 3. Clean chatMetadata keys for the current chat
+    const meta = ctx.chatMetadata;
+    if (meta && typeof meta === 'object') {
+      delete meta[CURSOR_KEY];
+      delete meta[BGM_HISTORY_KEY];
+      await ctx.saveMetadata();
+    }
   } catch (err) {
     console.error('[晓乐] clean: failed to delete settings:', err);
   }
-
-  try {
-    const forage = (SillyTavern as any).libs?.localforage;
-    if (forage && typeof forage.keys === 'function') {
-      const keys: string[] = await forage.keys();
-      await Promise.all(
-        keys
-          .filter((k: string) => k.startsWith(MODULE_NAME) || k.startsWith('stmp:'))
-          .map((k: string) => forage.removeItem(k)),
-      );
-    }
-  } catch (err) {
-    console.error('[晓乐] clean: failed to clear localforage:', err);
-  }
 }
-
-async function deleteExtension(): Promise<void> {
-  await clean();
-  destroy();
-}
-
-export { deleteExtension as delete };

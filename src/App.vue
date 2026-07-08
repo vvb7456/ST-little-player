@@ -17,6 +17,9 @@ const isHidden = computed(() => settingsStore.settings.widgetMode === 'hidden');
 const isMobile = ref(window.innerWidth <= 768);
 const sendFormReady = ref(false);
 
+/** Whether dock is aligned to top (below ST toolbar) vs bottom (above input bar). */
+const isDockTop = computed(() => settingsStore.settings.dockAlign.startsWith('top-'));
+
 /** Opacity for widget background. When customOpacity is off, default 75%. */
 const bgOpacity = computed(() => {
   if (settingsStore.settings.customOpacity) {
@@ -163,44 +166,55 @@ function clampToViewport(): void {
 }
 
 /**
- * Dock mode: position widget above ST's #send_form, aligned to its left edge.
- * Reads #send_form.getBoundingClientRect() live for responsive accuracy.
+ * Dock mode: position widget relative to ST's #send_form (bottom) or
+ * #top-settings-holder (top), aligned left or right.
+ * Reads getBoundingClientRect() live for responsive accuracy.
  */
 function dockToInput(): void {
   if (!widgetRef.value || !isDock.value) return;
 
-  const sendForm = document.querySelector('#send_form');
-  if (!sendForm) return;
+  const align = settingsStore.settings.dockAlign;
+  const topMode = align.startsWith('top-');
+  const rightSide = align.endsWith('-right');
 
-  const formRect = sendForm.getBoundingClientRect();
+  // Anchor element: #send_form for bottom, #top-settings-holder for top
+  const anchor = topMode
+    ? document.querySelector('#top-settings-holder')
+    : document.querySelector('#send_form');
+  if (!anchor) return;
+
+  const anchorRect = anchor.getBoundingClientRect();
   const widgetH = widgetRef.value.offsetHeight || 38;
 
-  // Constrain widget to available space above input bar
-  const maxH = Math.max(80, formRect.top - 8);
-  widgetRef.value.style.maxHeight = maxH + 'px';
-
-  // No gap — dock sits flush against the input bar
-  let top = formRect.top - Math.min(widgetH, maxH);
-  // Clamp: never go above viewport
-  if (top < 4) top = 4;
-
-  // Mobile: match #send_form full width
-  // Desktop: compact, aligned left or right to send_form
-  if (window.innerWidth <= 768) {
-    widgetRef.value.style.left = formRect.left + 'px';
-    widgetRef.value.style.width = formRect.width + 'px';
+  if (topMode) {
+    // Position below the top toolbar, flush against it
+    const maxH = Math.max(80, window.innerHeight - anchorRect.bottom - 8);
+    widgetRef.value.style.maxHeight = maxH + 'px';
+    widgetRef.value.style.top = anchorRect.bottom + 'px';
   } else {
-    const alignRight = settingsStore.settings.dockAlign === 'right';
+    // Position above the input bar, flush against it
+    const maxH = Math.max(80, anchorRect.top - 8);
+    widgetRef.value.style.maxHeight = maxH + 'px';
+    let top = anchorRect.top - Math.min(widgetH, maxH);
+    if (top < 4) top = 4;
+    widgetRef.value.style.top = top + 'px';
+  }
+
+  // Mobile: match anchor full width
+  // Desktop: compact, aligned left or right
+  if (window.innerWidth <= 768) {
+    widgetRef.value.style.left = anchorRect.left + 'px';
+    widgetRef.value.style.width = anchorRect.width + 'px';
+  } else {
     const widgetW = widgetRef.value.offsetWidth;
-    if (alignRight) {
-      widgetRef.value.style.left = (formRect.right - widgetW) + 'px';
+    if (rightSide) {
+      widgetRef.value.style.left = (anchorRect.right - widgetW) + 'px';
     } else {
-      widgetRef.value.style.left = formRect.left + 'px';
+      widgetRef.value.style.left = anchorRect.left + 'px';
     }
     widgetRef.value.style.width = '';
   }
 
-  widgetRef.value.style.top = top + 'px';
   widgetRef.value.style.right = 'auto';
   widgetRef.value.style.bottom = 'auto';
 }
@@ -375,6 +389,8 @@ onBeforeUnmount(() => {
       'stmp-expanded': isExpanded,
       'stmp-collapsed': !isExpanded,
       'stmp-dock': isDock,
+      'stmp-dock-top': isDock && isDockTop,
+      'stmp-dock-bottom': isDock && !isDockTop,
     }"
     :style="{ '--stmp-opacity': bgOpacity + '%' }"
     @pointerdown="startDrag"
@@ -386,61 +402,9 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* ===== ST theme variable aliases (inherited by all child components) ===== */
-.stmp-widget {
-  --stmp-accent: var(--SmartThemeQuoteColor, #7e57c2);
-  --stmp-text: var(--SmartThemeBodyColor, #ccc);
-  --stmp-text-dim: var(--SmartThemeEmColor, #999);
-  --stmp-bg: var(--SmartThemeBlurTintColor, #1a1a2e);
-  --stmp-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.08));
-  --stmp-blur: blur(var(--SmartThemeBlurStrength, 10px));
-  --stmp-hover: color-mix(in srgb, var(--SmartThemeBodyColor, #ccc) 8%, transparent);
-  --stmp-track: color-mix(in srgb, var(--SmartThemeBodyColor, #ccc) 15%, transparent);
-  --stmp-shadow: 0 4px 24px var(--SmartThemeShadowColor, rgba(0, 0, 0, 0.4));
-  --stmp-radius: 16px;
-
-  position: fixed;
-  z-index: 100;
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1a1a2e) var(--stmp-opacity, 75%), transparent);
-  backdrop-filter: var(--stmp-blur);
-  -webkit-backdrop-filter: var(--stmp-blur);
-  box-shadow: var(--stmp-shadow);
-  border: 1px solid var(--stmp-border);
-  padding: 4px;
-  touch-action: auto;
-}
-
-/* ===== Dock mode: same glass as base, no shadow/bottom border ===== */
-.stmp-dock {
-  --stmp-radius: 10px 10px 0 0;
-  border-radius: 10px 10px 0 0;
-  border: 1px solid var(--stmp-border);
-  border-bottom: none;
-  box-shadow: none;
-  padding: 2px 8px;
-}
-
-/* ===== Inline mode: bar embedded in #send_form ===== */
-.stmp-inline-bar {
-  --stmp-accent: var(--SmartThemeQuoteColor, #7e57c2);
-  --stmp-text: var(--SmartThemeBodyColor, #ccc);
-  --stmp-text-dim: var(--SmartThemeEmColor, #999);
-  --stmp-bg: var(--SmartThemeBlurTintColor, #1a1a2e);
-  --stmp-border: var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.08));
-  --stmp-blur: blur(var(--SmartThemeBlurStrength, 10px));
-  --stmp-hover: color-mix(in srgb, var(--SmartThemeBodyColor, #ccc) 8%, transparent);
-  --stmp-track: color-mix(in srgb, var(--SmartThemeBodyColor, #ccc) 15%, transparent);
-  --stmp-shadow: 0 4px 24px var(--SmartThemeShadowColor, rgba(0, 0, 0, 0.4));
-  --stmp-radius: 0;
-
-  order: 1;
-  width: 100%;
-  cursor: pointer;
-  border-bottom: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.08));
-}
-
-/* Inline expanded: full player panel inside #send_form */
+/* ===== Shared CSS variables (inherited by all mode variants) ===== */
+.stmp-widget,
+.stmp-inline-bar,
 .stmp-inline-expanded {
   --stmp-accent: var(--SmartThemeQuoteColor, #7e57c2);
   --stmp-text: var(--SmartThemeBodyColor, #ccc);
@@ -451,12 +415,74 @@ onBeforeUnmount(() => {
   --stmp-hover: color-mix(in srgb, var(--SmartThemeBodyColor, #ccc) 8%, transparent);
   --stmp-track: color-mix(in srgb, var(--SmartThemeBodyColor, #ccc) 15%, transparent);
   --stmp-shadow: 0 4px 24px var(--SmartThemeShadowColor, rgba(0, 0, 0, 0.4));
+}
+
+/* ===== ST theme variable aliases (inherited by all child components) ===== */
+.stmp-widget {
+  --stmp-radius: 16px;
+
+  --stmp-pad-x: 4px;
+  --stmp-pad-y: 4px;
+
+  position: fixed;
+  z-index: 100;
+  border-radius: 16px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--SmartThemeBlurTintColor, #1a1a2e) var(--stmp-opacity, 75%), transparent);
+  backdrop-filter: var(--stmp-blur);
+  -webkit-backdrop-filter: var(--stmp-blur);
+  box-shadow: var(--stmp-shadow);
+  border: 1px solid var(--stmp-border);
+  padding: 4px;
+  touch-action: auto;
+}
+
+/* ===== Dock mode: bottom (above input bar) ===== */
+.stmp-dock-bottom {
+  --stmp-radius: 10px 10px 0 0;
+  --stmp-pad-x: 8px;
+  --stmp-pad-y: 2px;
+  border-radius: 10px 10px 0 0;
+  border: 1px solid var(--stmp-border);
+  border-bottom: none;
+  box-shadow: none;
+  padding: 2px 8px;
+}
+
+/* ===== Dock mode: top (below ST toolbar) ===== */
+.stmp-dock-top {
+  --stmp-radius: 0 0 10px 10px;
+  --stmp-pad-x: 8px;
+  --stmp-pad-y: 2px;
+  border-radius: 0 0 10px 10px;
+  border: 1px solid var(--stmp-border);
+  border-top: none;
+  box-shadow: none;
+  padding: 2px 8px;
+}
+
+/* ===== Inline mode: bar embedded in #send_form ===== */
+.stmp-inline-bar {
   --stmp-radius: 0;
 
-  order: 1;
+  order: -1;
+  width: 100%;
+  cursor: pointer;
+  border-bottom: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.08));
+}
+
+/* Inline expanded: full player panel inside #send_form */
+.stmp-inline-expanded {
+  --stmp-radius: 0;
+  --stmp-pad-x: 12px;
+  --stmp-pad-y: 8px;
+
+  order: -1;
   width: 100%;
   max-height: min(50vh, 400px);
-  overflow-y: auto;
+  overflow: hidden;
+  position: relative;
+  padding: 8px 12px;
   border-bottom: 1px solid var(--SmartThemeBorderColor, rgba(255, 255, 255, 0.08));
 }
 
@@ -469,6 +495,8 @@ onBeforeUnmount(() => {
 
 /* Dock expanded: responsive width */
 .stmp-dock.stmp-expanded {
+  --stmp-pad-x: 10px;
+  --stmp-pad-y: 10px;
   padding: 10px;
 }
 
@@ -502,6 +530,8 @@ onBeforeUnmount(() => {
 }
 
 .stmp-expanded:not(.stmp-dock) {
+  --stmp-pad-x: 12px;
+  --stmp-pad-y: 12px;
   width: min(360px, calc(100vw - 16px));
   padding: 12px;
 }

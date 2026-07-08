@@ -33,7 +33,7 @@ function runRule(regex: RegExp, text: string): RawHit[] {
   return hits;
 }
 
-export function parseCue(messageText: string, customRules: string[] = []): Cue[] {
+export function parseCue(messageText: string): Cue[] {
   const byIndex = new Map<number, RawHit>();
 
   const addUnique = (hit: RawHit): void => {
@@ -42,15 +42,6 @@ export function parseCue(messageText: string, customRules: string[] = []): Cue[]
 
   for (const regex of BUILTIN_RULES) {
     for (const hit of runRule(regex, messageText)) addUnique(hit);
-  }
-
-  for (const rule of customRules) {
-    try {
-      const re = new RegExp(rule, 'g');
-      for (const hit of runRule(re, messageText)) addUnique(hit);
-    } catch {
-      // skip invalid regex
-    }
   }
 
   return [...byIndex.values()]

@@ -8,19 +8,31 @@ import type {
   SearchResult,
 } from '@/types';
 import type { ChatIndexer } from '@/tavern/ChatIndexer';
-import { CURSOR_KEY, USERLIST_KEY } from '@/storage';
+import { CURSOR_KEY } from '@/storage';
 import { createDefaultProviders } from '@/provider';
 import { useSettingsStore } from './settings';
 import { usePlayerStore } from './player';
 import { t } from '@/i18n';
+import { uploadFile, deleteFile } from '@/storage/STFileClient';
 
 function genId(): string {
   return `stmp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
+export type PlaylistTab = 'network' | 'server' | 'chat';
+
+interface PlaylistPersistData {
+  network: PlaylistItem[];
+  server: PlaylistItem[];
+}
+
 export const usePlaylistStore = defineStore('playlist', {
   state: () => ({
-    list: [] as PlaylistItem[],
+    networkList: [] as PlaylistItem[],
+    serverList: [] as PlaylistItem[],
+    chatList: [] as PlaylistItem[],
+    activeTab: 'network' as PlaylistTab,
+    currentList: 'network' as PlaylistTab,
     currentIndex: -1,
     chatIndexer: null as ChatIndexer | null,
     chatId: null as string | null,
@@ -28,25 +40,32 @@ export const usePlaylistStore = defineStore('playlist', {
 
   getters: {
     current(state): PlaylistItem | null {
-      return state.currentIndex >= 0 ? state.list[state.currentIndex] ?? null : null;
+      const list = state[`${state.currentList}List` as 'networkList' | 'serverList' | 'chatList'];
+      return state.currentIndex >= 0 ? list[state.currentIndex] ?? null : null;
     },
     isEmpty(state): boolean {
-      return state.list.length === 0;
+      return state.networkList.length === 0 && state.serverList.length === 0 && state.chatList.length === 0;
     },
     playMode(): PlayMode {
       return useSettingsStore().settings.playMode;
+    },
+    activeList(state): PlaylistItem[] {
+      return state[`${state.activeTab}List` as 'networkList' | 'serverList' | 'chatList'];
+    },
+    playingList(state): PlaylistItem[] {
+      return state[`${state.currentList}List` as 'networkList' | 'serverList' | 'chatList'];
     },
   },
 
   actions: {
     init(indexer: ChatIndexer): void {
       this.chatIndexer = indexer;
+      this.loadFromStorage();
     },
 
     setChatId(chatId: string): void {
       this.chatId = chatId;
-      this.list = this.list.filter((i) => i.source !== 'chat');
-      this.loadFromStorage();
+      this.chatList = [];
       const settingsStore = useSettingsStore();
       const storage = settingsStore.storage;
       if (storage) {
@@ -60,35 +79,54 @@ export const usePlaylistStore = defineStore('playlist', {
     loadFromStorage(): void {
       const settingsStore = useSettingsStore();
       const storage = settingsStore.storage;
-      if (!storage || !this.chatId) return;
-      const stored = storage.getMetadata<PlaylistItem[]>(USERLIST_KEY);
-      if (stored && Array.isArray(stored)) {
-        const userList = stored.filter((item) => item && item.source === 'user');
-        const localList = stored.filter((item) => item && item.source === 'local');
-        this.list = [
-          ...this.list.filter((i) => i.source !== 'user' && i.source !== 'local'),
-          ...userList,
-          ...localList,
-        ];
+      if (!storage) return;
+      const stored = storage.getPlaylistData<PlaylistPersistData>();
+      if (stored) {
+        this.networkList = Array.isArray(stored.network) ? stored.network : [];
+        this.serverList = Array.isArray(stored.server) ? stored.server : [];
       }
+    },
+
+    savePlaylistData(): void {
+      const settingsStore = useSettingsStore();
+      const storage = settingsStore.storage;
+      if (!storage) return;
+      const data: PlaylistPersistData = {
+        network: this.networkList,
+        server: this.serverList,
+      };
+      storage.setPlaylistData(data);
+    },
+
+    getListByTab(tab: PlaylistTab): PlaylistItem[] {
+      return this[`${tab}List` as 'networkList' | 'serverList' | 'chatList'];
     },
 
     addItem(item: PlaylistItem): void {
-      this.list.push(item);
-      if (item.source === 'user' || item.source === 'local') {
-        this.saveUserList();
+      if (item.source === 'network') {
+        this.networkList.push(item);
+        this.savePlaylistData();
+      } else if (item.source === 'server') {
+        this.serverList.push(item);
+        this.savePlaylistData();
+      } else if (item.source === 'chat') {
+        this.chatList.push(item);
       }
     },
 
-    removeItem(index: number): void {
-      if (index < 0 || index >= this.list.length) return;
-      const removed = this.list.splice(index, 1)[0];
-      if (removed && (removed.source === 'user' || removed.source === 'local')) {
-        this.saveUserList();
+    removeItem(tab: PlaylistTab, index: number): void {
+      const list = this.getListByTab(tab);
+      if (index < 0 || index >= list.length) return;
+      const removed = list.splice(index, 1)[0];
+      if (tab === 'network' || tab === 'server') {
+        this.savePlaylistData();
       }
-      if (index === this.currentIndex) {
+      if (tab === 'server' && removed?.serverPath) {
+        void deleteFile(removed.serverPath);
+      }
+      if (tab === this.currentList && index === this.currentIndex) {
         this.currentIndex = -1;
-      } else if (index < this.currentIndex) {
+      } else if (tab === this.currentList && index < this.currentIndex) {
         this.currentIndex--;
       }
     },
@@ -102,101 +140,121 @@ export const usePlaylistStore = defineStore('playlist', {
         messageId,
         addedAt: Date.now(),
       };
-      this.list.push(item);
+      this.chatList.push(item);
     },
 
-    addFromSearch(result: SearchResult): void {
+    addFromSearch(result: SearchResult, autoplay: boolean = true): boolean {
+      // Dedup by providerTrackId
+      const existingIdx = this.networkList.findIndex(
+        (item) => item.providerId === result.provider && item.providerTrackId === result.id,
+      );
+      this.activeTab = 'network';
+      if (existingIdx >= 0) {
+        if (autoplay) {
+          this.currentList = 'network';
+          this.play('network', existingIdx);
+        }
+        return false;
+      }
       const item: PlaylistItem = {
         id: genId(),
         song: result.name,
         artist: result.artist,
-        source: 'user',
+        source: 'network',
         providerId: result.provider,
         providerTrackId: result.id,
         providerPicId: result.picId,
         addedAt: Date.now(),
       };
-      this.list.push(item);
-      this.saveUserList();
+      this.networkList.push(item);
+      this.savePlaylistData();
+      if (autoplay) {
+        this.currentList = 'network';
+        this.play('network', this.networkList.length - 1);
+      }
+      return true;
     },
 
-    addLocalFile(name: string, blobKey: string): void {
+    async addServerFile(name: string, file: File): Promise<void> {
+      const serverPath = await uploadFile(file);
       const item: PlaylistItem = {
         id: genId(),
         song: name,
-        source: 'local',
-        localBlobKey: blobKey,
+        source: 'server',
+        serverPath,
         addedAt: Date.now(),
       };
-      this.list.push(item);
-      this.saveUserList();
+      this.serverList.push(item);
+      this.savePlaylistData();
     },
 
-    play(index: number): void {
-      if (index < 0 || index >= this.list.length) return;
+    play(tab: PlaylistTab, index: number): void {
+      const list = this.getListByTab(tab);
+      if (index < 0 || index >= list.length) return;
+      this.currentList = tab;
+      this.activeTab = tab;
       this.currentIndex = index;
-      void this.resolveAndPlay(index);
+      void this.resolveAndPlay(tab, index);
     },
 
     next(): void {
-      if (this.list.length === 0) return;
+      const list = this.playingList;
+      if (list.length === 0) return;
       const mode = this.playMode;
       let newIndex = this.currentIndex;
       if (mode === 'single') {
         newIndex = this.currentIndex;
       } else if (mode === 'random') {
-        if (this.list.length === 1) {
+        if (list.length === 1) {
           newIndex = 0;
         } else {
           for (let attempt = 0; attempt < 5; attempt++) {
-            const candidate = Math.floor(Math.random() * this.list.length);
+            const candidate = Math.floor(Math.random() * list.length);
             if (candidate !== this.currentIndex) {
               newIndex = candidate;
               break;
             }
           }
           if (newIndex === this.currentIndex) {
-            newIndex = (this.currentIndex + 1) % this.list.length;
+            newIndex = (this.currentIndex + 1) % list.length;
           }
         }
       } else {
         newIndex = this.currentIndex + 1;
-        if (newIndex >= this.list.length) newIndex = 0;
+        if (newIndex >= list.length) newIndex = 0;
       }
-      this.play(newIndex);
+      this.currentIndex = newIndex;
+      void this.resolveAndPlay(this.currentList, newIndex);
     },
 
     prev(): void {
-      if (this.list.length === 0) return;
+      const list = this.playingList;
+      if (list.length === 0) return;
       let newIndex = this.currentIndex - 1;
-      if (newIndex < 0) newIndex = this.list.length - 1;
-      this.play(newIndex);
+      if (newIndex < 0) newIndex = list.length - 1;
+      this.currentIndex = newIndex;
+      void this.resolveAndPlay(this.currentList, newIndex);
     },
 
-    async resolveAndPlay(index: number): Promise<void> {
-      const item = this.list[index];
+    async resolveAndPlay(tab: PlaylistTab, index: number): Promise<void> {
+      const list = this.getListByTab(tab);
+      const item = list[index];
       if (!item) return;
-      const settingsStore = useSettingsStore();
-      const storage = settingsStore.storage;
-      if (!storage) return;
 
       let resolved: ResolvedTrack | null = null;
-      const mgr = createDefaultProviders(settingsStore.settings.providers);
+      const mgr = createDefaultProviders(useSettingsStore().settings.providers);
 
-      // 1. Local file: blob → object URL
-      if (item.source === 'local' && item.localBlobKey) {
-        const blob = await storage.getBlob(item.localBlobKey);
-        if (blob) {
-          resolved = {
-            url: URL.createObjectURL(blob),
-            name: item.song,
-            artist: item.artist ?? '',
-            source: 'local',
-          };
-        }
+      // Server file: use stored path as URL
+      if (item.source === 'server' && item.serverPath) {
+        resolved = {
+          url: item.serverPath,
+          name: item.song,
+          artist: item.artist ?? '',
+          source: 'server',
+        };
       }
 
-      // 2. Search + resolve + probe (iterates results until playable)
+      // Network/chat: search + resolve
       if (!resolved && item.song) {
         resolved = await mgr.searchAndResolve(item.song, item.artist);
         if (resolved) {
@@ -218,10 +276,10 @@ export const usePlaylistStore = defineStore('playlist', {
 
     handleNewCues(cues: { messageId: number; cues: Cue[] }[]): void {
       if (cues.length === 0) return;
-      const settingsStore = useSettingsStore();
       let latestItem: PlaylistItem | null = null;
       for (const batch of cues) {
         for (const cue of batch.cues) {
+          console.log('[晓乐] cue found:', cue.song, cue.artist ?? '', 'from message', batch.messageId);
           const item: PlaylistItem = {
             id: genId(),
             song: cue.song,
@@ -230,25 +288,27 @@ export const usePlaylistStore = defineStore('playlist', {
             messageId: batch.messageId,
             addedAt: Date.now(),
           };
-          this.list.push(item);
+          this.chatList.push(item);
           latestItem = item;
         }
       }
-      if (settingsStore.settings.autoPlayOnNewCue && latestItem) {
-        const idx = this.list.indexOf(latestItem);
-        if (idx >= 0) this.play(idx);
+      if (latestItem) {
+        const idx = this.chatList.indexOf(latestItem);
+        if (idx >= 0) {
+          this.currentList = 'chat';
+          this.activeTab = 'chat';
+          this.play('chat', idx);
+        }
       }
     },
 
     handleMessageUpdate(messageId: number): void {
       if (!this.chatIndexer || !this.chatId) return;
-      const settingsStore = useSettingsStore();
       const result = this.chatIndexer.scanMessage(
         this.chatId,
         messageId,
-        settingsStore.settings.customCueRules,
       );
-      const indices = this.list
+      const indices = this.chatList
         .map((item, i) => (item.messageId === messageId ? i : -1))
         .filter((i) => i >= 0);
 
@@ -261,35 +321,44 @@ export const usePlaylistStore = defineStore('playlist', {
 
       if (!result.cue) {
         for (const idx of [...indices].reverse()) {
-          this.removeItem(idx);
+          this.chatList.splice(idx, 1);
+        }
+        if (this.currentList === 'chat') {
+          for (const idx of [...indices].reverse()) {
+            if (idx === this.currentIndex) this.currentIndex = -1;
+            else if (idx < this.currentIndex) this.currentIndex--;
+          }
         }
         return;
       }
 
       const firstIdx = indices[0];
-      const item = this.list[firstIdx];
+      const item = this.chatList[firstIdx];
       item.song = result.cue.song;
       item.artist = result.cue.artist;
       for (const idx of [...indices].reverse()) {
-        if (idx !== firstIdx) this.removeItem(idx);
+        if (idx !== firstIdx) this.chatList.splice(idx, 1);
+      }
+      if (this.currentList === 'chat') {
+        const removedBefore = indices.filter((idx) => idx !== firstIdx && idx < this.currentIndex).length;
+        this.currentIndex -= removedBefore;
+        if (this.currentIndex < 0) this.currentIndex = -1;
       }
     },
 
     handleMessageDelete(messageId: number): void {
-      const indices = this.list
+      const indices = this.chatList
         .map((item, i) => (item.messageId === messageId ? i : -1))
         .filter((i) => i >= 0);
       for (const idx of [...indices].reverse()) {
-        this.removeItem(idx);
+        this.chatList.splice(idx, 1);
       }
-    },
-
-    saveUserList(): void {
-      const settingsStore = useSettingsStore();
-      const storage = settingsStore.storage;
-      if (!storage || !this.chatId) return;
-      const userList = this.list.filter((item) => item.source === 'user' || item.source === 'local');
-      storage.setMetadata(USERLIST_KEY, userList);
+      if (this.currentList === 'chat') {
+        for (const idx of [...indices].reverse()) {
+          if (idx === this.currentIndex) this.currentIndex = -1;
+          else if (idx < this.currentIndex) this.currentIndex--;
+        }
+      }
     },
 
     getCursor(): number {
@@ -309,6 +378,10 @@ export const usePlaylistStore = defineStore('playlist', {
           updatedAt: Date.now(),
         });
       }
+    },
+
+    setActiveTab(tab: PlaylistTab): void {
+      this.activeTab = tab;
     },
   },
 });
