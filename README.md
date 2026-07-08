@@ -31,7 +31,7 @@ AI analyzes the conversation and automatically selects fitting background music.
 **Two modes:**
 
 - **Together**: Injects BGM instructions into the main AI's prompt. The AI includes a hidden song recommendation in its reply, which is automatically parsed and played. No extra API needed — works with your existing ST connection. You'll see a toast notification when a song is selected, and the track appears in the Chat playlist.
-- **Function Call**: Registers invisible tools that the AI can call to search, play, and stop music during generation. Requires an official API endpoint that supports function/tool calling (e.g. OpenAI, Claude, Gemini, DeepSeek). Third-party relay/proxy endpoints may not support tool calling. Alternatively, configure a separate custom endpoint that supports tool calling.
+- **Function Call**: Registers invisible tools that the AI can call to search, play, and stop music during generation. Requires an official API endpoint that supports Function Calling (e.g. OpenAI, Claude, Gemini, DeepSeek). Third-party relay/proxy endpoints may not support Function Calling. Alternatively, configure a separate custom endpoint that supports Function Calling.
 
 **Trigger options:**
 
@@ -140,14 +140,14 @@ Recently played: {{xiaoyueRecentPlayed}}
 2. Enable **AI BGM** toggle
 3. Choose a mode:
    - **Together**: The main AI writes BGM recommendations into its responses. No extra API needed.
-   - **Function Call**: The AI calls tools to search and play music. Requires an API that supports tool calling, or configure a custom endpoint.
+   - **Function Call**: The AI calls tools to search and play music. Requires an API that supports Function Calling, or configure a custom endpoint.
 4. Enable **Auto Trigger** to analyze new messages automatically
 5. (Optional) Enable **Trigger on Greeting** to analyze when opening a character card
 6. Use `/xybgm` to manually trigger analysis at any time (Function Call mode only)
 
-**Function Call custom endpoint settings** (requires an OpenAI-compatible endpoint that supports tool calling):
+**Function Call custom endpoint settings:**
 
-- **API URL**: OpenAI-compatible endpoint (must support `/chat/completions` and `/models`)
+- **API URL**: OpenAI-compatible endpoint that supports Function Calling
 - **API Key**: Bearer token for the endpoint
 - **Model**: Click the connect button to fetch available models, or type a model name manually
 - **Context Messages**: Number of recent chat messages to send to the AI (2-20, default 8)
