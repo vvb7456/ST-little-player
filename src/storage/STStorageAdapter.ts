@@ -1,5 +1,6 @@
 import type { StorageAdapter } from './StorageAdapter';
 import { MODULE_NAME } from './index';
+import { logger } from '@/utils/logger';
 
 /**
  * SillyTavern-backed implementation of {@link StorageAdapter}.
@@ -34,6 +35,7 @@ export class STStorageAdapter implements StorageAdapter {
     try {
       return JSON.parse(raw) as T;
     } catch {
+      logger.warn('Failed to parse stored settings:', raw);
       return null;
     }
   }
@@ -61,6 +63,7 @@ export class STStorageAdapter implements StorageAdapter {
     try {
       return JSON.parse(raw) as T;
     } catch {
+      logger.warn('Failed to parse stored playlist data:', raw);
       return null;
     }
   }

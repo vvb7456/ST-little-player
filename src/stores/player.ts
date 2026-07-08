@@ -4,6 +4,8 @@ import { AudioEngine } from '@/engine/AudioEngine';
 import type { AudioEngineEvent } from '@/engine/AudioEngine';
 import { parseLyric, getActiveLine } from '@/engine/LyricEngine';
 import { usePlaylistStore } from './playlist';
+import { useSettingsStore } from './settings';
+import { logger } from '@/utils/logger';
 
 export const usePlayerStore = defineStore('player', {
   state: () => ({
@@ -46,11 +48,16 @@ export const usePlayerStore = defineStore('player', {
       engine.on('pause', () => {
         playerStore.isPlaying = false;
       });
+
+      engine.on('error', () => {
+        logger.warn('Audio error event');
+      });
     },
 
     async loadAndPlay(track: ResolvedTrack): Promise<void> {
       if (!this.audioEngine) this.init();
       const engine = this.audioEngine!;
+      const fade = useSettingsStore().settings.crossfade;
       engine.load(track.url);
       this.currentTrack = track;
       if (track.lyric) {
@@ -59,18 +66,20 @@ export const usePlayerStore = defineStore('player', {
         this.lyrics = [];
         this.currentLyricIndex = -1;
       }
-      await engine.play();
+      await engine.play(fade);
       if (track.cover) {
         // preload cover
       }
     },
 
     async play(): Promise<void> {
-      await this.audioEngine?.play();
+      const fade = useSettingsStore().settings.crossfade;
+      await this.audioEngine?.play(fade);
     },
 
     pause(): void {
-      this.audioEngine?.pause();
+      const fade = useSettingsStore().settings.crossfade;
+      this.audioEngine?.pause(fade);
     },
 
     async togglePlay(): Promise<void> {

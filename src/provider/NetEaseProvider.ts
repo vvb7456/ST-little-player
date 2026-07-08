@@ -1,4 +1,5 @@
 import type { MusicProvider, SearchResult, ResolvedTrack } from '../types';
+import { logger } from '@/utils/logger';
 
 export interface NetEaseConfig {
   baseURL?: string;
@@ -37,7 +38,8 @@ export class NetEaseProvider implements MusicProvider {
       clearTimeout(timer);
       if (!res.ok) return null;
       return await res.json();
-    } catch {
+    } catch (err) {
+      logger.warn('NetEase: fetchJson failed: ' + url, err);
       return null;
     }
   }
@@ -148,7 +150,7 @@ export class NetEaseProvider implements MusicProvider {
 
       const playable = await this.probeAudio(track.url);
       if (!playable) {
-        console.warn(`[NetEase] audio probe failed for id=${result.id}, trying next`);
+        logger.warn('NetEase: audio probe failed for id=' + result.id + ', trying next');
         continue;
       }
 
@@ -157,7 +159,7 @@ export class NetEaseProvider implements MusicProvider {
       return track;
     }
 
-    console.warn(`[NetEase] searchAndResolve: no playable result for "${query}"`);
+    logger.warn('NetEase: no playable result for "' + query + '"');
     return null;
   }
 }

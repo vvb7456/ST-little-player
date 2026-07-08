@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { useSettingsStore, usePlaylistStore } from '@/stores/index';
 import type { PlayMode, WidgetMode, DockAlign, AiMode } from '@/types';
 import { t } from '@/i18n';
+import { logger } from '@/utils/logger';
 import { getBgmController } from '@/ai/BgmController';
 import { fetchCustomModels } from '@/ai/CustomApiClient';
 import { TOGETHER_INTERCEPTOR } from '@/ai/prompts';
@@ -101,7 +102,7 @@ async function onFetchModels(): Promise<void> {
   if (fetchingModels.value) return;
   const settings = settingsStore.settings;
   if (!settings.aiApiUrl) {
-    if (typeof toastr !== 'undefined') toastr.warning(t('Please fill API URL'));
+    if (typeof toastr !== 'undefined') toastr.warning(t('Please fill API URL'), '晓乐');
     return;
   }
   fetchingModels.value = true;
@@ -109,13 +110,13 @@ async function onFetchModels(): Promise<void> {
     const models = await fetchCustomModels();
     modelList.value = models;
     if (models.length === 0) {
-      if (typeof toastr !== 'undefined') toastr.info(t('No models returned by endpoint'));
+      if (typeof toastr !== 'undefined') toastr.info(t('No models returned'), '晓乐');
     } else {
-      if (typeof toastr !== 'undefined') toastr.success(`${models.length} ${t('models found')}`);
+      if (typeof toastr !== 'undefined') toastr.success(`${t('models found')} ${models.length} 个模型`, '晓乐');
     }
   } catch (err: any) {
-    console.error('[晓乐] Failed to fetch models:', err);
-    if (typeof toastr !== 'undefined') toastr.error(t('Failed to fetch models'));
+    logger.error('Failed to fetch models:', err);
+    if (typeof toastr !== 'undefined') toastr.error(t('Failed to fetch models'), '晓乐');
   } finally {
     fetchingModels.value = false;
   }
@@ -136,6 +137,7 @@ function toggleProvider(id: string): void {
         if (result === 1) {
           cfg.enabled = true;
           settingsStore.save();
+          if (typeof toastr !== 'undefined') toastr.info(`${t('Source enabled')}：${providerNames[id] || id}`, '晓乐');
         }
       });
       return;
@@ -143,6 +145,9 @@ function toggleProvider(id: string): void {
   }
   cfg.enabled = !cfg.enabled;
   settingsStore.save();
+  if (typeof toastr !== 'undefined') {
+    toastr.info(`${cfg.enabled ? t('Source enabled') : t('Source disabled')}：${providerNames[id] || id}`, '晓乐');
+  }
 }
 
 // ===== General =====
@@ -160,6 +165,7 @@ const exportData = (): void => {
   a.download = 'st-little-player-settings.json';
   a.click();
   URL.revokeObjectURL(url);
+  if (typeof toastr !== 'undefined') toastr.success(t('Settings exported'), '晓乐');
 };
 
 const importData = (): void => {
@@ -173,7 +179,7 @@ const importData = (): void => {
     try {
       const data = JSON.parse(text);
       if (typeof data !== 'object' || data === null) throw new Error('Not an object');
-      const validKeys = ['volume', 'playMode', 'position', 'widgetMode', 'dockAlign', 'providers', 'customOpacity', 'opacity', 'aiMode', 'aiUseCustomApi', 'aiContextMessages', 'aiAutoTrigger', 'aiTriggerOnGreeting', 'aiCooldownMs', 'togetherPromptRole', 'togetherCustomPromptEnabled', 'togetherCustomPrompt'];
+      const validKeys = ['volume', 'playMode', 'crossfade', 'position', 'widgetMode', 'dockAlign', 'providers', 'customOpacity', 'opacity', 'aiMode', 'aiUseCustomApi', 'aiContextMessages', 'aiAutoTrigger', 'aiTriggerOnGreeting', 'aiCooldownMs', 'togetherPromptRole', 'togetherCustomPromptEnabled', 'togetherCustomPrompt', 'debug'];
       const filtered: Record<string, unknown> = {};
       for (const key of validKeys) {
         if (key in data) filtered[key] = data[key];
@@ -189,10 +195,10 @@ const importData = (): void => {
       }
       Object.assign(settingsStore.settings, filtered);
       settingsStore.save();
-      if (typeof toastr !== 'undefined') toastr.success(t('Data imported'));
+      if (typeof toastr !== 'undefined') toastr.success(t('Settings imported'), '晓乐');
     } catch (err) {
-      console.error('Import failed', err);
-      if (typeof toastr !== 'undefined') toastr.error(t('Import failed') + ': ' + (err instanceof Error ? err.message : t('Invalid JSON')));
+      logger.error('Settings import failed:', err);
+      if (typeof toastr !== 'undefined') toastr.error(`${t('Import failed')}：${err instanceof Error ? err.message : t('Invalid JSON')}`, '晓乐');
     }
   };
   input.click();
@@ -217,7 +223,7 @@ const exportPlaylist = (): void => {
   a.download = 'st-little-player-playlist.json';
   a.click();
   URL.revokeObjectURL(url);
-  if (typeof toastr !== 'undefined') toastr.success(t('Data exported'));
+  if (typeof toastr !== 'undefined') toastr.success(t('Playlist exported'), '晓乐');
 };
 
 const importPlaylist = (): void => {
@@ -245,10 +251,10 @@ const importPlaylist = (): void => {
         }));
       playlistStore.networkList = items;
       playlistStore.savePlaylistData();
-      if (typeof toastr !== 'undefined') toastr.success(t('Data imported'));
+      if (typeof toastr !== 'undefined') toastr.success(t('Playlist imported'), '晓乐');
     } catch (err) {
-      console.error('Playlist import failed', err);
-      if (typeof toastr !== 'undefined') toastr.error(t('Import failed') + ': ' + (err instanceof Error ? err.message : t('Invalid JSON')));
+      logger.error('Playlist import failed:', err);
+      if (typeof toastr !== 'undefined') toastr.error(`${t('Import failed')}：${err instanceof Error ? err.message : t('Invalid JSON')}`, '晓乐');
     }
   };
   input.click();
@@ -399,6 +405,17 @@ async function openPromptEditor(): Promise<void> {
               <span>{{ m.label }}</span>
             </div>
           </div>
+        </div>
+
+        <div class="stmp-row">
+          <div class="stmp-row-info">
+            <div class="stmp-row-title">{{ t('Crossfade') }}</div>
+            <div class="stmp-row-desc">{{ t('Smoothly fade in when starting playback and fade out when pausing or switching tracks') }}</div>
+          </div>
+          <ToggleSwitch
+            :model-value="settingsStore.settings.crossfade"
+            @update:model-value="settingsStore.setCrossfade"
+          />
         </div>
 
         <div
@@ -640,6 +657,19 @@ async function openPromptEditor(): Promise<void> {
 
       <!-- ===== 通用 ===== -->
       <div v-show="activeTab === 'general'" class="stmp-tab-panel">
+        <div class="stmp-row">
+          <div class="stmp-row-info">
+            <div class="stmp-row-title">{{ t('Debug Mode') }}</div>
+            <div class="stmp-row-desc">{{ t('Enable verbose console logging for troubleshooting') }}</div>
+          </div>
+          <ToggleSwitch
+            :model-value="settingsStore.settings.debug"
+            @update:model-value="settingsStore.setDebug"
+          />
+        </div>
+
+        <div class="stmp-separator" />
+
         <div class="stmp-row">
           <div class="stmp-row-info">
             <div class="stmp-row-title">{{ t('Export data') }}</div>

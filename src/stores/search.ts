@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import type { SearchResult } from '@/types';
 import type { ProviderManager } from '@/provider/ProviderManager';
+import { logger } from '@/utils/logger';
 
 export const useSearchStore = defineStore('search', {
   state: () => ({
@@ -25,6 +26,7 @@ export const useSearchStore = defineStore('search', {
       try {
         this.results = await providerManager.searchAll(this.keyword);
       } catch (err) {
+        logger.warn('Search failed:', err);
         this.error = err instanceof Error ? err.message : String(err);
         this.results = [];
       } finally {

@@ -6,6 +6,7 @@ import type {
   AiMode,
 } from '@/types';
 import type { StorageAdapter } from '@/storage/StorageAdapter';
+import { setDebugEnabled } from '@/utils/logger';
 
 function defaultProviders(): ProviderConfig[] {
   return [
@@ -19,6 +20,7 @@ function defaultSettings(): ExtensionSettings {
   return {
     volume: 65,
     playMode: 'list',
+    crossfade: false,
     position: null,
     widgetMode: 'dock',
     dockAlign: 'bottom-left',
@@ -39,6 +41,7 @@ function defaultSettings(): ExtensionSettings {
     togetherPromptRole: 'system',
     togetherCustomPromptEnabled: false,
     togetherCustomPrompt: '',
+    debug: false,
   };
 }
 
@@ -53,44 +56,50 @@ export const useSettingsStore = defineStore('settings', {
   },
 
   actions: {
-    init(storage: StorageAdapter): void {
-      this.storage = storage;
-      const stored = storage.getSettings<ExtensionSettings>();
-      const defaults = defaultSettings();
-      if (stored) {
-        // Use ST's bundled lodash for deep merge
-        const lodash = (typeof SillyTavern !== 'undefined' && SillyTavern.getContext()?.libs?.lodash)
-          ? SillyTavern.getContext().libs.lodash
-          : null;
-        if (lodash) {
-          this.settings = lodash.merge(structuredClone(defaults), stored);
-        } else {
-          // Fallback: manual deep merge for providers
-          this.settings = {
-            ...defaults,
-            ...stored,
-            providers: defaults.providers.map((d) => {
-              const existing = stored.providers?.find((p) => p.id === d.id);
-              return existing
-                ? { ...existing, config: existing.config ?? d.config ?? {} }
-                : d;
-            }),
-          };
-        }
+  init(storage: StorageAdapter): void {
+    this.storage = storage;
+    const stored = storage.getSettings<ExtensionSettings>();
+    const defaults = defaultSettings();
+    if (stored) {
+      // Use ST's bundled lodash for deep merge
+      const lodash = (typeof SillyTavern !== 'undefined' && SillyTavern.getContext()?.libs?.lodash)
+        ? SillyTavern.getContext().libs.lodash
+        : null;
+      if (lodash) {
+        this.settings = lodash.merge(structuredClone(defaults), stored);
       } else {
-        this.settings = defaults;
+        // Fallback: manual deep merge for providers
+        this.settings = {
+          ...defaults,
+          ...stored,
+          providers: defaults.providers.map((d) => {
+            const existing = stored.providers?.find((p) => p.id === d.id);
+            return existing
+              ? { ...existing, config: existing.config ?? d.config ?? {} }
+              : d;
+          }),
+        };
       }
-    },
+    } else {
+      this.settings = defaults;
+    }
+    setDebugEnabled(this.settings.debug);
+  },
 
     setVolume(vol: number): void {
       this.settings.volume = vol;
       this.save();
     },
 
-    setPlayMode(mode: PlayMode): void {
-      this.settings.playMode = mode;
-      this.save();
-    },
+  setPlayMode(mode: PlayMode): void {
+    this.settings.playMode = mode;
+    this.save();
+  },
+
+  setCrossfade(enabled: boolean): void {
+    this.settings.crossfade = enabled;
+    this.save();
+  },
 
     setPosition(pos: { x: number; y: number } | null): void {
       this.settings.position = pos;
@@ -185,7 +194,13 @@ export const useSettingsStore = defineStore('settings', {
       this.save();
     },
 
-    save(): void {
+    setDebug(enabled: boolean): void {
+    this.settings.debug = enabled;
+    setDebugEnabled(enabled);
+    this.save();
+  },
+
+  save(): void {
       if (!this.storage) return;
       void this.storage.setSettings(this.settings);
     },

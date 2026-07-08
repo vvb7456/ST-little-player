@@ -12,6 +12,8 @@ interface FileUploadResponse {
   path: string;
 }
 
+import { logger } from '@/utils/logger';
+
 function getHeaders(): Record<string, string> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (typeof SillyTavern !== 'undefined' && SillyTavern.getContext) {
@@ -70,7 +72,7 @@ export async function deleteFile(path: string): Promise<void> {
     body: JSON.stringify({ path }),
   });
   if (!response.ok) {
-    console.warn(`[stmp] deleteFile failed: ${response.status}`);
+    logger.warn('deleteFile failed: ' + response.status);
   }
 }
 

@@ -1,4 +1,5 @@
 import type { MusicProvider, SearchResult, ResolvedTrack } from '../types';
+import { logger } from '@/utils/logger';
 
 export interface CustomAPIConfig {
   searchURL?: string;
@@ -27,7 +28,8 @@ export class CustomAPIProvider implements MusicProvider {
       clearTimeout(timer);
       if (!res.ok) return null;
       return await res.json();
-    } catch {
+    } catch (err) {
+      logger.warn('Custom API: fetchJson failed: ' + url, err);
       return null;
     }
   }

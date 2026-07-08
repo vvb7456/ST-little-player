@@ -1,7 +1,7 @@
 /**
  * Centralized slash command registration for the 晓乐 extension.
  *
- * All commands use the `xy` prefix to avoid conflicts with other extensions.
+ * All commands use the `xy` prefix.
  * Commands are registered once on activate and unregistered on disable.
  *
  * Command list:
@@ -14,6 +14,7 @@
  *   /xynow           Show current track info
  */
 
+import { logger } from '@/utils/logger';
 import { usePlayerStore } from '@/stores/player';
 import { usePlaylistStore } from '@/stores/playlist';
 import { useSettingsStore } from '@/stores/settings';
@@ -23,6 +24,7 @@ import type { SearchResult } from '@/types';
 import { t } from '@/i18n';
 
 const CMD_PREFIX = 'xy';
+const TITLE = '晓乐';
 const registeredNames: string[] = [];
 
 function toStr(unnamedArgs: unknown): string {
@@ -52,8 +54,12 @@ export function registerSlashCommands(): void {
     helpString: 'Toggle play/pause. With a song name argument, searches and plays it immediately.',
     callback: async (_named: unknown, unnamed: unknown): Promise<string> => {
       const songName = toStr(unnamed).trim();
+      const playerStore = usePlayerStore();
       if (!songName) {
-        await usePlayerStore().togglePlay();
+        await playerStore.togglePlay();
+        if (typeof toastr !== 'undefined') {
+          toastr.success(playerStore.isPlaying ? t('Now playing') : t('Paused'), TITLE);
+        }
         return '';
       }
       const settingsStore = useSettingsStore();
@@ -61,10 +67,10 @@ export function registerSlashCommands(): void {
       const track = await mgr.searchAndResolve(songName);
       if (track) {
         track.name = songName;
-        await usePlayerStore().loadAndPlay(track);
-        if (typeof toastr !== 'undefined') toastr.success(track.name);
+        await playerStore.loadAndPlay(track);
+        if (typeof toastr !== 'undefined') toastr.success(`${t('Now playing')}：${track.name}`, TITLE);
       } else {
-        if (typeof toastr !== 'undefined') toastr.warning(`${t('Cannot play')}: ${songName}`);
+        if (typeof toastr !== 'undefined') toastr.warning(`${t('Cannot play')}：${songName}`, TITLE);
       }
       return '';
     },
@@ -76,7 +82,12 @@ export function registerSlashCommands(): void {
     aliases: [`${CMD_PREFIX}n`],
     helpString: 'Skip to the next track.',
     callback: async (): Promise<string> => {
-      usePlaylistStore().next();
+      const playlistStore = usePlaylistStore();
+      playlistStore.next();
+      const track = playlistStore.current;
+      if (track && typeof toastr !== 'undefined') {
+        toastr.success(`${t('Now playing')}：${track.song}`, TITLE);
+      }
       return '';
     },
   });
@@ -87,7 +98,12 @@ export function registerSlashCommands(): void {
     aliases: [`${CMD_PREFIX}pp`],
     helpString: 'Go back to the previous track.',
     callback: async (): Promise<string> => {
-      usePlaylistStore().prev();
+      const playlistStore = usePlaylistStore();
+      playlistStore.prev();
+      const track = playlistStore.current;
+      if (track && typeof toastr !== 'undefined') {
+        toastr.success(`${t('Now playing')}：${track.song}`, TITLE);
+      }
       return '';
     },
   });
@@ -104,12 +120,12 @@ export function registerSlashCommands(): void {
       }
       const vol = parseInt(arg, 10);
       if (Number.isNaN(vol) || vol < 0 || vol > 100) {
-        if (typeof toastr !== 'undefined') toastr.warning(t('Volume must be 0-100'));
+        if (typeof toastr !== 'undefined') toastr.warning(t('Volume must be 0-100'), TITLE);
         return '';
       }
       playerStore.setVolume(vol);
       useSettingsStore().setVolume(vol);
-      if (typeof toastr !== 'undefined') toastr.success(`${t('Volume')}: ${vol}`);
+      if (typeof toastr !== 'undefined') toastr.success(`${t('Volume set to')} ${vol}`, TITLE);
       return '';
     },
   });
@@ -121,18 +137,20 @@ export function registerSlashCommands(): void {
     callback: async (_named: unknown, unnamed: unknown): Promise<string> => {
       const query = toStr(unnamed).trim();
       if (!query) {
-        if (typeof toastr !== 'undefined') toastr.warning(t('Search Song...'));
+        if (typeof toastr !== 'undefined') toastr.warning(t('Enter song name'), TITLE);
         return '';
       }
       const settingsStore = useSettingsStore();
       const mgr = createDefaultProviders(settingsStore.settings.providers);
       const results: SearchResult[] = await mgr.searchAll(query);
       if (results.length === 0) {
-        if (typeof toastr !== 'undefined') toastr.info(t('No results'));
+        if (typeof toastr !== 'undefined') toastr.info(t('No results'), TITLE);
         return '';
       }
       usePlaylistStore().addFromSearch(results[0], false);
-      if (typeof toastr !== 'undefined') toastr.success(`${results[0].name} - ${results[0].artist}`);
+      if (typeof toastr !== 'undefined') {
+        toastr.success(`${t('Added to playlist')}：${results[0].name} - ${results[0].artist}`, TITLE);
+      }
       return '';
     },
   });
@@ -144,9 +162,15 @@ export function registerSlashCommands(): void {
     callback: async (): Promise<string> => {
       const controller = getBgmController();
       if (!controller) {
-        if (typeof toastr !== 'undefined') toastr.warning(t('AI BGM') + ': ' + t('Off'));
+        if (typeof toastr !== 'undefined') toastr.warning(t('AI BGM off'), TITLE);
         return '';
       }
+      const settingsStore = useSettingsStore();
+      if (!settingsStore.settings.aiApiUrl || !settingsStore.settings.aiModel) {
+        if (typeof toastr !== 'undefined') toastr.warning(t('AI not configured'), TITLE);
+        return '';
+      }
+      if (typeof toastr !== 'undefined') toastr.info(t('AI analyzing'), TITLE);
       await controller.manualTrigger();
       return '';
     },
@@ -160,17 +184,16 @@ export function registerSlashCommands(): void {
       const playerStore = usePlayerStore();
       const track = playerStore.currentTrack;
       if (!track) {
-        if (typeof toastr !== 'undefined') toastr.info(t('No Song'));
+        if (typeof toastr !== 'undefined') toastr.info(t('No Song'), TITLE);
         return '';
       }
       const artist = track.artist ? ` - ${track.artist}` : '';
-      const status = playerStore.isPlaying ? '▶' : '⏸';
-      if (typeof toastr !== 'undefined') toastr.info(`${status} ${track.name}${artist}`);
+      if (typeof toastr !== 'undefined') toastr.info(`${t('Now playing track')}：${track.name}${artist}`, TITLE);
       return `${track.name}${artist}`;
     },
   });
 
-  console.log(`[晓乐] Slash commands registered: ${registeredNames.join(', ')}`);
+  logger.info('Slash commands registered: ' + registeredNames.join(', '));
 }
 
 export function unregisterSlashCommands(): void {
@@ -183,4 +206,5 @@ export function unregisterSlashCommands(): void {
     }
   }
   registeredNames.length = 0;
+  logger.info('Slash commands unregistered');
 }

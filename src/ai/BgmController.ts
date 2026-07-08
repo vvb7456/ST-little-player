@@ -1,3 +1,4 @@
+import { logger } from '@/utils/logger';
 import type { AiMode } from '@/types';
 import { useSettingsStore } from '@/stores/settings';
 import { TogetherMode } from './TogetherMode';
@@ -13,10 +14,12 @@ export class BgmController {
   init(): void {
     this.applyMode(useSettingsStore().settings.aiMode);
     _instance = this;
+    logger.info('BGM controller initialized, mode: ' + this.currentMode);
   }
 
   setMode(mode: AiMode): void {
     if (mode === this.currentMode) return;
+    logger.info('BGM mode changing to: ' + mode);
     this.destroyCurrent();
     this.applyMode(mode);
   }
@@ -46,7 +49,7 @@ export class BgmController {
           break;
       }
     } catch (err) {
-      console.error('[晓乐] BGM controller: failed to init mode', mode, err);
+      logger.error('BGM controller: failed to init mode ' + mode, err);
     }
   }
 
@@ -68,6 +71,7 @@ export class BgmController {
   }
 
   destroy(): void {
+    logger.info('BGM controller destroyed');
     this.destroyCurrent();
     this.currentMode = 'off';
     _instance = null;

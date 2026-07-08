@@ -8,6 +8,7 @@ import { buildChatContext } from '@/ai/ContextBuilder';
 import { buildFcAuxPrompt, buildFcSystemPrompt, buildFcUserPrompt } from '@/ai/PromptBuilder';
 import { runBgmAgentLoop } from '@/ai/CustomApiClient';
 import { t } from '@/i18n';
+import { logger } from '@/utils/logger';
 import {
   FC_TOOL_SEARCH_NAME,
   FC_TOOL_SEARCH_DESC,
@@ -98,7 +99,7 @@ export class FunctionCallMode {
     const ctx = SillyTavern.getContext();
 
     if (!ctx.isToolCallingSupported()) {
-      console.warn('[晓乐] Function tool calling is not supported by the current API. Switch to custom API or use Together mode.');
+      logger.warn('Function tool calling is not supported by the current API. Switch to custom API or use Together mode.');
       return;
     }
 
@@ -145,7 +146,7 @@ export class FunctionCallMode {
             duration: r.duration,
           })),
         );
-        console.log('[晓乐] search_music results:', topResults.length, 'items for:', keyword);
+        logger.debug('search_music results: ' + topResults.length + ' items for: ' + keyword);
         return formatted;
       },
       formatMessage: ({ keyword }: { keyword?: string }) =>
@@ -179,10 +180,10 @@ export class FunctionCallMode {
         addBgmHistory(searchResult.name, searchResult.artist);
 
         if (typeof toastr !== 'undefined') {
-          toastr.success(`${t('AI selected:')} ${searchResult.name}`);
+          toastr.success(`${t('AI selected:')}：${searchResult.name}`, '晓乐');
         }
 
-        console.log('[晓乐] play_music success:', searchResult.name, '-', searchResult.artist);
+        logger.debug('play_music success: ' + searchResult.name + ' - ' + searchResult.artist);
         return FC_TOOL_PLAY_SUCCESS
           .replace('{name}', searchResult.name)
           .replace('{artist}', searchResult.artist ? ' - ' + searchResult.artist : '');
@@ -239,7 +240,7 @@ export class FunctionCallMode {
     const auxPrompt = buildFcAuxPrompt();
     ctx.setExtensionPrompt(PROMPT_KEY, auxPrompt, 1, 0, false, 0);
 
-    console.log('[晓乐] Function Call (main API): 4 tools registered + aux prompt set');
+    logger.info('Function Call (main API): 4 tools registered + aux prompt set');
   }
 
   // ===== Custom API path: event-driven agent loop =====
@@ -255,7 +256,7 @@ export class FunctionCallMode {
       this.onMessageSwiped,
     );
 
-    console.log('[晓乐] Function Call (custom API): event listeners registered');
+    logger.info('Function Call (custom API): event listeners registered');
   }
 
   async manualTrigger(): Promise<void> {
@@ -281,13 +282,13 @@ export class FunctionCallMode {
     if (ctx.generationInProgress) return;
 
     if (!settingsStore.settings.aiApiUrl || !settingsStore.settings.aiModel) {
-      console.warn('[晓乐] Custom API path requires API URL + Model');
+      logger.warn('Custom API path requires API URL + Model');
       return;
     }
 
     this.isAnalyzing = true;
     this.lastTriggerTime = Date.now();
-    console.log('[晓乐] BGM agent loop started');
+    logger.info('BGM agent loop started');
 
     try {
       const chatText = await buildChatContext(settingsStore.settings.aiContextMessages);
@@ -296,9 +297,9 @@ export class FunctionCallMode {
       const userPrompt = buildFcUserPrompt(chatText);
       await runBgmAgentLoop(systemPrompt, userPrompt);
     } catch (err) {
-      console.error('[晓乐] AI agent loop failed:', err);
+      logger.error('AI agent loop failed:', err);
       if (typeof toastr !== 'undefined') {
-        toastr.error(t('AI recommendation failed'));
+        toastr.error(t('AI recommendation failed'), '晓乐');
       }
     } finally {
       this.isAnalyzing = false;
@@ -306,9 +307,11 @@ export class FunctionCallMode {
   }
 
   destroy(): void {
+    const settingsStore = useSettingsStore();
+    const path = settingsStore.settings.aiUseCustomApi ? 'custom API' : 'main API';
+    logger.info('Function Call destroyed: ' + path);
     this.destroyed = true;
     const ctx = SillyTavern.getContext();
-    const settingsStore = useSettingsStore();
 
     if (settingsStore.settings.aiUseCustomApi) {
       ctx.eventSource.removeListener(

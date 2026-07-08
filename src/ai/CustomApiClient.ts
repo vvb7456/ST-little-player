@@ -9,6 +9,7 @@
  */
 
 import type { SearchResult } from '@/types';
+import { logger } from '@/utils/logger';
 import { useSettingsStore } from '@/stores/settings';
 import { usePlayerStore } from '@/stores/player';
 import { usePlaylistStore } from '@/stores/playlist';
@@ -38,7 +39,7 @@ import {
   FC_TOOL_GET_CURRENT_NONE,
 } from '@/ai/prompts';
 
-const MAX_LOOP_ITERATIONS = 4;
+const MAX_LOOP_ITERATIONS = 5;
 
 // ===== Tool definitions (OpenAI function calling format) =====
 
@@ -152,7 +153,7 @@ async function callChatCompletions(
     thinking: { type: 'disabled' },
   };
 
-  console.log('[晓乐] BGM API request:', { model: settings.aiModel, messageCount: messages.length });
+  logger.debug('BGM API request:', { model: settings.aiModel, messageCount: messages.length });
 
   const res = await fetch(url, {
     method: 'POST',
@@ -165,6 +166,7 @@ async function callChatCompletions(
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
+    logger.warn('BGM API error: ' + res.status, text);
     throw new Error(`API ${res.status}: ${text}`);
   }
 
@@ -209,7 +211,7 @@ async function executeTool(
           duration: r.duration,
         })),
       );
-      console.log('[晓乐] search_music results:', topResults.length, 'items for:', keyword);
+      logger.debug('search_music results: ' + topResults.length + ' items for: ' + keyword);
       return formatted;
     }
 
@@ -227,10 +229,10 @@ async function executeTool(
       addBgmHistory(searchResult.name, searchResult.artist);
 
       if (typeof toastr !== 'undefined') {
-        toastr.success(`${t('AI selected:')} ${searchResult.name}`);
+        toastr.success(`${t('AI selected:')}：${searchResult.name}`, '晓乐');
       }
 
-      console.log('[晓乐] play_music success:', searchResult.name, '-', searchResult.artist);
+      logger.debug('play_music success: ' + searchResult.name + ' - ' + searchResult.artist);
       return FC_TOOL_PLAY_SUCCESS
         .replace('{name}', searchResult.name)
         .replace('{artist}', searchResult.artist ? ' - ' + searchResult.artist : '');
@@ -240,7 +242,7 @@ async function executeTool(
       const player = usePlayerStore();
       if (!player.currentTrack) return FC_TOOL_STOP_NOTHING;
       player.pause();
-      console.log('[晓乐] stop_music success');
+      logger.debug('stop_music success');
       return FC_TOOL_STOP_SUCCESS;
     }
 
@@ -252,7 +254,7 @@ async function executeTool(
         player.currentTrack.artist ?? null,
         player.isPlaying,
       );
-      console.log('[晓乐] get_current_track:', result);
+      logger.debug('get_current_track:', result);
       return result;
     }
 
@@ -282,7 +284,7 @@ export async function runBgmAgentLoop(
   const searchCache = new Map<string, SearchResult>();
 
   for (let iteration = 0; iteration < MAX_LOOP_ITERATIONS; iteration++) {
-    console.log(`[晓乐] BGM agent loop iteration ${iteration + 1}/${MAX_LOOP_ITERATIONS}`);
+    logger.debug('BGM agent loop iteration ' + (iteration + 1) + '/' + MAX_LOOP_ITERATIONS);
 
     const response = await callChatCompletions(messages);
 
@@ -296,9 +298,9 @@ export async function runBgmAgentLoop(
 
     // No tool calls = AI decided not to act (or finished acting)
     if (!response.tool_calls || response.tool_calls.length === 0) {
-      console.log('[晓乐] BGM agent loop ended — no tool calls');
+      logger.debug('BGM agent loop ended — no tool calls');
       if (response.content) {
-        console.log('[晓乐] BGM agent final text:', response.content);
+        logger.debug('BGM agent final text:', response.content);
       }
       return;
     }
@@ -310,12 +312,12 @@ export async function runBgmAgentLoop(
       try {
         args = JSON.parse(toolCall.function.arguments || '{}');
       } catch {
-        console.warn('[晓乐] Failed to parse tool arguments:', toolCall.function.arguments);
+        logger.warn('Failed to parse tool arguments:', toolCall.function.arguments);
       }
 
-      console.log(`[晓乐] Executing tool: ${toolName}`, args);
+      logger.debug('Executing tool: ' + toolName, args);
       const result = await executeTool(toolName, args, searchCache);
-      console.log(`[晓乐] Tool result:`, result);
+      logger.debug('Tool result:', result);
 
       messages.push({
         role: 'tool',
@@ -325,5 +327,5 @@ export async function runBgmAgentLoop(
     }
   }
 
-  console.warn('[晓乐] BGM agent loop reached max iterations');
+  logger.warn('BGM agent loop reached max iterations');
 }

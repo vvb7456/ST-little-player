@@ -6,6 +6,7 @@ import { useSettingsStore } from '@/stores/settings';
 import { usePlaylistStore } from '@/stores/playlist';
 import { createDefaultProviders } from '@/provider';
 import { t } from '@/i18n';
+import { logger } from '@/utils/logger';
 
 const MARKER_REGEX = /<!--XY_BGM_START-->[\s\S]*?<!--XY_BGM_END-->/g;
 
@@ -44,9 +45,12 @@ export class TogetherMode {
 
     const ctx = SillyTavern.getContext();
     ctx.eventSource.on(ctx.event_types.GENERATION_ENDED, this.onGenerationEndedBound);
+
+    logger.info('Together mode initialized');
   }
 
   destroy(): void {
+    logger.info('Together mode destroyed');
     const ctx = SillyTavern.getContext();
     ctx.eventSource.removeListener(ctx.event_types.GENERATION_ENDED, this.onGenerationEndedBound);
 
@@ -62,26 +66,26 @@ export class TogetherMode {
       const actualId = messageId > 0 ? messageId - 1 : 0;
       const msg = ctx.chat[actualId];
       if (!msg) {
-        console.log('[晓乐] Together: GENERATION_ENDED but msg not found', { messageId, actualId, chatLen: ctx.chat.length });
+        logger.warn('Together: GENERATION_ENDED but message not found', { messageId, actualId, chatLen: ctx.chat.length });
         return;
       }
 
       const text = msg.mes ?? '';
       const startIdx = text.indexOf(MARKER_START);
       if (startIdx === -1) return;
-      console.log('[晓乐] Together: marker found in message', actualId);
+      logger.debug('Together: marker found in message ' + actualId);
 
       const endIdx = text.indexOf(MARKER_END, startIdx);
       if (endIdx === -1) {
-        console.warn('[晓乐] Together: MARKER_END not found, marker may be truncated');
+        logger.warn('Together: MARKER_END not found, marker may be truncated');
         return;
       }
 
       const extracted = text.slice(startIdx + MARKER_START.length, endIdx).trim();
-      console.log('[晓乐] Together: extracted marker content:', extracted);
+      logger.debug('Together: extracted marker content:', extracted);
 
       const recommendation = parseJsonSafe(extracted) as BgmRecommendation | null;
-      console.log('[晓乐] Together: parsed recommendation:', recommendation);
+      logger.debug('Together: parsed recommendation:', recommendation);
 
       if (!recommendation) {
         this.cleanupMarker(actualId, msg);
@@ -89,13 +93,13 @@ export class TogetherMode {
       }
 
       if (recommendation.action === 'keep') {
-        console.log('[晓乐] Together: action=keep, no change');
+        logger.debug('Together: action=keep, no change');
         this.cleanupMarker(actualId, msg);
         return;
       }
 
       if (recommendation.action === 'play' && recommendation.song) {
-        console.log('[晓乐] Together: searching for:', recommendation.song, recommendation.artist);
+        logger.debug('Together: searching for: ' + recommendation.song, recommendation.artist);
         const settingsStore = useSettingsStore();
         const mgr = createDefaultProviders(settingsStore.settings.providers);
         const results = await mgr.searchAll(recommendation.artist
@@ -106,21 +110,21 @@ export class TogetherMode {
           const playlistStore = usePlaylistStore();
           playlistStore.addFromAi(results[0], true);
           addBgmHistory(recommendation.song, recommendation.artist, actualId);
-          console.log('[晓乐] Together: playing:', results[0].name, '-', results[0].artist);
+          logger.debug('Together: playing: ' + results[0].name + ' - ' + results[0].artist);
           if (typeof toastr !== 'undefined') {
-            toastr.success(t('AI selected:') + ' ' + recommendation.song);
+            toastr.success(`${t('AI selected:')}：${recommendation.song}`, '晓乐');
           }
         } else {
-          console.warn('[晓乐] Together: track not found:', recommendation.song);
+          logger.warn('Together: track not found: ' + recommendation.song);
           if (typeof toastr !== 'undefined') {
-            toastr.warning(t('Cannot play') + ': ' + recommendation.song);
+            toastr.warning(`${t('Cannot play')}：${recommendation.song}`, '晓乐');
           }
         }
       }
 
       this.cleanupMarker(actualId, msg);
     } catch (err) {
-      console.error('[晓乐] Together: onGenerationEnded error:', err);
+      logger.error('Together: onGenerationEnded error:', err);
     }
   }
 
@@ -128,7 +132,11 @@ export class TogetherMode {
     msg.mes = (msg.mes ?? '').replace(MARKER_REGEX, '').trim();
     const ctx = SillyTavern.getContext();
     if (typeof ctx.updateMessageBlock === 'function') {
-      ctx.updateMessageBlock(messageId, msg);
+      try {
+        ctx.updateMessageBlock(messageId, msg);
+      } catch (err) {
+        logger.warn('Together: failed to update message block', err);
+      }
     }
   }
 }

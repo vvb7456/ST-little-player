@@ -11,6 +11,7 @@
 
 import { usePlayerStore } from '@/stores/player';
 import { getRecentPlayed } from '@/ai/BgmHistory';
+import { logger } from '@/utils/logger';
 
 const MACROS: { name: string; description: string; fn: () => string }[] = [
   {
@@ -75,6 +76,11 @@ export function registerMacros(): void {
   const macros = (ctx as any).macros;
   const MacrosParser = (ctx as any).MacrosParser;
 
+  if (!macros?.register && !MacrosParser?.registerMacro) {
+    logger.warn('Macros API not available, skipping registration');
+    return;
+  }
+
   for (const macro of MACROS) {
     if (macros?.register) {
       macros.register(macro.name, {
@@ -86,6 +92,7 @@ export function registerMacros(): void {
       MacrosParser.registerMacro(macro.name, macro.fn, macro.description);
     }
   }
+  logger.info('Macros registered:', MACROS.map(m => m.name).join(', '));
 }
 
 export function unregisterMacros(): void {
@@ -100,4 +107,5 @@ export function unregisterMacros(): void {
       MacrosParser.unregisterMacro(macro.name);
     }
   }
+  logger.info('Macros unregistered');
 }

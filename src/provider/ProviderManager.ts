@@ -1,4 +1,5 @@
 import type { MusicProvider, SearchResult, ResolvedTrack } from '../types';
+import { logger } from '@/utils/logger';
 
 export class ProviderManager {
   private providers: MusicProvider[];
@@ -13,8 +14,11 @@ export class ProviderManager {
     );
     const merged: SearchResult[] = [];
     const seen = new Map<string, number>();
-    results.forEach((r) => {
-      if (r.status !== 'fulfilled') return;
+    results.forEach((r, i) => {
+      if (r.status !== 'fulfilled') {
+        logger.warn('Provider search failed: ' + this.providers[i]?.id, r.reason);
+        return;
+      }
       for (const item of r.value) {
         const key = `${item.name}__${item.artist}`;
         const existingIdx = seen.get(key);
@@ -38,8 +42,9 @@ export class ProviderManager {
           clearTimeout(timer);
           resolve(res);
         })
-        .catch(() => {
+        .catch((err) => {
           clearTimeout(timer);
+          logger.warn('Resolve failed: ' + providerId + '/' + id, err);
           resolve(null);
         });
     });
@@ -56,8 +61,8 @@ export class ProviderManager {
       try {
         const track = await provider.searchAndResolve(keyword, artist);
         if (track) return track;
-      } catch {
-        // continue to next provider
+      } catch (err) {
+        logger.warn('Provider searchAndResolve failed: ' + provider.id, err);
       }
     }
     return null;

@@ -10,6 +10,7 @@ import { registerMacros, unregisterMacros } from './tavern/Macros';
 import { registerSlashCommands, unregisterSlashCommands } from './tavern/SlashCommands';
 import { MODULE_NAME, BGM_HISTORY_KEY } from '@/storage';
 import { deleteFile } from '@/storage/STFileClient';
+import { logger } from '@/utils/logger';
 
 let app: App<Element> | null = null;
 let appReadyHandler: (() => void) | null = null;
@@ -32,7 +33,10 @@ const SETTINGS_HTML = `
 
 function addSettingsEntry(): void {
   const $container = $('#extensions_settings2');
-  if (!$container || !$container.length) return;
+  if (!$container || !$container.length) {
+    logger.warn('Settings container #extensions_settings2 not found');
+    return;
+  }
   $container.append(SETTINGS_HTML);
   settingsEntry = $container.children('.inline-drawer').last()[0] ?? null;
   if (!settingsEntry) return;
@@ -88,13 +92,14 @@ export async function init(): Promise<void> {
     };
     ctx.eventSource.on(ctx.event_types.APP_READY, appReadyHandler);
 
-    console.log('[晓乐] 播放器加载完成');
+    logger.info('Player loaded');
   } catch (err) {
-    console.error('[晓乐] init failed:', err);
+    logger.error('Init failed:', err);
   }
 }
 
 export function destroy(): void {
+  logger.info('Player destroyed');
   if (appReadyHandler) {
     try {
       const ctx = SillyTavern.getContext();
@@ -142,7 +147,7 @@ export async function clean(): Promise<void> {
       if (Array.isArray(serverList)) {
         const paths = serverList.map((item) => item?.serverPath).filter((p): p is string => !!p);
         await Promise.all(paths.map((p) => deleteFile(p).catch((err) => {
-          console.warn('[晓乐] clean: failed to delete file:', p, err);
+          logger.warn('Clean: failed to delete file:', p, err);
         })));
       }
     }
@@ -159,7 +164,8 @@ export async function clean(): Promise<void> {
       delete meta['stmp_cursor']; // legacy scan cursor (removed in 0.1.0)
       await ctx.saveMetadata();
     }
+    if (typeof toastr !== 'undefined') toastr.success('Data cleaned', '晓乐');
   } catch (err) {
-    console.error('[晓乐] clean: failed to delete settings:', err);
+    logger.error('Clean: failed to delete settings:', err);
   }
 }

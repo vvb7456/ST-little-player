@@ -1,4 +1,5 @@
 import { jsonrepair } from '@/vendor/jsonrepair.mjs';
+import { logger } from '@/utils/logger';
 
 /**
  * Fault-tolerant JSON parser.
@@ -45,6 +46,8 @@ export function parseJsonSafe(raw: string): any | null {
       }
     }
   }
+
+  logger.warn('Failed to parse JSON after all repair attempts:', raw.slice(0, 200));
 
   return null;
 }

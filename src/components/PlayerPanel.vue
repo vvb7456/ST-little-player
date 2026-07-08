@@ -64,11 +64,20 @@ const playModeIcon: Record<PlayMode, string> = {
   single: 'repeat-one',
 };
 
+const playModeLabels: Record<PlayMode, string> = {
+  list: 'List Loop',
+  random: 'Random',
+  single: 'Single Loop',
+};
+
 function cyclePlayMode(): void {
   const current = settingsStore.settings.playMode;
   const idx = playModeOrder.indexOf(current);
   const next = playModeOrder[(idx + 1) % playModeOrder.length];
   settingsStore.setPlayMode(next);
+  if (typeof toastr !== 'undefined') {
+    toastr.info(`${t('Play mode')}：${t(playModeLabels[next])}`, '晓乐');
+  }
 }
 
 function onVolume(e: Event): void {

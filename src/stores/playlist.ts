@@ -10,6 +10,7 @@ import { useSettingsStore } from './settings';
 import { usePlayerStore } from './player';
 import { t } from '@/i18n';
 import { uploadFile, deleteFile } from '@/storage/STFileClient';
+import { logger } from '@/utils/logger';
 
 function genId(): string {
   return `stmp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -256,9 +257,9 @@ export const usePlaylistStore = defineStore('playlist', {
       }
 
       if (!resolved) {
-        console.warn(`[playlist] track unavailable (possibly delisted): "${item.song}"`);
+        logger.warn('Track unavailable (possibly delisted): "' + item.song + '"');
         if (typeof toastr !== 'undefined') {
-          toastr.warning(`${t('Cannot play')}: ${item.song}`);
+          toastr.warning(`${t('Cannot play')}：${item.song}（${t('Delisted')}）`, '晓乐');
         }
         return;
       }

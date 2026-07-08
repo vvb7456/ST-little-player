@@ -58,6 +58,7 @@ export type DockAlign = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right
 export interface ExtensionSettings {
   volume: number;
   playMode: PlayMode;
+  crossfade: boolean;
   position: { x: number; y: number } | null;
   widgetMode: WidgetMode;
   dockAlign: DockAlign;
@@ -78,6 +79,7 @@ export interface ExtensionSettings {
   togetherPromptRole: 'system' | 'user';
   togetherCustomPromptEnabled: boolean;
   togetherCustomPrompt: string;
+  debug: boolean;
 }
 
 export interface ProviderConfig {

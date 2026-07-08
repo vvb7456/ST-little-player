@@ -5,6 +5,7 @@ import type { PlaylistItem } from '@/types';
 import type { PlaylistTab } from '@/stores/playlist';
 import Icon from './Icon.vue';
 import { t } from '@/i18n';
+import { logger } from '@/utils/logger';
 
 const playlistStore = usePlaylistStore();
 const settingsStore = useSettingsStore();
@@ -42,10 +43,10 @@ const onFileSelect = async (e: Event): Promise<void> => {
   uploading.value = true;
   try {
     await playlistStore.addServerFile(file.name, file);
-    if (typeof toastr !== 'undefined') toastr.success(t('Added'));
+    if (typeof toastr !== 'undefined') toastr.success(`${t('Uploaded')}：${file.name}`, '晓乐');
   } catch (err) {
-    console.error('[stmp] upload failed', err);
-    if (typeof toastr !== 'undefined') toastr.error(t('Cannot play') + ': ' + file.name);
+    logger.error('Upload failed:', err);
+    if (typeof toastr !== 'undefined') toastr.error(`${t('Upload failed')}：${file.name}`, '晓乐');
   } finally {
     uploading.value = false;
   }

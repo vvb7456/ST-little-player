@@ -50,6 +50,15 @@ const LONG_PRESS_MS = 500;
 let boundOnDrag: ((e: PointerEvent) => void) | null = null;
 let boundStopDrag: (() => void) | null = null;
 
+// Cached dimensions to avoid layout reflow on every pointermove
+let dragWidgetW = 0;
+let dragWidgetH = 0;
+let dragMaxX = 0;
+let dragMaxY = 0;
+let rafId = 0;
+let pendingX = 0;
+let pendingY = 0;
+
 function startDrag(e: PointerEvent): void {
   // Dock mode: no drag, click handler (onWidgetClick) handles toggle
   if (isDock.value) return;
@@ -91,6 +100,15 @@ function startDrag(e: PointerEvent): void {
 
   boundOnDrag = onDrag;
   boundStopDrag = stopDrag;
+
+  // Cache dimensions once to avoid reflow on every pointermove
+  const el = widgetRef.value;
+  if (!el) return;
+  dragWidgetW = el.offsetWidth || 60;
+  dragWidgetH = el.offsetHeight || 40;
+  dragMaxX = window.innerWidth - dragWidgetW;
+  dragMaxY = window.innerHeight - dragWidgetH;
+
   document.addEventListener('pointermove', boundOnDrag);
   document.addEventListener('pointerup', boundStopDrag);
   e.preventDefault();
@@ -105,18 +123,32 @@ function onDrag(e: PointerEvent): void {
   }
   let newX = widgetStartX + dx;
   let newY = widgetStartY + dy;
-  const w = widgetRef.value.offsetWidth || 60;
-  const h = widgetRef.value.offsetHeight || 40;
-  const maxX = window.innerWidth - w;
-  const maxY = window.innerHeight - h;
-  newX = Math.max(0, Math.min(newX, maxX));
-  newY = Math.max(0, Math.min(newY, maxY));
-  widgetRef.value.style.left = newX + 'px';
-  widgetRef.value.style.top = newY + 'px';
+  newX = Math.max(0, Math.min(newX, dragMaxX));
+  newY = Math.max(0, Math.min(newY, dragMaxY));
+  pendingX = newX;
+  pendingY = newY;
+  if (!rafId) {
+    rafId = requestAnimationFrame(() => {
+      rafId = 0;
+      if (widgetRef.value) {
+        widgetRef.value.style.left = pendingX + 'px';
+        widgetRef.value.style.top = pendingY + 'px';
+      }
+    });
+  }
 }
 
 function stopDrag(): void {
   isDragging = false;
+  if (rafId) {
+    cancelAnimationFrame(rafId);
+    rafId = 0;
+    // Flush final position
+    if (widgetRef.value) {
+      widgetRef.value.style.left = pendingX + 'px';
+      widgetRef.value.style.top = pendingY + 'px';
+    }
+  }
   if (boundOnDrag) document.removeEventListener('pointermove', boundOnDrag);
   if (boundStopDrag) document.removeEventListener('pointerup', boundStopDrag);
   boundOnDrag = null;
@@ -435,6 +467,11 @@ onBeforeUnmount(() => {
   border: 1px solid var(--stmp-border);
   padding: 4px;
   touch-action: auto;
+}
+
+/* Drag mode: prevent browser scroll/pinch from interfering with pointer drag */
+.stmp-widget:not(.stmp-dock) {
+  touch-action: none;
 }
 
 /* ===== Dock mode: bottom (above input bar) ===== */
