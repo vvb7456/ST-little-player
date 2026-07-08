@@ -15,6 +15,7 @@ A scene-aware music player extension for SillyTavern. Adds a compact, theme-inte
 - **Glass effect & theme integration**: Automatically matches your ST theme
 - **Mobile support**: Responsive layout with touch-friendly controls
 - **Keyboard shortcuts**: Space to toggle play/pause, Esc to collapse
+- **Crossfade**: Optional smooth volume fade in/out when starting, pausing, or switching tracks
 
 ### Music Sources
 
@@ -161,9 +162,9 @@ If the AI recommends a song that can't be found on any enabled music source, a w
 Four-tab settings panel (Appearance / Playback / AI / General):
 
 - **Appearance**: Widget mode, dock alignment, custom opacity, drag mini text toggle
-- **Playback**: Default volume, play mode (list loop / random / single loop), music sources, playlist import/export
+- **Playback**: Default volume, play mode (list loop / random / single loop), crossfade, music sources, playlist import/export
 - **AI**: AI BGM toggle, mode selection, custom API configuration, context messages, auto trigger, trigger on greeting, prompt role (system/user), custom prompt editor
-- **General**: Settings import/export, about
+- **General**: Debug mode, settings import/export, about
 
 ## Custom API Format
 
