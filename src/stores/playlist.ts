@@ -248,7 +248,7 @@ export const usePlaylistStore = defineStore('playlist', {
           source: 'server',
         };
       } else if (item.providerId && item.providerTrackId) {
-        const mgr = createDefaultProviders(useSettingsStore().settings.providers);
+        const mgr = createDefaultProviders(useSettingsStore().settings);
         resolved = await mgr.resolve(item.providerTrackId, item.providerId, item.providerPicId);
         if (resolved) {
           resolved.name = item.song;
@@ -257,9 +257,23 @@ export const usePlaylistStore = defineStore('playlist', {
       }
 
       if (!resolved) {
-        logger.warn('Track unavailable (possibly delisted): "' + item.song + '"');
+        const settingsStore = useSettingsStore();
+        const status = settingsStore.neteaseStatus;
+        let msg: string;
+        if (item.source === 'server') {
+          msg = `${t('Cannot play')}：${item.song}`;
+        } else if (status === 'no-cookie') {
+          msg = t('Cookie not configured');
+        } else if (status === 'expired') {
+          msg = t('Cookie expired');
+        } else if (status === 'invalid') {
+          msg = t('Cookie invalid');
+        } else {
+          msg = `${t('Cannot play')}：${item.song}（${t('Delisted')}）`;
+        }
+        logger.warn('Track unavailable: "' + item.song + '"');
         if (typeof toastr !== 'undefined') {
-          toastr.warning(`${t('Cannot play')}：${item.song}（${t('Delisted')}）`, '晓乐');
+          toastr.warning(msg, '晓乐');
         }
         return;
       }

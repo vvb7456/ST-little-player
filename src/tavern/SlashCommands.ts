@@ -63,7 +63,17 @@ export function registerSlashCommands(): void {
         return '';
       }
       const settingsStore = useSettingsStore();
-      const mgr = createDefaultProviders(settingsStore.settings.providers);
+      const status = settingsStore.neteaseStatus;
+      if (status !== 'ok') {
+        if (typeof toastr !== 'undefined') {
+          const msg = status === 'no-cookie' ? t('Cookie not configured')
+            : status === 'expired' ? t('Cookie expired')
+            : t('Cookie invalid');
+          toastr.warning(msg, TITLE);
+        }
+        return '';
+      }
+      const mgr = createDefaultProviders(settingsStore.settings);
       const track = await mgr.searchAndResolve(songName);
       if (track) {
         track.name = songName;
@@ -141,7 +151,17 @@ export function registerSlashCommands(): void {
         return '';
       }
       const settingsStore = useSettingsStore();
-      const mgr = createDefaultProviders(settingsStore.settings.providers);
+      const status = settingsStore.neteaseStatus;
+      if (status !== 'ok') {
+        if (typeof toastr !== 'undefined') {
+          const msg = status === 'no-cookie' ? t('Cookie not configured')
+            : status === 'expired' ? t('Cookie expired')
+            : t('Cookie invalid');
+          toastr.warning(msg, TITLE);
+        }
+        return '';
+      }
+      const mgr = createDefaultProviders(settingsStore.settings);
       const results: SearchResult[] = await mgr.searchAll(query);
       if (results.length === 0) {
         if (typeof toastr !== 'undefined') toastr.info(t('No results'), TITLE);

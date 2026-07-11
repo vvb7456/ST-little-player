@@ -1,35 +1,39 @@
-import type { ProviderConfig } from '../types';
+import type { ExtensionSettings } from '../types';
 import { ProviderManager } from './ProviderManager';
 import { NetEaseProvider } from './NetEaseProvider';
 import { LocalFileProvider } from './LocalFileProvider';
-import { CustomAPIProvider } from './CustomAPIProvider';
 
 export { ProviderManager } from './ProviderManager';
 export { NetEaseProvider } from './NetEaseProvider';
 export { LocalFileProvider } from './LocalFileProvider';
-export { CustomAPIProvider } from './CustomAPIProvider';
+
+export const OFFICIAL_WORKER_URL = 'https://xiaoyue.erocraft.org';
+
+export function getNeteaseWorkerURL(settings: ExtensionSettings): string {
+  return settings.neteaseMode === 'worker'
+    ? OFFICIAL_WORKER_URL
+    : settings.neteaseWorkerURL;
+}
 
 export function createDefaultProviders(
-  configs: ProviderConfig[],
+  settings: ExtensionSettings,
 ): ProviderManager {
-  const enabled = configs
+  const enabled = settings.providers
     .filter((c) => c.enabled)
     .sort((a, b) => a.priority - b.priority);
   const providers = enabled.map((c) => {
     const cfg = c.config ?? {};
     switch (c.id) {
       case 'netease':
-        return new NetEaseProvider({ baseURL: cfg.baseURL, apiBase: cfg.apiBase });
+        return new NetEaseProvider({
+          workerURL: getNeteaseWorkerURL(settings),
+          cookie: settings.neteaseCookie,
+        });
       case 'local':
         return new LocalFileProvider({
           storage: cfg.storage
             ? (cfg.storage as unknown as import('./LocalFileProvider').StorageLike)
             : undefined,
-        });
-      case 'custom':
-        return new CustomAPIProvider({
-          searchURL: cfg.searchURL,
-          resolveURL: cfg.resolveURL,
         });
       default:
         return null;

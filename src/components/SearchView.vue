@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useSearchStore, usePlaylistStore, useSettingsStore } from '@/stores/index';
-import { createDefaultProviders } from '@/provider/index';
+import { createDefaultProviders } from '@/provider';
 import type { SearchResult } from '@/types';
 import Icon from './Icon.vue';
 import { t } from '@/i18n';
@@ -10,12 +10,14 @@ const searchStore = useSearchStore();
 const playlistStore = usePlaylistStore();
 const settingsStore = useSettingsStore();
 
+const neteaseOk = computed(() => settingsStore.neteaseStatus === 'ok');
+
 const keyword = ref(searchStore.keyword);
 const playingId = ref<string | null>(null);
 
 async function doSearch(): Promise<void> {
   searchStore.setKeyword(keyword.value);
-  const mgr = createDefaultProviders(settingsStore.settings.providers);
+  const mgr = createDefaultProviders(settingsStore.settings);
   await searchStore.search(mgr);
 }
 
@@ -68,6 +70,11 @@ function isPlaying(result: SearchResult): boolean {
 
 <template>
   <div class="stmp-search">
+    <div v-if="!neteaseOk" class="stmp-search-hint">
+      {{ settingsStore.neteaseStatus === 'no-cookie' ? t('Cookie not configured') : settingsStore.neteaseStatus === 'invalid' ? t('Cookie invalid') : t('Cookie expired') }}
+      <br>{{ t('Configure in settings') }}
+    </div>
+    <template v-else>
     <div class="stmp-search-bar">
       <input
         v-model="keyword"
@@ -117,6 +124,7 @@ function isPlaying(result: SearchResult): boolean {
         </button>
       </div>
     </div>
+    </template>
   </div>
 </template>
 

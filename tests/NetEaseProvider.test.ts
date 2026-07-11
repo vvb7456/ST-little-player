@@ -4,11 +4,12 @@ import { NetEaseProvider } from '../src/provider/NetEaseProvider';
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
 
-function jsonResp(data: any) {
-  return Promise.resolve({
-    ok: true,
+function jsonResp(data: any, ok = true): Response {
+  return {
+    ok,
+    status: 200,
     json: () => Promise.resolve(data),
-  });
+  } as any;
 }
 
 describe('NetEaseProvider', () => {
@@ -20,42 +21,38 @@ describe('NetEaseProvider', () => {
   });
 
   it('has correct id and name', () => {
-    const p = new NetEaseProvider();
+    const p = new NetEaseProvider({ workerURL: 'https://w.test', cookie: 'c' });
     expect(p.id).toBe('netease');
     expect(p.name).toBe('网易云');
   });
 
-  it('uses default apiBase and urlBase', () => {
+  it('search returns empty when workerURL not configured', async () => {
     const p = new NetEaseProvider();
-    expect((p as any).apiBase).toBe('https://jgauby2m0k6n.erocraft.com');
-    expect((p as any).urlBase).toBe('https://music-api.gdstudio.xyz/api.php');
+    const results = await p.search('test');
+    expect(results).toEqual([]);
   });
 
-  it('search maps NetEase official API results to SearchResult[]', async () => {
-    mockFetch.mockImplementation((url: string) => {
-      expect(url).toContain('/search');
-      expect(url).toContain('s=test');
-      return jsonResp({
-        result: {
-          songs: [
-            {
-              id: 10,
-              name: 'Song',
-              artists: [{ name: 'A' }, { name: 'B' }],
-              duration: 120000,
-              album: { picId: 999, name: 'Album' },
-            },
-            {
-              id: 11,
-              name: 'Song2',
-              artists: [{ name: 'C' }],
-              album: { name: 'Album2' },
-            },
-          ],
-        },
-      });
-    });
-    const p = new NetEaseProvider();
+  it('search maps worker results to SearchResult[]', async () => {
+    mockFetch.mockImplementation(() =>
+      jsonResp({
+        success: true,
+        data: [
+          {
+            id: 10,
+            name: 'Song',
+            artist: 'A, B',
+            duration: 120,
+            picId: 'pic999',
+          },
+          {
+            id: 11,
+            name: 'Song2',
+            artist: 'C',
+          },
+        ],
+      }),
+    );
+    const p = new NetEaseProvider({ workerURL: 'https://w.test', cookie: 'c' });
     const results = await p.search('test');
     expect(results).toHaveLength(2);
     expect(results[0]).toEqual({
@@ -64,89 +61,100 @@ describe('NetEaseProvider', () => {
       artist: 'A, B',
       duration: 120,
       provider: 'netease',
-      picId: '999',
+      picId: 'pic999',
     });
-    expect(results[1].artist).toBe('C');
-    expect(results[1].duration).toBeUndefined();
     expect(results[1].picId).toBeUndefined();
+    expect(results[1].duration).toBeUndefined();
   });
 
-  it('search returns empty array on fetch failure', async () => {
+  it('search returns empty on fetch failure', async () => {
     mockFetch.mockRejectedValue(new Error('network'));
-    const p = new NetEaseProvider();
+    const p = new NetEaseProvider({ workerURL: 'https://w.test', cookie: 'c' });
     const results = await p.search('test');
     expect(results).toEqual([]);
   });
 
-  it('search returns empty array on missing songs field', async () => {
-    mockFetch.mockImplementation(() => jsonResp({ result: {} }));
-    const p = new NetEaseProvider();
+  it('search returns empty when data is not array', async () => {
+    mockFetch.mockImplementation(() => jsonResp({ success: true, data: null }));
+    const p = new NetEaseProvider({ workerURL: 'https://w.test', cookie: 'c' });
     const results = await p.search('test');
     expect(results).toEqual([]);
   });
 
-  it('resolve returns ResolvedTrack with url, lyric, cover from detail', async () => {
+  it('resolve returns null when cookie not set', async () => {
+    const p = new NetEaseProvider({ workerURL: 'https://w.test' });
+    const track = await p.resolve('123');
+    expect(track).toBeNull();
+  });
+
+  it('resolve returns ResolvedTrack with url, lyric, cover, name, artist', async () => {
     mockFetch.mockImplementation((url: string) => {
-      if (url.includes('types=url')) {
-        return jsonResp({ url: 'http://a/x.mp3' });
+      if (url.includes('/resolve')) {
+        return jsonResp({ success: true, data: { url: 'http://a/x.mp3' } });
       }
       if (url.includes('/lyric')) {
-        return jsonResp({ lrc: { lyric: '[00:00] lala' } });
+        return jsonResp({ success: true, data: { lyric: '[00:00] lala' } });
       }
       if (url.includes('/detail')) {
         return jsonResp({
-          songs: [
-            {
-              name: 'Song',
-              artists: [{ name: 'A' }],
-              album: { picUrl: 'http://a/cover.jpg' },
-            },
-          ],
+          success: true,
+          data: { name: 'Song', artist: 'A', cover: 'http://a/cover.jpg' },
         });
       }
       return jsonResp(null);
     });
-    const p = new NetEaseProvider();
-    const track = await p.resolve('123', '456');
+    const p = new NetEaseProvider({ workerURL: 'https://w.test', cookie: 'c' });
+    const track = await p.resolve('123');
     expect(track).toEqual({
       url: 'http://a/x.mp3',
       lyric: '[00:00] lala',
       cover: 'http://a/cover.jpg',
-      name: '',
-      artist: '',
+      name: 'Song',
+      artist: 'A',
       source: 'netease',
     });
   });
 
-  it('resolve returns null when url endpoint fails', async () => {
-    mockFetch.mockRejectedValue(new Error('network'));
-    const p = new NetEaseProvider();
-    const track = await p.resolve('123');
-    expect(track).toBeNull();
-  });
-
   it('resolve returns null when url is missing in response', async () => {
     mockFetch.mockImplementation((url: string) => {
-      if (url.includes('types=url')) return jsonResp({ other: 'x' });
-      return jsonResp({});
+      if (url.includes('/resolve')) {
+        return jsonResp({ success: true, data: { url: null } });
+      }
+      return jsonResp({ success: true, data: {} });
     });
-    const p = new NetEaseProvider();
+    const p = new NetEaseProvider({ workerURL: 'https://w.test', cookie: 'c' });
     const track = await p.resolve('123');
     expect(track).toBeNull();
   });
 
-  it('resolve still works without lyric and cover', async () => {
+  it('resolve still works without lyric and detail', async () => {
     mockFetch.mockImplementation((url: string) => {
-      if (url.includes('types=url')) {
-        return jsonResp({ url: 'http://a/x.mp3' });
+      if (url.includes('/resolve')) {
+        return jsonResp({ success: true, data: { url: 'http://a/x.mp3' } });
       }
-      return jsonResp(null);
+      return jsonResp({ success: true, data: null });
     });
-    const p = new NetEaseProvider();
+    const p = new NetEaseProvider({ workerURL: 'https://w.test', cookie: 'c' });
     const track = await p.resolve('123');
     expect(track).not.toBeNull();
     expect(track!.url).toBe('http://a/x.mp3');
     expect(track!.lyric).toBeUndefined();
     expect(track!.cover).toBeUndefined();
+  });
+
+  it('resolve sends encrypted params and cookie headers', async () => {
+    let capturedHeaders: Record<string, string> | null = null;
+    mockFetch.mockImplementation((url: string, opts?: any) => {
+      if (url.includes('/resolve')) {
+        capturedHeaders = opts?.headers ?? null;
+        return jsonResp({ success: true, data: { url: 'http://a/x.mp3' } });
+      }
+      return jsonResp({ success: true, data: null });
+    });
+    const p = new NetEaseProvider({ workerURL: 'https://w.test', cookie: 'mycookie' });
+    await p.resolve('123');
+    expect(capturedHeaders).not.toBeNull();
+    expect(capturedHeaders!['X-Netease-Cookie']).toBe('mycookie');
+    expect(capturedHeaders!['X-Netease-Params']).toBeTruthy();
   });
 });

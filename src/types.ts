@@ -80,6 +80,11 @@ export interface ExtensionSettings {
   togetherCustomPromptEnabled: boolean;
   togetherCustomPrompt: string;
   debug: boolean;
+  neteaseMode: 'worker' | 'self';
+  neteaseWorkerURL: string;
+  neteaseCookie: string;
+  neteaseCookieAt: number;
+  neteaseCookieValid: boolean;
 }
 
 export interface ProviderConfig {

@@ -101,7 +101,7 @@ export class TogetherMode {
       if (recommendation.action === 'play' && recommendation.song) {
         logger.debug('Together: searching for: ' + recommendation.song, recommendation.artist);
         const settingsStore = useSettingsStore();
-        const mgr = createDefaultProviders(settingsStore.settings.providers);
+        const mgr = createDefaultProviders(settingsStore.settings);
         const results = await mgr.searchAll(recommendation.artist
           ? `${recommendation.song} ${recommendation.artist}`
           : recommendation.song);

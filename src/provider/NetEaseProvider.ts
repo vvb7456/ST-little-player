@@ -1,54 +1,56 @@
 import type { MusicProvider, SearchResult, ResolvedTrack } from '../types';
 import { logger } from '@/utils/logger';
+import { eapiEncrypt, buildCoverUrl } from '@/utils/netease-crypto';
 
 export interface NetEaseConfig {
-  baseURL?: string;
-  apiBase?: string;
+  workerURL?: string;
+  cookie?: string;
 }
 
-/**
- * NetEase music provider.
- *
- * Architecture:
- * - Search/lyric/detail: proxied through our own nginx → NetEase official API
- *   (100% stable, no rate limiting, no empty results)
- * - URL resolve: gdstudio API (only thing that returns playable audio URLs)
- *
- * The apiBase defaults to our self-hosted proxy. Users can override
- * via provider config if they host their own.
- */
 export class NetEaseProvider implements MusicProvider {
   id = 'netease';
   name = '网易云';
-  private apiBase: string;
-  private urlBase: string;
+  private workerURL: string;
+  private cookie: string;
 
   constructor(config?: NetEaseConfig) {
-    this.apiBase =
-      config?.apiBase?.trim() || 'https://jgauby2m0k6n.erocraft.com';
-    this.urlBase =
-      config?.baseURL?.trim() || 'https://music-api.gdstudio.xyz/api.php';
+    this.workerURL = config?.workerURL?.trim() || '';
+    this.cookie = config?.cookie?.trim() || '';
   }
 
-  private async fetchJson(url: string, timeoutMs = 5000): Promise<any | null> {
-    try {
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), timeoutMs);
-      const res = await fetch(url, { signal: controller.signal });
-      clearTimeout(timer);
-      if (!res.ok) return null;
-      return await res.json();
-    } catch (err) {
-      logger.warn('NetEase: fetchJson failed: ' + url, err);
-      return null;
+  private async fetchJson(
+    url: string,
+    options?: RequestInit,
+    timeoutMs = 5000,
+    retries = 2,
+  ): Promise<any | null> {
+    let lastErr: unknown;
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        const res = await fetch(url, { ...options, signal: controller.signal });
+        clearTimeout(timer);
+        if (!res.ok) {
+          logger.warn(`NetEase: HTTP ${res.status} from ${url}`);
+          if (res.status >= 500 && attempt < retries) continue;
+          return null;
+        }
+        const json = await res.json();
+        if (json && json.success === false) {
+          logger.warn('NetEase: API error: ' + (json.error ?? 'unknown'));
+          return null;
+        }
+        return json;
+      } catch (err) {
+        lastErr = err;
+        if (attempt < retries) continue;
+      }
     }
+    logger.warn('NetEase: fetchJson failed after ' + (retries + 1) + ' attempts: ' + url, lastErr);
+    return null;
   }
 
-  /**
-   * Probe whether an audio URL is actually playable.
-   * Uses Audio element (not fetch) because media elements work cross-origin
-   * without CORS headers. 3s timeout, resolves boolean.
-   */
   probeAudio(url: string, timeoutMs = 3000): Promise<boolean> {
     return new Promise<boolean>((resolve) => {
       const audio = new Audio();
@@ -85,57 +87,84 @@ export class NetEaseProvider implements MusicProvider {
   }
 
   async search(keyword: string): Promise<SearchResult[]> {
+    if (!this.workerURL) {
+      logger.warn('NetEase: worker URL not configured');
+      return [];
+    }
+
     const data = await this.fetchJson(
-      `${this.apiBase}/search?s=${encodeURIComponent(keyword)}&type=1&offset=0&limit=20`,
+      `${this.workerURL}/search?keyword=${encodeURIComponent(keyword)}&limit=20`,
     );
-    const songs = data?.result?.songs;
+    const songs = data?.data;
     if (!Array.isArray(songs)) return [];
 
     return songs.map((item: any) => ({
       id: String(item.id ?? ''),
       name: String(item.name ?? ''),
-      artist: Array.isArray(item.artists)
-        ? item.artists.map((a: any) => a.name).join(', ')
-        : String(item.artists?.[0]?.name ?? ''),
-      duration: item.duration ? Math.floor(item.duration / 1000) : undefined,
+      artist: String(item.artist ?? ''),
+      duration: item.duration ?? undefined,
       provider: this.id,
-      picId: item.album?.picId ? String(item.album.picId) : undefined,
+      picId: item.picId ? String(item.picId) : undefined,
     }));
   }
 
   async resolve(id: string, _picId?: string): Promise<ResolvedTrack | null> {
-    // Get playable URL from gdstudio
-    const urlData = await this.fetchJson(
-      `${this.urlBase}?types=url&id=${encodeURIComponent(id)}`,
-    );
-    if (!urlData || !urlData.url) return null;
+    if (!this.workerURL) {
+      logger.warn('NetEase: worker URL not configured');
+      return null;
+    }
+    if (!this.cookie) {
+      logger.warn('NetEase: cookie not set, cannot resolve URL');
+      return null;
+    }
 
-    // Fetch lyric + cover in parallel from official API
-    const [lyricData, detailData] = await Promise.all([
-      this.fetchJson(
-        `${this.apiBase}/lyric?os=pc&id=${encodeURIComponent(id)}&lv=-1&kv=-1&tv=-1`,
-      ),
-      this.fetchJson(
-        `${this.apiBase}/detail?ids=%5B${encodeURIComponent(id)}%5D`,
-      ),
+    const urlPath = '/api/song/enhance/player/url/v1';
+    const payload = {
+      ids: [Number(id)],
+      level: 'exhigh',
+      encodeType: 'flac',
+      header: JSON.stringify({
+        os: 'pc',
+        appver: '',
+        osver: '',
+        deviceId: 'pyncm!',
+        requestId: String(
+          Math.floor(Math.random() * 10000000) + 20000000,
+        ),
+      }),
+    };
+    const encryptedParams = eapiEncrypt(urlPath, payload);
+
+    const headers: Record<string, string> = {
+      'X-Netease-Params': encryptedParams,
+      'X-Netease-Cookie': this.cookie,
+    };
+
+    const [urlData, lyricData, detailData] = await Promise.all([
+      this.fetchJson(`${this.workerURL}/resolve?id=${encodeURIComponent(id)}`, { headers }),
+      this.fetchJson(`${this.workerURL}/lyric?id=${encodeURIComponent(id)}`),
+      this.fetchJson(`${this.workerURL}/detail?id=${encodeURIComponent(id)}`, { headers }),
     ]);
 
-    const song = detailData?.songs?.[0];
+    const url = urlData?.data?.url;
+    if (!url) {
+      logger.warn('NetEase: no URL returned for id=' + id);
+      return null;
+    }
+
+    const detail = detailData?.data;
+    const cover = detail?.cover || (_picId ? buildCoverUrl(_picId) : undefined);
 
     return {
-      url: String(urlData.url),
-      lyric: lyricData?.lrc?.lyric ? String(lyricData.lrc.lyric) : undefined,
-      cover: song?.album?.picUrl ? String(song.album.picUrl) : undefined,
-      name: '',
-      artist: '',
+      url: String(url),
+      lyric: lyricData?.data?.lyric ? String(lyricData.data.lyric) : undefined,
+      cover: cover || undefined,
+      name: detail?.name ? String(detail.name) : '',
+      artist: detail?.artist ? String(detail.artist) : '',
       source: this.id,
     };
   }
 
-  /**
-   * Search + resolve + probe in one call.
-   * Iterates search results until finding one with a playable URL.
-   */
   async searchAndResolve(
     keyword: string,
     artist?: string,

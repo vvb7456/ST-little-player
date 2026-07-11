@@ -35,7 +35,7 @@ export class ProviderManager {
     const provider = this.getProvider(providerId);
     if (!provider) return null;
     return new Promise<ResolvedTrack | null>((resolve) => {
-      const timer = setTimeout(() => resolve(null), 15000);
+      const timer = setTimeout(() => resolve(null), 20000);
       provider
         .resolve(id, picId)
         .then((res) => {

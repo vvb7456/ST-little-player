@@ -20,6 +20,8 @@ const coverUrl = computed(() => playerStore.currentTrack?.cover || '');
 
 const hasTrack = computed(() => !!playerStore.currentTrack);
 
+const controlsDisabled = computed(() => !hasTrack.value || settingsStore.neteaseStatus !== 'ok');
+
 /** Drag mini: show cover-only (no title/lyrics) when setting is off. */
 const dragShowText = computed(() => settingsStore.settings.showDragMiniText);
 
@@ -199,10 +201,10 @@ onBeforeUnmount(() => {
     </div>
     <div class="stmp-mini-side stmp-mini-side-right">
       <div class="stmp-mini-controls">
-        <button class="stmp-mini-btn" :aria-label="playerStore.isPlaying ? t('Pause') : t('Play')" @click="onPlay">
+        <button class="stmp-mini-btn" :disabled="controlsDisabled" :aria-label="playerStore.isPlaying ? t('Pause') : t('Play')" @click="onPlay">
           <Icon :name="playerStore.isPlaying ? 'pause' : 'play'" :size="props.isMobile ? 16 : 14" />
         </button>
-        <button class="stmp-mini-btn" :aria-label="t('Next')" @click="onNext">
+        <button class="stmp-mini-btn" :disabled="controlsDisabled" :aria-label="t('Next')" @click="onNext">
           <Icon name="next" :size="props.isMobile ? 16 : 14" />
         </button>
       </div>
@@ -337,6 +339,15 @@ onBeforeUnmount(() => {
 
 .stmp-mini-btn:hover {
   background: var(--stmp-hover, rgba(255,255,255,0.08));
+}
+
+.stmp-mini-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.stmp-mini-btn:disabled:hover {
+  background: none;
 }
 
 /* ===== Dock mini lyric: full list, translateY smooth scroll ===== */

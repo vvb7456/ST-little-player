@@ -126,7 +126,7 @@ export class FunctionCallMode {
         if (!keyword) return FC_TOOL_SEARCH_NO_KEYWORD;
 
         const settingsStore = useSettingsStore();
-        const mgr = createDefaultProviders(settingsStore.settings.providers);
+        const mgr = createDefaultProviders(settingsStore.settings);
         const results = await mgr.searchAll(keyword);
 
         if (results.length === 0) {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useSettingsStore, usePlaylistStore } from '@/stores/index';
 import type { PlayMode, WidgetMode, DockAlign, AiMode } from '@/types';
 import { t } from '@/i18n';
@@ -7,6 +7,7 @@ import { logger } from '@/utils/logger';
 import { getBgmController } from '@/ai/BgmController';
 import { fetchCustomModels } from '@/ai/CustomApiClient';
 import { TOGETHER_INTERCEPTOR } from '@/ai/prompts';
+import { OFFICIAL_WORKER_URL } from '@/provider';
 import ToggleSwitch from './ToggleSwitch.vue';
 import ComboBox from './ComboBox.vue';
 
@@ -57,17 +58,10 @@ function onVolume(e: Event): void {
   settingsStore.setVolume(Number(target.value));
 }
 
-const providerNames: Record<string, string> = {
-  netease: t('Network'),
-  local: t('Upload'),
-  custom: t('Custom API'),
-};
-
-const providerDescs: Record<string, string> = {
-  netease: t('Search and play songs from the network'),
-  local: t('Upload and play songs from the server'),
-  custom: t('Search and play songs from a custom API'),
-};
+const neteaseModes: { value: 'worker' | 'self'; label: string }[] = [
+  { value: 'worker', label: t('Official Worker') },
+  { value: 'self', label: t('Self-hosted') },
+];
 
 const aiModes: { value: AiMode; label: string; icon: string }[] = [
   { value: 'together', label: t('Together'), icon: 'fa-solid fa-link' },
@@ -122,10 +116,10 @@ async function onFetchModels(): Promise<void> {
   }
 }
 
-function toggleProvider(id: string): void {
-  const cfg = settingsStore.settings.providers.find((p) => p.id === id);
+function toggleLocalUpload(): void {
+  const cfg = settingsStore.settings.providers.find((p) => p.id === 'local');
   if (!cfg) return;
-  if (!cfg.enabled && id === 'local') {
+  if (!cfg.enabled) {
     const ctx = SillyTavern.getContext();
     if (ctx?.callGenericPopup && ctx?.POPUP_TYPE) {
       void ctx.callGenericPopup(
@@ -137,7 +131,7 @@ function toggleProvider(id: string): void {
         if (result === 1) {
           cfg.enabled = true;
           settingsStore.save();
-          if (typeof toastr !== 'undefined') toastr.info(`${t('Source enabled')}：${providerNames[id] || id}`, '晓乐');
+          if (typeof toastr !== 'undefined') toastr.info(t('Source enabled'), '晓乐');
         }
       });
       return;
@@ -146,12 +140,65 @@ function toggleProvider(id: string): void {
   cfg.enabled = !cfg.enabled;
   settingsStore.save();
   if (typeof toastr !== 'undefined') {
-    toastr.info(`${cfg.enabled ? t('Source enabled') : t('Source disabled')}：${providerNames[id] || id}`, '晓乐');
+    toastr.info(cfg.enabled ? t('Source enabled') : t('Source disabled'), '晓乐');
   }
 }
 
+// ===== NetEase =====
+const verifyingCookie = ref(false);
+
+const cookieState = computed<{ icon: string; ok: boolean; warn: boolean }>(() => {
+  const status = settingsStore.neteaseStatus;
+  if (status === 'no-cookie') return { icon: 'fa-solid fa-link', ok: false, warn: false };
+  if (status === 'expired') return { icon: 'fa-solid fa-triangle-exclamation', ok: false, warn: true };
+  if (status === 'invalid') return { icon: 'fa-solid fa-triangle-exclamation', ok: false, warn: true };
+  return { icon: 'fa-solid fa-circle-check', ok: true, warn: false };
+});
+
+const hasStoredCookie = computed(() => !!settingsStore.settings.neteaseCookie);
+
+async function verifyCookie(): Promise<void> {
+  if (verifyingCookie.value) return;
+  const cookie = settingsStore.settings.neteaseCookie.trim();
+  if (!cookie) {
+    if (typeof toastr !== 'undefined') toastr.warning(t('Cookie invalid or expired'), '晓乐');
+    return;
+  }
+  verifyingCookie.value = true;
+  try {
+    const workerURL = settingsStore.settings.neteaseMode === 'worker'
+      ? OFFICIAL_WORKER_URL
+      : settingsStore.settings.neteaseWorkerURL;
+    if (!workerURL) {
+      if (typeof toastr !== 'undefined') toastr.warning(t('Worker URL'), '晓乐');
+      return;
+    }
+    const res = await fetch(`${workerURL}/auth`, {
+      headers: { 'X-Netease-Cookie': cookie },
+    });
+    const data = await res.json();
+    if (data?.success && data?.data?.valid) {
+      settingsStore.setNeteaseCookie(cookie);
+      if (typeof toastr !== 'undefined') toastr.success(t('Cookie valid'), '晓乐');
+    } else {
+      settingsStore.setNeteaseCookieInvalid();
+      if (typeof toastr !== 'undefined') toastr.error(t('Cookie invalid or expired'), '晓乐');
+    }
+  } catch (err: any) {
+    logger.error('NetEase cookie verify failed:', err);
+    if (typeof toastr !== 'undefined') toastr.error(t('Cannot reach Worker'), '晓乐');
+  } finally {
+    verifyingCookie.value = false;
+  }
+}
+
+function onCookieInput(e: Event): void {
+  const val = (e.target as HTMLInputElement).value.trim();
+  settingsStore.setNeteaseCookie(val);
+}
+
 // ===== General =====
-const EXPORT_EXCLUDE_KEYS = ['aiApiUrl', 'aiApiKey', 'aiModel'];
+const EXPORT_EXCLUDE_KEYS = ['aiApiUrl', 'aiApiKey', 'aiModel', 'neteaseCookie', 'neteaseCookieAt', 'neteaseCookieValid'];
 
 const exportData = (): void => {
   const data: Record<string, unknown> = {};
@@ -179,7 +226,7 @@ const importData = (): void => {
     try {
       const data = JSON.parse(text);
       if (typeof data !== 'object' || data === null) throw new Error('Not an object');
-      const validKeys = ['volume', 'playMode', 'crossfade', 'position', 'widgetMode', 'dockAlign', 'providers', 'customOpacity', 'opacity', 'aiMode', 'aiUseCustomApi', 'aiContextMessages', 'aiAutoTrigger', 'aiTriggerOnGreeting', 'aiCooldownMs', 'togetherPromptRole', 'togetherCustomPromptEnabled', 'togetherCustomPrompt', 'debug'];
+      const validKeys = ['volume', 'playMode', 'crossfade', 'position', 'widgetMode', 'dockAlign', 'showDragMiniText', 'providers', 'customOpacity', 'opacity', 'aiMode', 'aiUseCustomApi', 'aiContextMessages', 'aiAutoTrigger', 'aiTriggerOnGreeting', 'aiCooldownMs', 'togetherPromptRole', 'togetherCustomPromptEnabled', 'togetherCustomPrompt', 'debug', 'neteaseMode', 'neteaseWorkerURL'];
       const filtered: Record<string, unknown> = {};
       for (const key of validKeys) {
         if (key in data) filtered[key] = data[key];
@@ -379,6 +426,11 @@ async function openPromptEditor(): Promise<void> {
 
       <!-- ===== 播放 ===== -->
       <div v-show="activeTab === 'playback'" class="stmp-tab-panel">
+        <!-- Section: Playback Settings -->
+        <div class="stmp-section-header">
+          <div class="stmp-section-title">{{ t('Playback Settings') }}</div>
+        </div>
+
         <div class="stmp-row">
           <div class="stmp-row-info">
             <div class="stmp-row-title">{{ t('Default Volume') }}</div>
@@ -418,37 +470,84 @@ async function openPromptEditor(): Promise<void> {
           />
         </div>
 
-        <div
-          v-for="p in settingsStore.settings.providers"
-          :key="p.id"
-        >
-          <div class="stmp-row">
-            <div class="stmp-row-info">
-              <div class="stmp-row-title">{{ providerNames[p.id] || p.id }}</div>
-              <div class="stmp-row-desc">{{ providerDescs[p.id] }}</div>
-            </div>
-            <ToggleSwitch
-              :model-value="p.enabled"
-              @update:model-value="() => toggleProvider(p.id)"
-            />
+        <!-- Section: Data Sources -->
+        <div class="stmp-section-header">
+          <div class="stmp-section-title">{{ t('Data Sources') }}</div>
+        </div>
+
+        <div class="stmp-row">
+          <div class="stmp-row-info">
+            <div class="stmp-row-title">{{ t('NetEase Music') }}</div>
+            <div class="stmp-row-desc">{{ t('Select official or self-hosted Worker') }}</div>
           </div>
-          <div v-if="p.id === 'custom' && p.enabled" class="stmp-provider-fields">
-            <input
-              class="text_pole"
-              v-model="p.config!.searchURL"
-              :placeholder="t('Search URL')"
-              @change="settingsStore.save()"
-            />
-            <input
-              class="text_pole"
-              v-model="p.config!.resolveURL"
-              :placeholder="t('Resolve URL')"
-              @change="settingsStore.save()"
-            />
+          <div class="stmp-chips">
+            <div
+              v-for="m in neteaseModes"
+              :key="m.value"
+              class="stmp-chip"
+              :class="{ active: settingsStore.settings.neteaseMode === m.value }"
+              @click="settingsStore.setNeteaseMode(m.value)"
+            >
+              <span>{{ m.label }}</span>
+            </div>
           </div>
         </div>
 
-        <div class="stmp-separator" />
+        <div v-if="settingsStore.settings.neteaseMode === 'self'" class="stmp-row">
+          <div class="stmp-row-info">
+            <div class="stmp-row-title">{{ t('Worker URL') }}</div>
+            <div class="stmp-row-desc">{{ t('Your Cloudflare Worker deployment URL') }}</div>
+          </div>
+          <input
+            class="text_pole stmp-text-input"
+            :value="settingsStore.settings.neteaseWorkerURL"
+            :placeholder="t('Worker URL')"
+            @change="settingsStore.setNeteaseWorkerURL(($event.target as HTMLInputElement).value)"
+          />
+        </div>
+
+        <div class="stmp-row">
+          <div class="stmp-row-info">
+            <div class="stmp-row-title">
+              {{ t('MUSIC_U Cookie') }}
+              <i class="fa-solid fa-circle-info stmp-help-tip" :title="t('Cookie privacy hint')" />
+            </div>
+            <div class="stmp-row-desc">{{ t('Paste cookie from music.163.com') }}</div>
+          </div>
+          <div class="stmp-model-wrap">
+            <input
+              type="password"
+              class="text_pole"
+              :value="settingsStore.settings.neteaseCookie"
+              :placeholder="hasStoredCookie ? '••••••••' : t('Paste MUSIC_U cookie value here')"
+              @change="onCookieInput"
+            />
+            <div
+              class="menu_button menu_button_icon stmp-action-btn"
+              :class="{ 'stmp-spin': verifyingCookie, 'stmp-verify-ok': cookieState.ok, 'stmp-verify-warn': cookieState.warn }"
+              @click="verifyCookie"
+            >
+              <i :class="cookieState.icon" />
+            </div>
+          </div>
+        </div>
+
+        <div class="stmp-row">
+          <div class="stmp-row-info">
+            <div class="stmp-row-title">{{ t('Upload') }}</div>
+            <div class="stmp-row-desc">{{ t('Upload and play songs from the server') }}</div>
+          </div>
+          <ToggleSwitch
+            :model-value="!!settingsStore.settings.providers.find(p => p.id === 'local')?.enabled"
+            @update:model-value="toggleLocalUpload"
+          />
+        </div>
+
+        <!-- Section: Playlist Management -->
+        <div class="stmp-section-header">
+          <div class="stmp-section-title">{{ t('Playlist Management') }}</div>
+        </div>
+
         <div class="stmp-row">
           <div class="stmp-row-info">
             <div class="stmp-row-title">{{ t('Export playlist') }}</div>
@@ -900,6 +999,28 @@ async function openPromptEditor(): Promise<void> {
   margin: 8px 0;
 }
 
+/* ===== Section header ===== */
+.stmp-section-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px 0 4px;
+}
+
+.stmp-section-title {
+  font-size: calc(var(--mainFontSize, 14px) * 0.8);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--SmartThemeQuoteColor, rgb(225,138,36));
+}
+
+.stmp-section-sub {
+  font-size: calc(var(--mainFontSize, 14px) * 0.75);
+  color: var(--SmartThemeEmColor, rgb(145,145,145));
+  line-height: 1.3;
+}
+
 /* ===== Action button ===== */
 .stmp-action-btn {
   margin: 0 !important;
@@ -907,18 +1028,38 @@ async function openPromptEditor(): Promise<void> {
   flex-shrink: 0;
 }
 
-/* ===== Provider fields ===== */
-.stmp-provider-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 0 0 8px 4px;
-}
-
 .stmp-text-input {
   flex: 0 0 240px;
   max-width: 240px;
   font-size: var(--mainFontSize, 14px);
+}
+
+.stmp-verify-ok {
+  color: #4caf50 !important;
+}
+
+.stmp-verify-ok i {
+  color: #4caf50;
+}
+
+.stmp-verify-warn {
+  color: #ff9800 !important;
+}
+
+.stmp-verify-warn i {
+  color: #ff9800;
+}
+
+.stmp-help-tip {
+  font-size: calc(var(--mainFontSize, 14px) * 0.75);
+  opacity: 0.5;
+  cursor: help;
+  margin-left: 4px;
+  transition: opacity 0.2s;
+}
+
+.stmp-help-tip:hover {
+  opacity: 1;
 }
 
 .stmp-model-wrap {

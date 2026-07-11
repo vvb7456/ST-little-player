@@ -19,11 +19,10 @@ A scene-aware music player extension for SillyTavern. Adds a compact, theme-inte
 
 ### Music Sources
 
-- **Network**: Search and play from online music platforms
+- **NetEase Cloud Music**: Search and play from NetEase Cloud Music (music.163.com). Uses a Cloudflare Worker as the backend proxy. You can use the official Worker or self-host your own. Requires a `MUSIC_U` cookie from music.163.com for playback. See [NetEase Setup](#netease-setup) below.
 - **Server Upload**: Upload audio files to the ST server for playback
-- **Custom API**: Point to your own search and resolve endpoints. See [Custom API Format](#custom-api-format) below.
 
-Enable or disable sources independently in Settings -> Playback.
+Enable or disable sources independently in Settings -> Playback -> Data Sources.
 
 ### AI BGM
 
@@ -126,11 +125,12 @@ Recently played: {{xiaoyueRecentPlayed}}
 
 ### Basic Playback
 
-1. Click the player widget to expand it
-2. Click the **search** icon (left side of controls)
-3. Type a song name and press Enter
-4. Click a result to play it immediately, or click `+` to add to playlist
-5. Click the **playlist** icon to view your queue — songs are organized into tabs:
+1. Configure NetEase Cloud Music: go to Settings -> Playback -> Data Sources, paste your MUSIC_U cookie and verify it. See [NetEase Setup](#netease-setup) for details.
+2. Click the player widget to expand it
+3. Click the **search** icon (left side of controls)
+4. Type a song name and press Enter
+5. Click a result to play it immediately, or click `+` to add to playlist
+6. Click the **playlist** icon to view your queue - songs are organized into tabs:
    - **Network**: Songs added from search
    - **Upload**: Files uploaded to the server (shown when upload source is enabled)
    - **Chat**: Songs selected by AI (shown when AI BGM is active)
@@ -162,44 +162,89 @@ If the AI recommends a song that can't be found on any enabled music source, a w
 Four-tab settings panel (Appearance / Playback / AI / General):
 
 - **Appearance**: Widget mode, dock alignment, custom opacity, drag mini text toggle
-- **Playback**: Default volume, play mode (list loop / random / single loop), crossfade, music sources, playlist import/export
+- **Playback**: Default volume, play mode (list loop / random / single loop), crossfade, data sources (NetEase Cloud Music mode, cookie, Worker URL, upload), playlist import/export
 - **AI**: AI BGM toggle, mode selection, custom API configuration, context messages, auto trigger, trigger on greeting, prompt role (system/user), custom prompt editor
 - **General**: Debug mode, settings import/export, about
 
-## Custom API Format
+## NetEase Setup
 
-The Custom API music source lets you point to your own endpoints for searching and resolving songs.
+The extension uses NetEase Cloud Music as its music source. A Cloudflare Worker acts as a proxy between your browser and NetEase's API. You need to configure two things: the Worker endpoint and your NetEase cookie.
 
-### Search Endpoint
+### Step 1: Choose Worker Mode
 
-The search URL should contain `{keyword}` as a placeholder. The extension will replace it with the URL-encoded search keyword.
+In **Settings -> Playback -> Data Sources**, choose one of:
 
-**Expected response** (JSON array):
+- **Official Worker**: Uses `https://xiaoyue.erocraft.org` (hosted by the extension author). No setup needed, but may be rate-limited or unavailable.
+- **Self-hosted**: Deploy your own Cloudflare Worker (free tier is sufficient). See [Self-Hosting the Worker](#self-hosting-the-worker) below.
 
-```json
-[
-  { "id": "123", "name": "Song Name", "artist": "Artist", "duration": 240 },
-  ...
-]
-```
+### Step 2: Get Your MUSIC_U Cookie
 
-### Resolve Endpoint
+The `MUSIC_U` cookie is your NetEase Cloud Music login credential. The extension uses it to resolve playable audio URLs.
 
-The resolve URL should contain `{id}` as a placeholder. The extension will replace it with the URL-encoded song ID from search results.
+1. Open [music.163.com](https://music.163.com) in your browser and log in
+2. Open browser DevTools (F12) -> Application tab (in Firefox: Storage tab)
+3. Under **Cookies** -> `https://music.163.com`, find the cookie named `MUSIC_U`
+4. Copy its **value** (a long hex string)
+5. Paste it into the **MUSIC_U Cookie** field in Settings -> Playback -> Data Sources
+6. Click the verify button (link icon) to check if the cookie is valid
 
-**Expected response** (JSON object):
+**Cookie notes:**
 
-```json
-{
-  "url": "https://example.com/audio.mp3",
-  "name": "Song Name",
-  "artist": "Artist",
-  "lyric": "[00:00.00] Lyric line...",
-  "cover": "https://example.com/cover.jpg"
-}
-```
+- The cookie is stored only in your browser's local storage. It is never sent to the SillyTavern server.
+- During playback, the cookie is sent via the `X-Netease-Cookie` header to the Worker for authentication. The Worker does not store the cookie.
+- The cookie may expire periodically (typically every 14 days). If playback stops working, re-obtain the cookie and update it.
 
-Only `url` is required. `lyric` should be in LRC format.
+### Self-Hosting the Worker
+
+Deploying your own Worker gives you full control and avoids depending on the official instance.
+
+#### Prerequisites
+
+- A Cloudflare account (free tier is sufficient)
+- [Node.js](https://nodejs.org/) 18+ and npm
+
+#### Deploy
+
+1. Clone this repository:
+   ```bash
+   git clone https://github.com/vvb7456/ST-little-player.git
+   cd ST-little-player/worker
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Authenticate with Cloudflare (interactive login):
+   ```bash
+   npx wrangler login
+   ```
+   Or set environment variables for CI/headless:
+   ```bash
+   export CLOUDFLARE_API_TOKEN="your-api-token"
+   export CLOUDFLARE_ACCOUNT_ID="your-account-id"
+   ```
+
+4. Deploy:
+   ```bash
+   npx wrangler deploy
+   ```
+   You'll get a URL like `https://netease-proxy.<your-subdomain>.workers.dev`.
+
+5. (Optional) Bind a custom domain in the Cloudflare dashboard -> Workers & Pages -> your Worker -> Settings -> Domains & Routes. This is recommended for better availability and CORS reliability.
+
+6. In **Settings -> Playback -> Data Sources**, select **Self-hosted** and enter your Worker URL.
+
+#### Worker Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/search?keyword=...&limit=...` | GET | Search songs |
+| `/resolve?id=...` | GET | Resolve a playable audio URL (requires `X-Netease-Params` + `X-Netease-Cookie` headers) |
+| `/detail?id=...` | GET | Get song metadata (name, artist, cover) |
+| `/lyric?id=...` | GET | Get LRC lyrics |
+| `/auth` | GET | Verify cookie validity (requires `X-Netease-Cookie` header) |
 
 ## Data & Storage
 

@@ -10,9 +10,8 @@ import { setDebugEnabled } from '@/utils/logger';
 
 function defaultProviders(): ProviderConfig[] {
   return [
-    { id: 'netease', enabled: true, priority: 0, config: { baseURL: '' } },
+    { id: 'netease', enabled: true, priority: 0, config: {} },
     { id: 'local', enabled: false, priority: 1, config: {} },
-    { id: 'custom', enabled: false, priority: 2, config: { searchURL: '', resolveURL: '' } },
   ];
 }
 
@@ -42,6 +41,11 @@ function defaultSettings(): ExtensionSettings {
     togetherCustomPromptEnabled: false,
     togetherCustomPrompt: '',
     debug: false,
+    neteaseMode: 'worker',
+    neteaseWorkerURL: '',
+    neteaseCookie: '',
+    neteaseCookieAt: 0,
+    neteaseCookieValid: false,
   };
 }
 
@@ -53,6 +57,15 @@ export const useSettingsStore = defineStore('settings', {
 
   getters: {
     defaults: (): ExtensionSettings => defaultSettings(),
+    neteaseStatus(state): 'ok' | 'no-cookie' | 'expired' | 'invalid' {
+      const cookie = state.settings.neteaseCookie;
+      const ts = state.settings.neteaseCookieAt;
+      const valid = state.settings.neteaseCookieValid;
+      if (!cookie || !ts) return 'no-cookie';
+      if (Date.now() - ts >= 14 * 86400000) return 'expired';
+      if (!valid) return 'invalid';
+      return 'ok';
+    },
   },
 
   actions: {
@@ -131,12 +144,9 @@ export const useSettingsStore = defineStore('settings', {
       this.save();
     },
 
-    setProviderConfig(id: string, enabled: boolean): void {
-      const cfg = this.settings.providers.find((p) => p.id === id);
-      if (cfg) {
-        cfg.enabled = enabled;
-        this.save();
-      }
+    setNeteaseMode(mode: 'worker' | 'self'): void {
+      this.settings.neteaseMode = mode;
+      this.save();
     },
 
     setAiMode(mode: AiMode): void {
@@ -197,6 +207,30 @@ export const useSettingsStore = defineStore('settings', {
     setDebug(enabled: boolean): void {
     this.settings.debug = enabled;
     setDebugEnabled(enabled);
+    this.save();
+  },
+
+  setNeteaseWorkerURL(url: string): void {
+    let normalized = url.trim();
+    if (normalized && !normalized.startsWith('http://') && !normalized.startsWith('https://')) {
+      normalized = 'https://' + normalized;
+    }
+    if (normalized.endsWith('/')) {
+      normalized = normalized.slice(0, -1);
+    }
+    this.settings.neteaseWorkerURL = normalized;
+    this.save();
+  },
+
+  setNeteaseCookie(cookie: string): void {
+    this.settings.neteaseCookie = cookie;
+    this.settings.neteaseCookieAt = cookie ? Date.now() : 0;
+    this.settings.neteaseCookieValid = !!cookie;
+    this.save();
+  },
+
+  setNeteaseCookieInvalid(): void {
+    this.settings.neteaseCookieValid = false;
     this.save();
   },
 

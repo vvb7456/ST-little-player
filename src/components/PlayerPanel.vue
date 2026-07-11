@@ -28,6 +28,20 @@ let preMuteVolume = 0;
 
 const coverUrl = computed(() => playerStore.currentTrack?.cover || '');
 
+const hasTrack = computed(() => !!playerStore.currentTrack);
+
+const neteaseStatus = computed(() => settingsStore.neteaseStatus);
+
+const emptyHint = computed(() => {
+  if (hasTrack.value) return '';
+  if (neteaseStatus.value === 'no-cookie') return t('Cookie not configured');
+  if (neteaseStatus.value === 'expired') return t('Cookie expired');
+  if (neteaseStatus.value === 'invalid') return t('Cookie invalid');
+  return t('No Song');
+});
+
+const controlsDisabled = computed(() => !hasTrack.value || neteaseStatus.value !== 'ok');
+
 const onCoverError = (): void => {
   coverError.value = true;
 };
@@ -147,13 +161,13 @@ function closeOverlay(): void {
             <Icon name="music" :size="48" />
           </div>
         </div>
-        <div class="stmp-track-name">{{ playerStore.currentTrack?.name || t('No Song') }}</div>
+        <div class="stmp-track-name">{{ playerStore.currentTrack?.name || emptyHint }}</div>
         <div class="stmp-track-artist">{{ (playerStore.currentTrack?.artist || '').trim() || '\u00A0' }}</div>
       </div>
       <!-- Lyric mode: track name + artist fixed, 6-line scrolling lyrics -->
       <div class="stmp-lyric-mode" :class="{ hidden: viewMode !== 'lyric' }">
         <div class="stmp-lyric-header">
-          <div class="stmp-track-name">{{ playerStore.currentTrack?.name || t('No Song') }}</div>
+          <div class="stmp-track-name">{{ playerStore.currentTrack?.name || emptyHint }}</div>
           <div class="stmp-track-artist">{{ (playerStore.currentTrack?.artist || '').trim() || '\u00A0' }}</div>
         </div>
         <div ref="lyricWindowRef" class="stmp-lyric-window">
@@ -196,6 +210,7 @@ function closeOverlay(): void {
         <button
           class="stmp-ctrl-btn"
           :class="{ active: activeOverlay === 'search' }"
+          :disabled="neteaseStatus !== 'ok'"
           :aria-label="t('Search')"
           @click.stop="toggleOverlay('search')"
         >
@@ -204,16 +219,17 @@ function closeOverlay(): void {
       </div>
 
       <!-- Left cluster -->
-      <button class="stmp-ctrl-btn" :aria-label="t('Toggle play mode')" @click="cyclePlayMode">
+      <button class="stmp-ctrl-btn" :disabled="controlsDisabled" :aria-label="t('Toggle play mode')" @click="cyclePlayMode">
         <Icon :name="playModeIcon[settingsStore.settings.playMode]" :size="16" />
       </button>
-      <button class="stmp-ctrl-btn" :aria-label="t('Previous')" @click="playlistStore.prev()">
+      <button class="stmp-ctrl-btn" :disabled="controlsDisabled" :aria-label="t('Previous')" @click="playlistStore.prev()">
         <Icon name="prev" :size="18" />
       </button>
 
       <!-- Center: play/pause -->
       <button
         class="stmp-ctrl-btn stmp-play-btn"
+        :disabled="controlsDisabled"
         :aria-label="playerStore.isPlaying ? t('Pause') : t('Play')"
         @click="playerStore.togglePlay()"
       >
@@ -221,7 +237,7 @@ function closeOverlay(): void {
       </button>
 
       <!-- Right cluster -->
-      <button class="stmp-ctrl-btn" :aria-label="t('Next')" @click="playlistStore.next()">
+      <button class="stmp-ctrl-btn" :disabled="controlsDisabled" :aria-label="t('Next')" @click="playlistStore.next()">
         <Icon name="next" :size="18" />
       </button>
       <button
@@ -571,6 +587,16 @@ function closeOverlay(): void {
 .stmp-ctrl-btn.active {
   opacity: 1;
   color: var(--stmp-accent);
+}
+
+.stmp-ctrl-btn:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+.stmp-ctrl-btn:disabled:hover {
+  background: none;
+  opacity: 0.25;
 }
 
 .stmp-play-btn {
