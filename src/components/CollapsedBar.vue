@@ -34,7 +34,7 @@ const displayText = computed(() => {
 });
 
 // ===== Dock mini lyric: shared vertical scroll composable =====
-const { scrollY: dockScrollY, windowRef: dockWindowRef, setLineRef: setDockLyricRef } = useVerticalLyricScroll();
+const { scrollY: dockScrollY, windowRef: dockWindowRef, setLineRef: setDockLyricRef, updateScroll: refreshDockLyric } = useVerticalLyricScroll();
 
 // ===== Drag mode lyric: continuous scroll, all lines in one track =====
 // All lyric lines are concatenated into a single horizontal track.
@@ -115,7 +115,13 @@ watch(() => playerStore.lyrics, () => {
   lyricLineEls.value = [];
   lyricTransitionDuration.value = 0;
   lyricTranslateX.value = 0;
-  nextTick(() => updateLyricScroll());
+  requestAnimationFrame(() => updateLyricScroll());
+});
+watch(() => settingsStore.settings.widgetMode, () => {
+  requestAnimationFrame(() => {
+    refreshDockLyric();
+    updateLyricScroll();
+  });
 });
 
 // ===== Drag mode title marquee: pure CSS animation, JS only for overflow detection =====
@@ -161,7 +167,8 @@ function onNext(e: Event): void {
 }
 
 onMounted(() => {
-  nextTick(() => {
+  requestAnimationFrame(() => {
+    refreshDockLyric();
     updateLyricScroll();
     checkTitleOverflow();
   });

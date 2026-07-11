@@ -3,18 +3,22 @@ import { logger } from '@/utils/logger';
 export type AudioEngineEvent = 'timeupdate' | 'ended' | 'error' | 'play' | 'pause';
 
 const FADE_DURATION_MS = 800;
+const FADE_INTERVAL_MS = 16;
 
 export class AudioEngine {
   private audio: HTMLAudioElement;
   private listeners: Map<AudioEngineEvent, Set<EventListenerOrEventListenerObject>> = new Map();
   private targetVolume = 1;
-  private fadeRaf = 0;
+  private fadeTimer: ReturnType<typeof setTimeout> | 0 = 0;
   private fadeAbort: ((skip: boolean) => void) | null = null;
+  private preloadAudio: HTMLAudioElement | null = null;
 
   constructor() {
     this.audio = new Audio();
     this.audio.crossOrigin = 'anonymous';
     this.audio.preload = 'auto';
+    this.audio.style.display = 'none';
+    document.body.appendChild(this.audio);
   }
 
   load(url: string): void {
@@ -26,7 +30,7 @@ export class AudioEngine {
   async play(fade = false): Promise<void> {
     try {
       this.cancelFade();
-      if (fade) {
+      if (fade && !document.hidden) {
         this.audio.volume = 0;
         await this.audio.play();
         this.runFade(this.targetVolume);
@@ -41,7 +45,7 @@ export class AudioEngine {
 
   pause(fade = false): void {
     this.cancelFade();
-    if (fade && !this.audio.paused) {
+    if (fade && !document.hidden && !this.audio.paused) {
       this.runFade(0, () => this.audio.pause());
     } else {
       this.audio.pause();
@@ -54,7 +58,7 @@ export class AudioEngine {
 
   setVolume(vol: number): void {
     this.targetVolume = vol;
-    if (!this.fadeRaf) {
+    if (!this.fadeTimer) {
       this.audio.volume = vol;
     }
   }
@@ -69,6 +73,24 @@ export class AudioEngine {
 
   get paused(): boolean {
     return this.audio.paused;
+  }
+
+  preloadNext(url: string): void {
+    if (!this.preloadAudio) {
+      this.preloadAudio = new Audio();
+      this.preloadAudio.crossOrigin = 'anonymous';
+      this.preloadAudio.preload = 'auto';
+      this.preloadAudio.style.display = 'none';
+      document.body.appendChild(this.preloadAudio);
+    }
+    this.preloadAudio.src = url;
+    this.preloadAudio.load();
+  }
+
+  clearPreload(): void {
+    if (this.preloadAudio) {
+      this.preloadAudio.src = '';
+    }
   }
 
   on(event: AudioEngineEvent, cb: () => void): () => void {
@@ -93,29 +115,29 @@ export class AudioEngine {
 
     this.fadeAbort = (skip: boolean) => {
       if (skip) this.audio.volume = target;
-      this.fadeRaf = 0;
+      this.fadeTimer = 0;
       this.fadeAbort = null;
       onDone?.();
     };
 
-    const step = (now: number): void => {
+    const step = (): void => {
       if (!this.fadeAbort) return;
-      const elapsed = now - startTime;
+      const elapsed = performance.now() - startTime;
       const progress = Math.min(elapsed / FADE_DURATION_MS, 1);
       this.audio.volume = Math.max(0, Math.min(1, start + delta * progress));
       if (progress >= 1) {
         this.fadeAbort(true);
       } else {
-        this.fadeRaf = requestAnimationFrame(step);
+        this.fadeTimer = setTimeout(step, FADE_INTERVAL_MS);
       }
     };
-    this.fadeRaf = requestAnimationFrame(step);
+    this.fadeTimer = setTimeout(step, FADE_INTERVAL_MS);
   }
 
   private cancelFade(): void {
     if (this.fadeAbort) this.fadeAbort(true);
-    if (this.fadeRaf) cancelAnimationFrame(this.fadeRaf);
-    this.fadeRaf = 0;
+    if (this.fadeTimer) clearTimeout(this.fadeTimer);
+    this.fadeTimer = 0;
     this.fadeAbort = null;
   }
 
@@ -129,5 +151,11 @@ export class AudioEngine {
     }
     this.listeners.clear();
     this.audio.src = '';
+    this.audio.remove();
+    if (this.preloadAudio) {
+      this.preloadAudio.src = '';
+      this.preloadAudio.remove();
+      this.preloadAudio = null;
+    }
   }
 }

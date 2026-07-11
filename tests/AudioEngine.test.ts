@@ -9,6 +9,7 @@ class FakeAudio {
   duration = NaN;
   crossOrigin: string | null = null;
   preload = 'auto';
+  style = { display: '' };
   private listeners = new Map<string, Set<(ev: { type: string }) => void>>();
 
   addEventListener(type: string, listener: (ev: { type: string }) => void): void {
@@ -30,6 +31,7 @@ class FakeAudio {
   pause(): void {
     this.paused = true;
   }
+  remove(): void {}
 }
 
 describe('AudioEngine', () => {
@@ -38,6 +40,12 @@ describe('AudioEngine', () => {
 
   beforeEach(() => {
     vi.stubGlobal('Audio', FakeAudio);
+    const fakeBody = { appendChild: vi.fn((node: Node) => node) };
+    vi.stubGlobal('document', {
+      body: fakeBody,
+      hidden: false,
+      createElement: vi.fn(() => new FakeAudio()),
+    });
     engine = new AudioEngine();
     audio = engine['audio'] as unknown as FakeAudio;
     vi.spyOn(console, 'error').mockImplementation(() => {});

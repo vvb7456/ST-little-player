@@ -194,6 +194,26 @@ export const usePlaylistStore = defineStore('playlist', {
       void this.resolveAndPlay(tab, index);
     },
 
+    peekNextIndex(): number {
+      const list = this.playingList;
+      if (list.length === 0) return -1;
+      const mode = this.playMode;
+      if (mode === 'single') {
+        return this.currentIndex;
+      } else if (mode === 'random') {
+        if (list.length === 1) return 0;
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const candidate = Math.floor(Math.random() * list.length);
+          if (candidate !== this.currentIndex) return candidate;
+        }
+        return (this.currentIndex + 1) % list.length;
+      } else {
+        let newIndex = this.currentIndex + 1;
+        if (newIndex >= list.length) newIndex = 0;
+        return newIndex;
+      }
+    },
+
     next(): void {
       const list = this.playingList;
       if (list.length === 0) return;
@@ -231,6 +251,33 @@ export const usePlaylistStore = defineStore('playlist', {
       if (newIndex < 0) newIndex = list.length - 1;
       this.currentIndex = newIndex;
       void this.resolveAndPlay(this.currentList, newIndex);
+    },
+
+    async resolveTrack(tab: PlaylistTab, index: number): Promise<ResolvedTrack | null> {
+      const list = this.getListByTab(tab);
+      const item = list[index];
+      if (!item) return null;
+
+      if (item.source === 'server' && item.serverPath) {
+        return {
+          url: item.serverPath,
+          name: item.song,
+          artist: item.artist ?? '',
+          source: 'server',
+        };
+      }
+
+      if (item.providerId && item.providerTrackId) {
+        const mgr = createDefaultProviders(useSettingsStore().settings);
+        const resolved = await mgr.resolve(item.providerTrackId, item.providerId, item.providerPicId);
+        if (resolved) {
+          resolved.name = item.song;
+          resolved.artist = item.artist ?? '';
+        }
+        return resolved;
+      }
+
+      return null;
     },
 
     async resolveAndPlay(tab: PlaylistTab, index: number): Promise<void> {

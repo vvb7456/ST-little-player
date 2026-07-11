@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { usePlayerStore, usePlaylistStore, useSettingsStore } from '@/stores/index';
 import { useVerticalLyricScroll } from "@/composables/useVerticalLyricScroll";
 import type { PlayMode } from '@/types';
@@ -58,7 +58,11 @@ const progressPercent = computed(() =>
 );
 
 // Lyric scroll: render full list, translateY to center current line
-const { scrollY: lyricScrollY, windowRef: lyricWindowRef, setLineRef: setLyricRef } = useVerticalLyricScroll();
+const { scrollY: lyricScrollY, windowRef: lyricWindowRef, setLineRef: setLyricRef, updateScroll: refreshLyricScroll } = useVerticalLyricScroll();
+
+onMounted(() => { refreshLyricScroll(); });
+watch(() => settingsStore.settings.widgetMode, () => { refreshLyricScroll(); });
+watch(viewMode, () => { refreshLyricScroll(); });
 
 function formatTime(s: number): string {
   const m = Math.floor(s / 60);

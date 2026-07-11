@@ -18,6 +18,7 @@ export function useVerticalLyricScroll() {
 
   async function updateScroll(): Promise<void> {
     await nextTick();
+    await new Promise<void>((r) => requestAnimationFrame(() => r()));
     const playerStore = usePlayerStore();
     const idx = playerStore.currentLyricIndex;
     const win = windowRef.value;
@@ -30,6 +31,7 @@ export function useVerticalLyricScroll() {
     const lineTop = lineEl.offsetTop;
     const lineH = lineEl.offsetHeight;
     const winH = win.clientHeight;
+    if (!lineTop && !lineH && !winH) return;
     scrollY.value = lineTop - winH / 2 + lineH / 2;
   }
 
@@ -40,5 +42,5 @@ export function useVerticalLyricScroll() {
     updateScroll();
   });
 
-  return { scrollY, windowRef, setLineRef };
+  return { scrollY, windowRef, setLineRef, updateScroll };
 }
