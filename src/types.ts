@@ -40,6 +40,26 @@ export interface PlaylistItem {
   addedAt: number;
 }
 
+export type PlaylistSourceType = 'local' | 'netease' | 'upload' | 'ai';
+
+export interface Playlist {
+  id: string;
+  name: string;
+  source: PlaylistSourceType;
+  neteaseId?: string;
+  neteaseSpecialType?: number;
+  cover?: string;
+  songs: PlaylistItem[];
+  updatedAt: number;
+  syncedAt?: number;
+}
+
+export interface PlayQueue {
+  items: PlaylistItem[];
+  currentIndex: number;
+  sourcePlaylistId?: string;
+}
+
 export type PlayMode = 'list' | 'random' | 'single';
 
 // ===== Lyric Types =====

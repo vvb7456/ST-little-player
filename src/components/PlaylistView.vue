@@ -1,33 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { usePlaylistStore, useSettingsStore } from '@/stores/index';
-import type { PlaylistItem } from '@/types';
-import type { PlaylistTab } from '@/stores/playlist';
+import type { Playlist, PlaylistItem } from '@/types';
+import type { OverlayTab } from '@/stores/playlist';
 import Icon from './Icon.vue';
 import { t } from '@/i18n';
 import { logger } from '@/utils/logger';
 
 const playlistStore = usePlaylistStore();
 const settingsStore = useSettingsStore();
-
-const tabs = computed((): { value: PlaylistTab; label: string }[] => {
-  const result: { value: PlaylistTab; label: string }[] = [
-    { value: 'network', label: t('Network') },
-  ];
-  const localEnabled = settingsStore.settings.providers.find((p) => p.id === 'local')?.enabled;
-  if (localEnabled) {
-    result.push({ value: 'server', label: t('Upload') });
-  }
-  result.push({ value: 'chat', label: t('Chat') });
-  return result;
-});
-
-// If active tab disappears, fall back to network
-watch(tabs, (newTabs) => {
-  if (!newTabs.some((tab) => tab.value === playlistStore.activeTab)) {
-    playlistStore.setActiveTab('network');
-  }
-});
 
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const uploading = ref(false);
@@ -53,75 +34,200 @@ const onFileSelect = async (e: Event): Promise<void> => {
   input.value = '';
 };
 
-const tabItems = computed((): { index: number; item: PlaylistItem }[] => {
-  const list = playlistStore.getListByTab(playlistStore.activeTab);
-  return list.map((item, index) => ({ index, item }));
+// ===== Queue tab =====
+const queueItems = computed((): { index: number; item: PlaylistItem }[] => {
+  return playlistStore.queue.items.map((item, index) => ({ index, item }));
 });
 
-const isEmpty = computed(() => tabItems.value.length === 0);
+const isQueueEmpty = computed(() => playlistStore.queue.items.length === 0);
 
-function play(index: number): void {
-  playlistStore.play(playlistStore.activeTab, index);
+function playQueueItem(index: number): void {
+  playlistStore.playQueueIndex(index);
 }
 
-function remove(index: number): void {
-  playlistStore.removeItem(playlistStore.activeTab, index);
+function removeQueueItem(index: number): void {
+  playlistStore.removeFromQueue(index);
 }
 
-function onTabClick(tab: PlaylistTab): void {
+// ===== Playlists tab =====
+const localPlaylists = computed(() => playlistStore.localPlaylists);
+const neteasePlaylists = computed(() => playlistStore.neteasePlaylists);
+const hasNeteaseCookie = computed(() => settingsStore.neteaseStatus === 'ok');
+
+const tabs = computed((): { value: OverlayTab; label: string }[] => [
+  { value: 'queue', label: t('Now Playing') },
+  { value: 'playlists', label: t('Playlists') },
+]);
+
+watch(tabs, (newTabs) => {
+  if (!newTabs.some((tab) => tab.value === playlistStore.activeTab)) {
+    playlistStore.setActiveTab('queue');
+  }
+});
+
+let autoSynced = false;
+function onTabClick(tab: OverlayTab): void {
   playlistStore.setActiveTab(tab);
+  if (tab === 'playlists' && hasNeteaseCookie.value && !autoSynced && neteasePlaylists.value.length === 0) {
+    autoSynced = true;
+    void playlistStore.syncNeteasePlaylists();
+  }
+}
+
+async function refreshNeteasePlaylists(): Promise<void> {
+  await playlistStore.syncNeteasePlaylists();
+}
+
+function isPlaylistSyncing(id: string): boolean {
+  return playlistStore.syncingPlaylistIds.includes(id);
+}
+
+async function syncPlaylist(playlistId: string): Promise<void> {
+  await playlistStore.syncNeteasePlaylist(playlistId);
+  if (typeof toastr !== 'undefined') toastr.success(t('Playlist synced'), '晓乐');
+}
+
+function openPlaylistDetail(playlistId: string): void {
+  const pl = playlistStore.getPlaylist(playlistId);
+  if (!pl) return;
+  if (pl.source === 'netease' && pl.songs.length === 0) {
+    void syncPlaylist(playlistId);
+  }
+  playlistStore.selectPlaylist(playlistId);
+}
+
+function playlistSongCount(pl: Playlist): string {
+  if (pl.songs.length > 0) return `${pl.songs.length} ${t('songs')}`;
+  if (pl.source === 'netease') {
+    return isPlaylistSyncing(pl.id) ? t('Syncing...') : t('Not synced');
+  }
+  return '0 ' + t('songs');
+}
+
+function isNeteaseNotSynced(pl: Playlist): boolean {
+  return pl.source === 'netease' && pl.songs.length === 0;
 }
 </script>
 
 <template>
   <div class="stmp-playlist">
-    <!-- Tabs -->
-    <div class="stmp-tabs">
-      <div
-        v-for="tab in tabs"
-        :key="tab.value"
-        class="stmp-tab"
-        :class="{ active: playlistStore.activeTab === tab.value }"
-        @click="onTabClick(tab.value)"
-      >
-        {{ tab.label }}
-      </div>
-    </div>
-
-    <!-- Upload button (only in server tab) -->
-    <div v-if="playlistStore.activeTab === 'server'" class="stmp-upload-area">
-      <input
-        type="file"
-        accept="audio/*"
-        ref="fileInputRef"
-        @change="onFileSelect"
-        style="display:none"
-      />
-      <button class="stmp-upload-btn" :disabled="uploading" @click="triggerUpload">
-        {{ uploading ? '...' : '+ ' + t('Upload audio file') }}
-      </button>
-    </div>
-
-    <!-- Song list -->
-    <div v-if="isEmpty" class="stmp-empty">{{ t('No Songs') }}</div>
-    <template v-else>
-      <div
-        v-for="entry in tabItems"
-        :key="entry.item.id"
-        class="stmp-item"
-        :class="{ active: playlistStore.activeTab === playlistStore.currentList && entry.index === playlistStore.currentIndex }"
-        @click="play(entry.index)"
-      >
-        <span class="stmp-item-index">{{ entry.index + 1 }}</span>
-        <div class="stmp-item-info">
-          <span class="stmp-item-song">{{ entry.item.song }}</span>
-          <span v-if="entry.item.artist" class="stmp-item-artist">{{ entry.item.artist }}</span>
+    <!-- ===== 双 tab ===== -->
+    <div class="stmp-main-view">
+      <!-- Tabs -->
+      <div class="stmp-tabs">
+        <div
+          v-for="tab in tabs"
+          :key="tab.value"
+          class="stmp-tab"
+          :class="{ active: playlistStore.activeTab === tab.value }"
+          @click="onTabClick(tab.value)"
+        >
+          {{ tab.label }}
         </div>
-        <button class="stmp-item-del" @click.stop="remove(entry.index)">
-          <Icon name="x" :size="14" />
-        </button>
       </div>
-    </template>
+
+      <!-- ===== Queue tab ===== -->
+      <div v-show="playlistStore.activeTab === 'queue'" class="stmp-queue-view">
+        <!-- Upload button (only if upload source enabled) -->
+        <div v-if="settingsStore.settings.providers.find(p => p.id === 'local')?.enabled" class="stmp-upload-area">
+          <input
+            type="file"
+            accept="audio/*"
+            ref="fileInputRef"
+            @change="onFileSelect"
+            style="display:none"
+          />
+          <button class="stmp-upload-btn" :disabled="uploading" @click="triggerUpload">
+            {{ uploading ? '...' : '+ ' + t('Upload audio file') }}
+          </button>
+        </div>
+
+        <div v-if="isQueueEmpty" class="stmp-empty">{{ t('No Songs') }}</div>
+        <template v-else>
+          <div
+            v-for="entry in queueItems"
+            :key="entry.item.id"
+            class="stmp-item"
+            :class="{ active: entry.index === playlistStore.queue.currentIndex }"
+            @click="playQueueItem(entry.index)"
+          >
+            <span class="stmp-item-index">{{ entry.index + 1 }}</span>
+            <div class="stmp-item-info">
+              <span class="stmp-item-song">{{ entry.item.song }}</span>
+              <span v-if="entry.item.artist" class="stmp-item-artist">{{ entry.item.artist }}</span>
+            </div>
+            <button class="stmp-item-del" @click.stop="removeQueueItem(entry.index)">
+              <Icon name="x" :size="14" />
+            </button>
+          </div>
+        </template>
+      </div>
+
+      <!-- ===== Playlists tab ===== -->
+      <div v-show="playlistStore.activeTab === 'playlists'" class="stmp-playlists-view">
+        <!-- 本地歌单分类 -->
+        <div class="stmp-section-header">
+          <span class="stmp-section-title">{{ t('My Playlists') }}</span>
+        </div>
+        <div
+          v-for="pl in localPlaylists"
+          :key="pl.id"
+          class="stmp-pl-item"
+          @click="openPlaylistDetail(pl.id)"
+        >
+          <div class="stmp-pl-icon">
+            <Icon :name="pl.source === 'upload' ? 'upload' : pl.source === 'ai' ? 'sparkles' : 'bookmark'" :size="16" />
+          </div>
+          <div class="stmp-pl-info">
+            <span class="stmp-pl-name">{{ pl.name }}</span>
+          </div>
+          <span class="stmp-pl-count">{{ playlistSongCount(pl) }}</span>
+        </div>
+
+        <!-- 网易云歌单分类 -->
+        <div class="stmp-section-header stmp-section-header-netease">
+          <span class="stmp-section-title">{{ t('NetEase Playlists') }}</span>
+          <button
+            v-if="hasNeteaseCookie"
+            class="stmp-refresh-btn"
+            :class="{ 'stmp-spin': playlistStore.neteasePlaylistsLoading }"
+            :disabled="playlistStore.neteasePlaylistsLoading"
+            @click="refreshNeteasePlaylists"
+          >
+            <Icon :name="playlistStore.neteasePlaylistsLoading ? 'loader' : 'refresh-cw'" :size="14" />
+          </button>
+        </div>
+
+        <div v-if="!hasNeteaseCookie" class="stmp-empty stmp-empty-sm">
+          {{ t('Configure in settings') }}
+        </div>
+        <div v-else-if="neteasePlaylists.length === 0 && !playlistStore.neteasePlaylistsLoading" class="stmp-empty stmp-empty-sm">
+          {{ t('No Songs') }}
+        </div>
+        <template v-else>
+          <div
+            v-for="pl in neteasePlaylists"
+            :key="pl.id"
+            class="stmp-pl-item"
+            @click="openPlaylistDetail(pl.id)"
+          >
+            <div class="stmp-pl-icon">
+              <Icon :name="pl.neteaseSpecialType === 5 ? 'heart' : 'list'" :size="16" />
+            </div>
+            <div class="stmp-pl-info">
+            <span class="stmp-pl-name">{{ pl.name }}</span>
+            </div>
+            <span v-if="isNeteaseNotSynced(pl) && !isPlaylistSyncing(pl.id)" class="stmp-pl-sync" @click.stop="syncPlaylist(pl.id)">
+              <Icon name="refresh-cw" :size="14" />
+            </span>
+            <span v-else-if="isPlaylistSyncing(pl.id)" class="stmp-pl-sync stmp-spin">
+              <Icon name="loader" :size="14" />
+            </span>
+            <span v-else class="stmp-pl-count">{{ playlistSongCount(pl) }}</span>
+          </div>
+        </template>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -129,8 +235,16 @@ function onTabClick(tab: PlaylistTab): void {
 .stmp-playlist {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  overflow-y: auto;
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+/* ===== Main view ===== */
+.stmp-main-view {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
 }
@@ -163,6 +277,17 @@ function onTabClick(tab: PlaylistTab): void {
 .stmp-tab.active {
   color: var(--stmp-accent);
   border-bottom-color: var(--stmp-accent);
+}
+
+/* ===== Queue / Playlists views ===== */
+.stmp-queue-view,
+.stmp-playlists-view {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
 }
 
 /* ===== Upload area ===== */
@@ -203,7 +328,11 @@ function onTabClick(tab: PlaylistTab): void {
   font-size: calc(var(--mainFontSize, 14px) * 0.9);
 }
 
-/* ===== Song items ===== */
+.stmp-empty-sm {
+  padding: 12px 0;
+}
+
+/* ===== Song items (queue + detail) ===== */
 .stmp-item {
   display: flex;
   align-items: center;
@@ -269,5 +398,122 @@ function onTabClick(tab: PlaylistTab): void {
 .stmp-item-del:hover {
   opacity: 1;
   background: color-mix(in srgb, var(--fullred, rgba(255, 80, 80, 0.5)) 30%, transparent);
+}
+
+/* ===== Playlist list items ===== */
+.stmp-section-header {
+  display: flex;
+  align-items: center;
+  padding: 8px 4px 4px;
+  flex-shrink: 0;
+}
+
+.stmp-section-header-netease {
+  justify-content: space-between;
+}
+
+.stmp-section-title {
+  font-size: calc(var(--mainFontSize, 14px) * 0.72);
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--stmp-accent);
+  opacity: 0.8;
+}
+
+.stmp-refresh-btn {
+  background: none;
+  border: none;
+  color: var(--stmp-text-dim);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.stmp-refresh-btn:hover:not(:disabled) {
+  color: var(--stmp-accent);
+  background: var(--stmp-hover);
+}
+
+.stmp-refresh-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.stmp-pl-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.stmp-pl-item:hover {
+  background: var(--stmp-hover);
+}
+
+.stmp-pl-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--stmp-text-dim);
+  flex-shrink: 0;
+}
+
+.stmp-pl-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.stmp-pl-name {
+  font-size: calc(var(--mainFontSize, 14px) * 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--stmp-text);
+}
+
+.stmp-pl-count {
+  font-size: calc(var(--mainFontSize, 14px) * 0.72);
+  color: var(--stmp-text-dim);
+  opacity: 0.6;
+  flex-shrink: 0;
+}
+
+.stmp-pl-sync {
+  color: var(--stmp-accent);
+  opacity: 0.7;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.stmp-pl-sync:hover {
+  opacity: 1;
+  background: var(--stmp-hover);
+}
+
+/* ===== Spin animation ===== */
+.stmp-spin {
+  animation: stmp-spin 0.8s linear infinite;
+}
+
+@keyframes stmp-spin {
+  to { transform: rotate(360deg); }
 }
 </style>

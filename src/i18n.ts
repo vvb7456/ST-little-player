@@ -49,6 +49,11 @@ const zhCN: Record<string, string> = {
   'models found': '获取到',
   'No models returned': '该端点未返回模型',
   'Failed to fetch models': '获取模型列表失败',
+  'Endpoint CORS blocked': '该端点不支持浏览器直连（CORS 被拦截），请改用支持 CORS 的端点或通过反代转发',
+  'Endpoint unreachable': '无法连接到该端点（网络错误），请检查地址是否可达',
+  'Endpoint HTTP error': '该端点返回错误：{detail}',
+  'Endpoint request failed': '请求该端点失败，请检查地址与网络',
+  'Endpoint CORS blocked (agent)': 'AI 选曲端点被 CORS 拦截，浏览器无法直连该地址',
   'Connect': '连接',
   'Please fill API URL': '请先填写 API 地址',
   'Enter song name': '请输入歌曲名',
@@ -158,6 +163,18 @@ const zhCN: Record<string, string> = {
   'Cookie expired': 'Cookie 已失效',
   'Cookie invalid': 'Cookie 无效',
   'Configure in settings': '请在设置中配置',
+
+  // Playlist / Queue refactor
+  'Now Playing': '播放列表',
+  'Playlists': '歌单',
+  'My Playlists': '我的歌单',
+  'NetEase Playlists': '网易云歌单',
+  'Network Collection': '网络收藏',
+  'AI Picks': 'AI 选曲',
+  'songs': '首',
+  'Not synced': '未同步',
+  'Syncing...': '同步中...',
+  'Playlist synced': '歌单已同步',
 };
 
 let currentLang: string | null = null;

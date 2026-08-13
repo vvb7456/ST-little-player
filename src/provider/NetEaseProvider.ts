@@ -7,6 +7,20 @@ export interface NetEaseConfig {
   cookie?: string;
 }
 
+export interface NetEasePlaylistSummary {
+  id: string;
+  name: string;
+  trackCount: number;
+  cover: string;
+  specialType: number;
+}
+
+export interface NetEasePlaylistDetail {
+  name: string;
+  cover: string;
+  songs: SearchResult[];
+}
+
 export class NetEaseProvider implements MusicProvider {
   id = 'netease';
   name = '网易云';
@@ -190,5 +204,55 @@ export class NetEaseProvider implements MusicProvider {
 
     logger.warn('NetEase: no playable result for "' + query + '"');
     return null;
+  }
+
+  async fetchPlaylists(): Promise<NetEasePlaylistSummary[] | null> {
+    if (!this.workerURL || !this.cookie) {
+      logger.warn('NetEase: worker URL or cookie not configured for fetchPlaylists');
+      return null;
+    }
+    const data = await this.fetchJson(
+      `${this.workerURL}/playlists?limit=100`,
+      { headers: { 'X-Netease-Cookie': this.cookie } },
+      15000,
+      1,
+    );
+    if (!data || data.success === false) {
+      logger.warn('NetEase: fetchPlaylists failed', data?.error);
+      return null;
+    }
+    return Array.isArray(data.data) ? data.data : [];
+  }
+
+  async fetchPlaylist(playlistId: string): Promise<NetEasePlaylistDetail | null> {
+    if (!this.workerURL || !this.cookie) {
+      logger.warn('NetEase: worker URL or cookie not configured for fetchPlaylist');
+      return null;
+    }
+    const data = await this.fetchJson(
+      `${this.workerURL}/playlist?id=${encodeURIComponent(playlistId)}`,
+      { headers: { 'X-Netease-Cookie': this.cookie } },
+      30000,
+      1,
+    );
+    if (!data || data.success === false) {
+      logger.warn('NetEase: fetchPlaylist failed', data?.error);
+      return null;
+    }
+    const d = data.data;
+    if (!d || !Array.isArray(d.songs)) return null;
+    const songs: SearchResult[] = d.songs.map((item: any) => ({
+      id: String(item.id ?? ''),
+      name: String(item.name ?? ''),
+      artist: String(item.artist ?? ''),
+      duration: item.duration ?? undefined,
+      provider: this.id,
+      picId: item.picId ? String(item.picId) : undefined,
+    }));
+    return {
+      name: String(d.name ?? ''),
+      cover: String(d.cover ?? ''),
+      songs,
+    };
   }
 }

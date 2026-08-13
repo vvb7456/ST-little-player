@@ -5,6 +5,7 @@ import { useVerticalLyricScroll } from "@/composables/useVerticalLyricScroll";
 import type { PlayMode } from '@/types';
 import Icon from './Icon.vue';
 import PlaylistView from './PlaylistView.vue';
+import PlaylistDetail from './PlaylistDetail.vue';
 import SearchView from './SearchView.vue';
 import { t } from '@/i18n';
 
@@ -132,7 +133,18 @@ function toggleOverlay(which: 'list' | 'search'): void {
 }
 
 function closeOverlay(): void {
+  // If a playlist detail is open, close that first
+  if (playlistStore.selectedPlaylistId) {
+    playlistStore.selectPlaylist(null);
+    return;
+  }
   activeOverlay.value = null;
+}
+
+function playEntirePlaylist(): void {
+  if (playlistStore.selectedPlaylistId) {
+    playlistStore.playPlaylist(playlistStore.selectedPlaylistId, 0);
+  }
 }
 </script>
 
@@ -296,6 +308,24 @@ function closeOverlay(): void {
         <div class="stmp-overlay-body">
           <PlaylistView v-if="activeOverlay === 'list'" />
           <SearchView v-else />
+        </div>
+      </div>
+    </Transition>
+
+    <!-- Second overlay layer: playlist detail (same style as first overlay) -->
+    <Transition name="stmp-overlay">
+      <div v-if="activeOverlay === 'list' && playlistStore.selectedPlaylist" class="stmp-overlay stmp-overlay-detail">
+        <div class="stmp-overlay-header">
+          <button class="stmp-overlay-back" @click.stop="playlistStore.selectPlaylist(null)">
+            <Icon name="chevron-left" :size="16" />
+          </button>
+          <span class="stmp-overlay-title">{{ playlistStore.selectedPlaylist.name }}</span>
+          <button class="stmp-overlay-play-btn" @click.stop="playEntirePlaylist">
+            <Icon name="play" :size="14" />
+          </button>
+        </div>
+        <div class="stmp-overlay-body">
+          <PlaylistDetail />
         </div>
       </div>
     </Transition>
@@ -731,6 +761,48 @@ function closeOverlay(): void {
   display: flex;
   flex-direction: column;
   min-height: 0;
+}
+
+/* Second overlay layer: same as first, stacked above */
+.stmp-overlay-detail {
+  z-index: 20;
+}
+
+.stmp-overlay-back {
+  background: none;
+  border: none;
+  color: var(--stmp-text-dim);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.stmp-overlay-back:hover {
+  color: var(--stmp-text);
+  background: var(--stmp-hover);
+}
+
+.stmp-overlay-play-btn {
+  background: none;
+  border: 1px solid var(--stmp-border);
+  border-radius: 8px;
+  color: var(--stmp-accent);
+  cursor: pointer;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s;
+}
+
+.stmp-overlay-play-btn:hover {
+  background: color-mix(in srgb, var(--stmp-accent) 15%, transparent);
+  border-color: var(--stmp-accent);
 }
 
 /* Overlay slide-up transition */

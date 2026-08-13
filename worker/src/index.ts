@@ -65,6 +65,27 @@ async function neteasePost(
   return await res.json();
 }
 
+async function neteaseGet(
+  url: string,
+  cookie?: string,
+): Promise<any> {
+  const t0 = Date.now();
+  const headers: Record<string, string> = { ...NETEASE_HEADERS };
+  if (cookie) headers['Cookie'] = cookie;
+  const res = await fetch(url, {
+    method: 'GET',
+    headers,
+  });
+  const elapsed = Date.now() - t0;
+  console.log(`[neteaseGet] ${url} -> ${res.status} (${elapsed}ms)`);
+  if (!res.ok) {
+    const text = await res.text();
+    console.log(`[neteaseGet] error body: ${text.slice(0, 200)}`);
+    throw new Error(`NetEase API ${res.status}: ${text}`);
+  }
+  return await res.json();
+}
+
 async function handleSearch(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const keyword = url.searchParams.get('keyword') ?? '';
@@ -176,6 +197,106 @@ async function handleAuth(request: Request): Promise<Response> {
   return json({ success: true, data: { valid } });
 }
 
+async function handlePlaylists(request: Request): Promise<Response> {
+  const cookieHeader = request.headers.get('X-Netease-Cookie');
+  if (!cookieHeader) return errorResponse('Missing X-Netease-Cookie header', 400);
+
+  const cookie = buildCookie(cookieHeader);
+
+  // 1. Get current user id
+  const accountData = await neteasePost(
+    'https://music.163.com/api/nuser/account/get',
+    '',
+    cookie,
+  );
+  const userId = accountData?.profile?.userId;
+  if (!userId) return errorResponse('Failed to get user id', 401);
+
+  // 2. Get user playlists
+  const url = new URL(request.url);
+  const limit = url.searchParams.get('limit') ?? '100';
+  const offset = url.searchParams.get('offset') ?? '0';
+  const listBody = `uid=${userId}&limit=${encodeURIComponent(limit)}&offset=${encodeURIComponent(offset)}`;
+  const data = await neteaseGet(
+    `https://music.163.com/api/user/playlist?${listBody}`,
+    cookie,
+  );
+
+  const playlists = data?.playlist;
+  if (!Array.isArray(playlists)) return json({ success: true, data: [] });
+
+  const mapped = playlists.map((item: any) => ({
+    id: String(item.id ?? ''),
+    name: String(item.name ?? ''),
+    trackCount: Number(item.trackCount ?? 0),
+    cover: String(item.coverImgUrl ?? ''),
+    specialType: Number(item.specialType ?? 0),
+  }));
+
+  return json({ success: true, data: mapped });
+}
+
+async function handlePlaylistDetail(request: Request): Promise<Response> {
+  const url = new URL(request.url);
+  const id = url.searchParams.get('id');
+  if (!id) return errorResponse('Missing id param', 400);
+
+  const cookieHeader = request.headers.get('X-Netease-Cookie');
+  if (!cookieHeader) return errorResponse('Missing X-Netease-Cookie header', 400);
+  const cookie = buildCookie(cookieHeader);
+
+  // 1. Get trackIds
+  const detailBody = `id=${encodeURIComponent(id)}&n=1000`;
+  const detailData = await neteasePost(
+    'https://music.163.com/api/v6/playlist/detail',
+    detailBody,
+    cookie,
+  );
+
+  const pl = detailData?.playlist;
+  if (!pl) return errorResponse('Playlist not found', 404);
+
+  const trackIds = Array.isArray(pl.trackIds) ? pl.trackIds.map((t: any) => t.id) : [];
+  if (trackIds.length === 0) return errorResponse('Empty or private playlist', 400);
+
+  // 2. Batch fetch song details (1000 per batch)
+  const BATCH_SIZE = 1000;
+  const batches: number[][] = [];
+  for (let i = 0; i < trackIds.length; i += BATCH_SIZE) {
+    batches.push(trackIds.slice(i, i + BATCH_SIZE));
+  }
+
+  const batchResults = await Promise.all(
+    batches.map(async (ids) => {
+      const c = JSON.stringify(ids.map((sid) => ({ id: String(sid), v: 0 })));
+      const body = `c=${encodeURIComponent(c)}`;
+      const data = await neteasePost(
+        'https://interface3.music.163.com/api/v3/song/detail',
+        body,
+      );
+      return Array.isArray(data?.songs) ? data.songs : [];
+    }),
+  );
+
+  const allSongs = batchResults.flat();
+  const songs = allSongs.map((item: any) => ({
+    id: String(item.id ?? ''),
+    name: String(item.name ?? ''),
+    artist: joinArtists(item.ar ?? item.artists),
+    duration: (item.dt ?? item.duration) ? Math.floor((item.dt ?? item.duration) / 1000) : undefined,
+    picId: (item.al ?? item.album)?.pic ? String((item.al ?? item.album).pic) : '',
+  }));
+
+  return json({
+    success: true,
+    data: {
+      name: String(pl.name ?? ''),
+      cover: String(pl.coverImgUrl ?? ''),
+      songs,
+    },
+  });
+}
+
 async function handleRequest(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const path = url.pathname;
@@ -199,6 +320,12 @@ async function handleRequest(request: Request): Promise<Response> {
   }
   if (path === '/auth' && request.method === 'GET') {
     return await handleAuth(request);
+  }
+  if (path === '/playlists' && request.method === 'GET') {
+    return await handlePlaylists(request);
+  }
+  if (path === '/playlist' && request.method === 'GET') {
+    return await handlePlaylistDetail(request);
   }
 
   return errorResponse('Not found', 404);

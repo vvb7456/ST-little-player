@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { useSearchStore, usePlaylistStore, useSettingsStore } from '@/stores/index';
 import { createDefaultProviders } from '@/provider';
+import { LOCAL_PLAYLIST_ID } from '@/stores/playlist';
 import type { SearchResult } from '@/types';
 import Icon from './Icon.vue';
 import { t } from '@/i18n';
@@ -25,14 +26,10 @@ const retrySearch = (): void => {
   void doSearch();
 };
 
-function isInPlaylist(result: SearchResult): boolean {
-  return playlistStore.networkList.some(
-    (item) => item.providerId === result.provider && item.providerTrackId === result.id,
-  );
-}
-
-function findPlaylistIndex(result: SearchResult): number {
-  return playlistStore.networkList.findIndex(
+function isInLocalPlaylist(result: SearchResult): boolean {
+  const pl = playlistStore.getPlaylist(LOCAL_PLAYLIST_ID);
+  if (!pl) return false;
+  return pl.songs.some(
     (item) => item.providerId === result.provider && item.providerTrackId === result.id,
   );
 }
@@ -40,27 +37,17 @@ function findPlaylistIndex(result: SearchResult): number {
 function addAndPlay(result: SearchResult): void {
   const key = result.provider + result.id;
   if (playingId.value === key) return;
-  // If already in playlist, just play it
-  const existingIdx = findPlaylistIndex(result);
-  if (existingIdx >= 0) {
-    playlistStore.play('network', existingIdx);
-    playingId.value = key;
-    setTimeout(() => { playingId.value = null; }, 600);
-    return;
-  }
   playingId.value = key;
-  playlistStore.addFromSearch(result);
+  playlistStore.addFromSearch(result, true);
   setTimeout(() => { playingId.value = null; }, 600);
 }
 
 function onAddButtonClick(result: SearchResult): void {
-  // If already added, play it; otherwise add to list
-  if (isInPlaylist(result)) {
-    const idx = findPlaylistIndex(result);
-    if (idx >= 0) playlistStore.play('network', idx);
+  if (isInLocalPlaylist(result)) {
     return;
   }
   playlistStore.addFromSearch(result, false);
+  if (typeof toastr !== 'undefined') toastr.success(t('Added to playlist'), '晓乐');
 }
 
 function isPlaying(result: SearchResult): boolean {
@@ -116,11 +103,11 @@ function isPlaying(result: SearchResult): boolean {
         </div>
         <button
           class="stmp-icon-btn stmp-result-add"
-          :class="{ added: isInPlaylist(result) }"
-          :aria-label="isInPlaylist(result) ? t('Added') : t('Add to list')"
+          :class="{ added: isInLocalPlaylist(result) }"
+          :aria-label="isInLocalPlaylist(result) ? t('Added') : t('Add to list')"
           @click.stop="onAddButtonClick(result)"
         >
-          <Icon :name="isInPlaylist(result) ? 'check' : 'plus'" :size="16" />
+          <Icon :name="isInLocalPlaylist(result) ? 'check' : 'plus'" :size="16" />
         </button>
       </div>
     </div>

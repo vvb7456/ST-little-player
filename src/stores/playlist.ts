@@ -1,11 +1,16 @@
 import { defineStore } from 'pinia';
 import type {
+  Playlist,
   PlaylistItem,
+  PlaylistSourceType,
   PlayMode,
+  PlayQueue,
   ResolvedTrack,
   SearchResult,
 } from '@/types';
 import { createDefaultProviders } from '@/provider';
+import { getNeteaseWorkerURL } from '@/provider';
+import { NetEaseProvider } from '@/provider/NetEaseProvider';
 import { useSettingsStore } from './settings';
 import { usePlayerStore } from './player';
 import { t } from '@/i18n';
@@ -16,39 +21,164 @@ function genId(): string {
   return `stmp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export type PlaylistTab = 'network' | 'server' | 'chat';
+// 固定歌单 id 常量
+const LOCAL_PLAYLIST_ID = '__local__';
+const UPLOAD_PLAYLIST_ID = '__upload__';
+const AI_PLAYLIST_ID = '__ai__';
+
+export type OverlayTab = 'queue' | 'playlists';
 
 interface PlaylistPersistData {
-  network: PlaylistItem[];
-  server: PlaylistItem[];
+  playlists: Playlist[];
+  queue: PlayQueue;
+  version: number;
+}
+
+// 旧存储结构（用于迁移检测）
+interface LegacyPersistData {
+  network?: PlaylistItem[];
+  server?: PlaylistItem[];
+}
+
+function isLegacyData(raw: unknown): raw is LegacyPersistData {
+  if (!raw || typeof raw !== 'object') return false;
+  const obj = raw as Record<string, unknown>;
+  return ('network' in obj || 'server' in obj) && !('playlists' in obj);
+}
+
+function migrateLegacy(legacy: LegacyPersistData): PlaylistPersistData {
+  const now = Date.now();
+  const playlists: Playlist[] = [];
+
+  const networkItems = Array.isArray(legacy.network) ? legacy.network : [];
+  if (networkItems.length > 0) {
+    playlists.push({
+      id: LOCAL_PLAYLIST_ID,
+      name: t('Network Collection'),
+      source: 'local',
+      songs: networkItems,
+      updatedAt: now,
+    });
+  }
+
+  const serverItems = Array.isArray(legacy.server) ? legacy.server : [];
+  if (serverItems.length > 0) {
+    playlists.push({
+      id: UPLOAD_PLAYLIST_ID,
+      name: t('Upload'),
+      source: 'upload',
+      songs: serverItems,
+      updatedAt: now,
+    });
+  }
+
+  return {
+    playlists,
+    queue: { items: [], currentIndex: -1 },
+    version: 2,
+  };
+}
+
+function ensureFixedPlaylists(playlists: Playlist[]): Playlist[] {
+  const result = [...playlists];
+  const now = Date.now();
+
+  // Fix names of fixed playlists (in case they were stored as i18n keys)
+  const fixedNames: Record<string, string> = {
+    [LOCAL_PLAYLIST_ID]: t('Network Collection'),
+    [UPLOAD_PLAYLIST_ID]: t('Upload'),
+    [AI_PLAYLIST_ID]: t('AI Picks'),
+  };
+  for (const pl of result) {
+    if (pl.id in fixedNames) {
+      pl.name = fixedNames[pl.id];
+    }
+  }
+
+  const hasLocal = result.some((p) => p.id === LOCAL_PLAYLIST_ID);
+  const hasUpload = result.some((p) => p.id === UPLOAD_PLAYLIST_ID);
+  const hasAi = result.some((p) => p.id === AI_PLAYLIST_ID);
+
+  // Ensure local playlist exists and is first
+  if (!hasLocal) {
+    result.unshift({
+      id: LOCAL_PLAYLIST_ID,
+      name: t('Network Collection'),
+      source: 'local',
+      songs: [],
+      updatedAt: now,
+    });
+  }
+
+  // Ensure upload playlist exists, right after local
+  if (!hasUpload) {
+    const localIdx = result.findIndex((p) => p.id === LOCAL_PLAYLIST_ID);
+    result.splice(localIdx + 1, 0, {
+      id: UPLOAD_PLAYLIST_ID,
+      name: t('Upload'),
+      source: 'upload',
+      songs: [],
+      updatedAt: now,
+    });
+  }
+
+  // Ensure AI playlist exists, right after upload
+  if (!hasAi) {
+    const uploadIdx = result.findIndex((p) => p.id === UPLOAD_PLAYLIST_ID);
+    result.splice(uploadIdx + 1, 0, {
+      id: AI_PLAYLIST_ID,
+      name: t('AI Picks'),
+      source: 'ai',
+      songs: [],
+      updatedAt: now,
+    });
+  }
+
+  return result;
 }
 
 export const usePlaylistStore = defineStore('playlist', {
   state: () => ({
-    networkList: [] as PlaylistItem[],
-    serverList: [] as PlaylistItem[],
-    chatList: [] as PlaylistItem[],
-    activeTab: 'network' as PlaylistTab,
-    currentList: 'network' as PlaylistTab,
-    currentIndex: -1,
+    playlists: [] as Playlist[],
+    queue: { items: [], currentIndex: -1 } as PlayQueue,
+    activeTab: 'queue' as OverlayTab,
+    selectedPlaylistId: null as string | null,
+    neteasePlaylistsLoading: false,
+    syncingPlaylistIds: [] as string[],
   }),
 
   getters: {
     current(state): PlaylistItem | null {
-      const list = state[`${state.currentList}List` as 'networkList' | 'serverList' | 'chatList'];
-      return state.currentIndex >= 0 ? list[state.currentIndex] ?? null : null;
+      const idx = state.queue.currentIndex;
+      return idx >= 0 && idx < state.queue.items.length ? state.queue.items[idx] ?? null : null;
     },
     isEmpty(state): boolean {
-      return state.networkList.length === 0 && state.serverList.length === 0 && state.chatList.length === 0;
+      return state.queue.items.length === 0 && state.playlists.every((p) => p.songs.length === 0);
     },
     playMode(): PlayMode {
       return useSettingsStore().settings.playMode;
     },
-    activeList(state): PlaylistItem[] {
-      return state[`${state.activeTab}List` as 'networkList' | 'serverList' | 'chatList'];
+    selectedPlaylist(state): Playlist | null {
+      if (!state.selectedPlaylistId) return null;
+      return state.playlists.find((p) => p.id === state.selectedPlaylistId) ?? null;
     },
-    playingList(state): PlaylistItem[] {
-      return state[`${state.currentList}List` as 'networkList' | 'serverList' | 'chatList'];
+    localPlaylists(state): Playlist[] {
+      return state.playlists.filter((p) => p.source === 'local' || p.source === 'upload' || p.source === 'ai');
+    },
+    neteasePlaylists(state): Playlist[] {
+      const list = state.playlists.filter((p) => p.source === 'netease');
+      list.sort((a, b) => {
+        if (a.neteaseSpecialType === 5 && b.neteaseSpecialType !== 5) return -1;
+        if (a.neteaseSpecialType !== 5 && b.neteaseSpecialType === 5) return 1;
+        return 0;
+      });
+      return list;
+    },
+    queueSourceName(state): string | null {
+      const srcId = state.queue.sourcePlaylistId;
+      if (!srcId) return null;
+      const pl = state.playlists.find((p) => p.id === srcId);
+      return pl?.name ?? null;
     },
   },
 
@@ -61,10 +191,25 @@ export const usePlaylistStore = defineStore('playlist', {
       const settingsStore = useSettingsStore();
       const storage = settingsStore.storage;
       if (!storage) return;
-      const stored = storage.getPlaylistData<PlaylistPersistData>();
+      const stored = storage.getPlaylistData<PlaylistPersistData | LegacyPersistData>();
       if (stored) {
-        this.networkList = Array.isArray(stored.network) ? stored.network : [];
-        this.serverList = Array.isArray(stored.server) ? stored.server : [];
+        if (isLegacyData(stored)) {
+          const migrated = migrateLegacy(stored);
+          this.playlists = ensureFixedPlaylists(migrated.playlists);
+          this.queue = migrated.queue;
+          this.savePlaylistData();
+          logger.info('Playlist data migrated from legacy format');
+        } else if ((stored as PlaylistPersistData).version === 2) {
+          const data = stored as PlaylistPersistData;
+          this.playlists = ensureFixedPlaylists(data.playlists ?? []);
+          this.queue = data.queue ?? { items: [], currentIndex: -1 };
+        } else {
+          this.playlists = ensureFixedPlaylists([]);
+          this.queue = { items: [], currentIndex: -1 };
+        }
+      } else {
+        this.playlists = ensureFixedPlaylists([]);
+        this.queue = { items: [], currentIndex: -1 };
       }
     },
 
@@ -73,198 +218,165 @@ export const usePlaylistStore = defineStore('playlist', {
       const storage = settingsStore.storage;
       if (!storage) return;
       const data: PlaylistPersistData = {
-        network: this.networkList,
-        server: this.serverList,
+        playlists: this.playlists,
+        queue: this.queue,
+        version: 2,
       };
       storage.setPlaylistData(data);
     },
 
-    getListByTab(tab: PlaylistTab): PlaylistItem[] {
-      return this[`${tab}List` as 'networkList' | 'serverList' | 'chatList'];
+    // ===== 歌单管理 =====
+
+    getPlaylist(id: string): Playlist | undefined {
+      return this.playlists.find((p) => p.id === id);
     },
 
-    addItem(item: PlaylistItem): void {
-      if (item.source === 'network') {
-        this.networkList.push(item);
-        this.savePlaylistData();
-      } else if (item.source === 'server') {
-        this.serverList.push(item);
-        this.savePlaylistData();
-      } else if (item.source === 'chat') {
-        this.chatList.push(item);
-      }
-    },
-
-    removeItem(tab: PlaylistTab, index: number): void {
-      const list = this.getListByTab(tab);
-      if (index < 0 || index >= list.length) return;
-      const removed = list.splice(index, 1)[0];
-      if (tab === 'network' || tab === 'server') {
-        this.savePlaylistData();
-      }
-      if (tab === 'server' && removed?.serverPath) {
-        void deleteFile(removed.serverPath);
-      }
-      if (tab === this.currentList && index === this.currentIndex) {
-        this.currentIndex = -1;
-      } else if (tab === this.currentList && index < this.currentIndex) {
-        this.currentIndex--;
-      }
-    },
-
-    addFromSearch(result: SearchResult, autoplay: boolean = true): boolean {
-      const existingIdx = this.networkList.findIndex(
-        (item) => item.providerId === result.provider && item.providerTrackId === result.id,
+    addToPlaylist(playlistId: string, item: PlaylistItem): boolean {
+      const pl = this.getPlaylist(playlistId);
+      if (!pl) return false;
+      const exists = pl.songs.some(
+        (s) => s.providerId === item.providerId && s.providerTrackId === item.providerTrackId,
       );
-      this.activeTab = 'network';
-      if (existingIdx >= 0) {
-        if (autoplay) {
-          this.currentList = 'network';
-          this.play('network', existingIdx);
-        }
-        return false;
-      }
-      const item: PlaylistItem = {
-        id: genId(),
-        song: result.name,
-        artist: result.artist,
-        source: 'network',
-        providerId: result.provider,
-        providerTrackId: result.id,
-        providerPicId: result.picId,
-        addedAt: Date.now(),
-      };
-      this.networkList.push(item);
+      if (exists) return false;
+      pl.songs.push(item);
+      pl.updatedAt = Date.now();
       this.savePlaylistData();
-      if (autoplay) {
-        this.currentList = 'network';
-        this.play('network', this.networkList.length - 1);
-      }
       return true;
     },
 
-    addFromAi(result: SearchResult, autoplay: boolean = true): void {
-      const existingIdx = this.chatList.findIndex(
-        (item) => item.providerId === result.provider && item.providerTrackId === result.id,
-      );
-      this.activeTab = 'chat';
-      if (existingIdx >= 0) {
-        if (autoplay) {
-          this.currentList = 'chat';
-          this.play('chat', existingIdx);
-        }
-        return;
-      }
-      const item: PlaylistItem = {
-        id: genId(),
-        song: result.name,
-        artist: result.artist,
-        source: 'chat',
-        providerId: result.provider,
-        providerTrackId: result.id,
-        providerPicId: result.picId,
-        addedAt: Date.now(),
-      };
-      this.chatList.push(item);
-      if (autoplay) {
-        this.currentList = 'chat';
-        this.play('chat', this.chatList.length - 1);
-      }
-    },
-
-    async addServerFile(name: string, file: File): Promise<void> {
-      const serverPath = await uploadFile(file);
-      const item: PlaylistItem = {
-        id: genId(),
-        song: name,
-        source: 'server',
-        serverPath,
-        addedAt: Date.now(),
-      };
-      this.serverList.push(item);
+    removeFromPlaylist(playlistId: string, songId: string): void {
+      const pl = this.getPlaylist(playlistId);
+      if (!pl) return;
+      pl.songs = pl.songs.filter((s) => s.id !== songId);
+      pl.updatedAt = Date.now();
       this.savePlaylistData();
     },
 
-    play(tab: PlaylistTab, index: number): void {
-      const list = this.getListByTab(tab);
-      if (index < 0 || index >= list.length) return;
-      this.currentList = tab;
-      this.activeTab = tab;
-      this.currentIndex = index;
-      void this.resolveAndPlay(tab, index);
+    deletePlaylist(id: string): void {
+      const pl = this.getPlaylist(id);
+      if (!pl) return;
+      if (id === LOCAL_PLAYLIST_ID || id === UPLOAD_PLAYLIST_ID || id === AI_PLAYLIST_ID) return;
+      if (pl.source === 'upload') {
+        const paths = pl.songs.map((s) => s.serverPath).filter((p): p is string => !!p);
+        void Promise.all(paths.map((p) => deleteFile(p).catch(() => {})));
+      }
+      this.playlists = this.playlists.filter((p) => p.id !== id);
+      if (this.queue.sourcePlaylistId === id) {
+        this.queue.sourcePlaylistId = undefined;
+      }
+      this.savePlaylistData();
     },
 
+    // ===== 队列管理 =====
+
+    playPlaylist(playlistId: string, startIndex: number = 0): void {
+      const pl = this.getPlaylist(playlistId);
+      if (!pl || pl.songs.length === 0) return;
+      this.queue = {
+        items: pl.songs.slice(),
+        currentIndex: Math.max(0, Math.min(startIndex, pl.songs.length - 1)),
+        sourcePlaylistId: playlistId,
+      };
+      this.activeTab = 'queue';
+      this.savePlaylistData();
+      void this.resolveAndPlay(this.queue.currentIndex);
+    },
+
+    playFromHere(playlistId: string, songIndex: number): void {
+      this.playPlaylist(playlistId, songIndex);
+    },
+
+    playQueueIndex(index: number): void {
+      if (index < 0 || index >= this.queue.items.length) return;
+      this.queue.currentIndex = index;
+      this.savePlaylistData();
+      void this.resolveAndPlay(index);
+    },
+
+    removeFromQueue(index: number): void {
+      if (index < 0 || index >= this.queue.items.length) return;
+      this.queue.items.splice(index, 1);
+      if (this.queue.currentIndex === index) {
+        this.queue.currentIndex = -1;
+      } else if (index < this.queue.currentIndex) {
+        this.queue.currentIndex--;
+      }
+      this.savePlaylistData();
+    },
+
+    clearQueue(): void {
+      this.queue = { items: [], currentIndex: -1 };
+      this.savePlaylistData();
+    },
+
+    // ===== 播放控制 =====
+
     peekNextIndex(): number {
-      const list = this.playingList;
+      const list = this.queue.items;
       if (list.length === 0) return -1;
       const mode = this.playMode;
-      if (mode === 'single') {
-        return this.currentIndex;
-      } else if (mode === 'random') {
+      const cur = this.queue.currentIndex;
+      if (mode === 'single') return cur;
+      if (mode === 'random') {
         if (list.length === 1) return 0;
         for (let attempt = 0; attempt < 5; attempt++) {
           const candidate = Math.floor(Math.random() * list.length);
-          if (candidate !== this.currentIndex) return candidate;
+          if (candidate !== cur) return candidate;
         }
-        return (this.currentIndex + 1) % list.length;
-      } else {
-        let newIndex = this.currentIndex + 1;
-        if (newIndex >= list.length) newIndex = 0;
-        return newIndex;
+        return (cur + 1) % list.length;
       }
+      let next = cur + 1;
+      if (next >= list.length) next = 0;
+      return next;
     },
 
     next(): void {
-      const list = this.playingList;
+      const list = this.queue.items;
       if (list.length === 0) return;
       const mode = this.playMode;
-      let newIndex = this.currentIndex;
+      let newIndex = this.queue.currentIndex;
       if (mode === 'single') {
-        newIndex = this.currentIndex;
+        newIndex = this.queue.currentIndex;
       } else if (mode === 'random') {
         if (list.length === 1) {
           newIndex = 0;
         } else {
           for (let attempt = 0; attempt < 5; attempt++) {
             const candidate = Math.floor(Math.random() * list.length);
-            if (candidate !== this.currentIndex) {
+            if (candidate !== this.queue.currentIndex) {
               newIndex = candidate;
               break;
             }
           }
-          if (newIndex === this.currentIndex) {
-            newIndex = (this.currentIndex + 1) % list.length;
+          if (newIndex === this.queue.currentIndex) {
+            newIndex = (this.queue.currentIndex + 1) % list.length;
           }
         }
       } else {
-        newIndex = this.currentIndex + 1;
+        newIndex = this.queue.currentIndex + 1;
         if (newIndex >= list.length) newIndex = 0;
       }
-      this.currentIndex = newIndex;
-      void this.resolveAndPlay(this.currentList, newIndex);
+      this.queue.currentIndex = newIndex;
+      this.savePlaylistData();
+      void this.resolveAndPlay(newIndex);
     },
 
     prev(): void {
-      const list = this.playingList;
+      const list = this.queue.items;
       if (list.length === 0) return;
-      let newIndex = this.currentIndex - 1;
+      let newIndex = this.queue.currentIndex - 1;
       if (newIndex < 0) newIndex = list.length - 1;
-      this.currentIndex = newIndex;
-      void this.resolveAndPlay(this.currentList, newIndex);
+      this.queue.currentIndex = newIndex;
+      this.savePlaylistData();
+      void this.resolveAndPlay(newIndex);
     },
 
-    async resolveTrack(tab: PlaylistTab, index: number): Promise<ResolvedTrack | null> {
-      const list = this.getListByTab(tab);
-      const item = list[index];
+    async resolveTrack(index: number): Promise<ResolvedTrack | null> {
+      const item = this.queue.items[index];
       if (!item) return null;
 
       if (item.source === 'server' && item.serverPath) {
-        return {
-          url: item.serverPath,
-          name: item.song,
-          artist: item.artist ?? '',
-          source: 'server',
-        };
+        return { url: item.serverPath, name: item.song, artist: item.artist ?? '', source: 'server' };
       }
 
       if (item.providerId && item.providerTrackId) {
@@ -280,20 +392,14 @@ export const usePlaylistStore = defineStore('playlist', {
       return null;
     },
 
-    async resolveAndPlay(tab: PlaylistTab, index: number): Promise<void> {
-      const list = this.getListByTab(tab);
-      const item = list[index];
+    async resolveAndPlay(index: number): Promise<void> {
+      const item = this.queue.items[index];
       if (!item) return;
 
       let resolved: ResolvedTrack | null = null;
 
       if (item.source === 'server' && item.serverPath) {
-        resolved = {
-          url: item.serverPath,
-          name: item.song,
-          artist: item.artist ?? '',
-          source: 'server',
-        };
+        resolved = { url: item.serverPath, name: item.song, artist: item.artist ?? '', source: 'server' };
       } else if (item.providerId && item.providerTrackId) {
         const mgr = createDefaultProviders(useSettingsStore().settings);
         resolved = await mgr.resolve(item.providerTrackId, item.providerId, item.providerPicId);
@@ -329,8 +435,176 @@ export const usePlaylistStore = defineStore('playlist', {
       await playerStore.loadAndPlay(resolved);
     },
 
-    setActiveTab(tab: PlaylistTab): void {
+    // ===== 搜索结果 =====
+
+    addFromSearch(result: SearchResult, autoplay: boolean = true): void {
+      const item: PlaylistItem = {
+        id: genId(),
+        song: result.name,
+        artist: result.artist,
+        source: 'network',
+        providerId: result.provider,
+        providerTrackId: result.id,
+        providerPicId: result.picId,
+        addedAt: Date.now(),
+      };
+      this.addToPlaylist(LOCAL_PLAYLIST_ID, item);
+
+      if (autoplay) {
+        this.queue = {
+          items: [item],
+          currentIndex: 0,
+          sourcePlaylistId: LOCAL_PLAYLIST_ID,
+        };
+        this.activeTab = 'queue';
+        this.savePlaylistData();
+        void this.resolveAndPlay(0);
+      }
+    },
+
+    // ===== AI 选曲 =====
+
+    addFromAi(result: SearchResult, autoplay: boolean = true): void {
+      const item: PlaylistItem = {
+        id: genId(),
+        song: result.name,
+        artist: result.artist,
+        source: 'chat',
+        providerId: result.provider,
+        providerTrackId: result.id,
+        providerPicId: result.picId,
+        addedAt: Date.now(),
+      };
+      this.addToPlaylist(AI_PLAYLIST_ID, item);
+
+      if (autoplay) {
+        const insertIdx = this.queue.currentIndex + 1;
+        this.queue.items.splice(insertIdx, 0, item);
+        this.queue.currentIndex = insertIdx;
+        this.savePlaylistData();
+        void this.resolveAndPlay(insertIdx);
+      }
+    },
+
+    // ===== 上传 =====
+
+    async addServerFile(name: string, file: File): Promise<void> {
+      const serverPath = await uploadFile(file);
+      const item: PlaylistItem = {
+        id: genId(),
+        song: name,
+        source: 'server',
+        serverPath,
+        addedAt: Date.now(),
+      };
+      this.addToPlaylist(UPLOAD_PLAYLIST_ID, item);
+      this.queue = {
+        items: [item],
+        currentIndex: 0,
+        sourcePlaylistId: UPLOAD_PLAYLIST_ID,
+      };
+      this.savePlaylistData();
+      void this.resolveAndPlay(0);
+    },
+
+    // ===== 网易云歌单同步 =====
+
+    async syncNeteasePlaylists(): Promise<void> {
+      if (this.neteasePlaylistsLoading) return;
+      const settingsStore = useSettingsStore();
+      const workerURL = getNeteaseWorkerURL(settingsStore.settings);
+      const cookie = settingsStore.settings.neteaseCookie;
+      if (!workerURL || !cookie) {
+        logger.warn('Cannot sync netease playlists: worker or cookie missing');
+        return;
+      }
+      this.neteasePlaylistsLoading = true;
+      try {
+        const provider = new NetEaseProvider({ workerURL, cookie });
+        const list = await provider.fetchPlaylists();
+        if (!list) return;
+        const now = Date.now();
+        const existingMap = new Map(this.playlists.filter((p) => p.source === 'netease').map((p) => [p.neteaseId, p]));
+        const newNetease: Playlist[] = list.map((p) => {
+          const existing = existingMap.get(p.id);
+          return {
+            id: existing?.id ?? genId(),
+            name: p.name,
+            source: 'netease' as PlaylistSourceType,
+            neteaseId: p.id,
+            neteaseSpecialType: p.specialType,
+            cover: p.cover,
+            songs: existing?.songs ?? [],
+            updatedAt: existing?.updatedAt ?? now,
+            syncedAt: now,
+          };
+        });
+        this.playlists = this.playlists.filter((p) => p.source !== 'netease');
+        this.playlists.push(...newNetease);
+        this.savePlaylistData();
+
+        // Auto-sync songs for playlists that have no songs yet (limited concurrency)
+        const toSync = newNetease.filter((p) => p.songs.length === 0);
+        if (toSync.length > 0) {
+          const CONCURRENCY = 3;
+          for (let i = 0; i < toSync.length; i += CONCURRENCY) {
+            const batch = toSync.slice(i, i + CONCURRENCY);
+            await Promise.all(batch.map((p) => this.syncNeteasePlaylist(p.id).catch((err) => {
+              logger.warn('Auto-sync playlist failed: ' + p.name, err);
+            })));
+          }
+        }
+      } catch (err) {
+        logger.error('syncNeteasePlaylists failed:', err);
+      } finally {
+        this.neteasePlaylistsLoading = false;
+      }
+    },
+
+    async syncNeteasePlaylist(playlistId: string): Promise<void> {
+      const pl = this.getPlaylist(playlistId);
+      if (!pl || pl.source !== 'netease' || !pl.neteaseId) return;
+      if (this.syncingPlaylistIds.includes(playlistId)) return;
+      const settingsStore = useSettingsStore();
+      const workerURL = getNeteaseWorkerURL(settingsStore.settings);
+      const cookie = settingsStore.settings.neteaseCookie;
+      if (!workerURL || !cookie) return;
+      this.syncingPlaylistIds.push(playlistId);
+      try {
+        const provider = new NetEaseProvider({ workerURL, cookie });
+        const detail = await provider.fetchPlaylist(pl.neteaseId);
+        if (!detail) return;
+        pl.songs = detail.songs.map((s) => ({
+          id: genId(),
+          song: s.name,
+          artist: s.artist,
+          source: 'network' as const,
+          providerId: 'netease',
+          providerTrackId: s.id,
+          providerPicId: s.picId,
+          addedAt: Date.now(),
+        }));
+        pl.cover = detail.cover;
+        pl.syncedAt = Date.now();
+        pl.updatedAt = Date.now();
+        this.savePlaylistData();
+      } catch (err) {
+        logger.error('syncNeteasePlaylist failed:', err);
+      } finally {
+        this.syncingPlaylistIds = this.syncingPlaylistIds.filter((id) => id !== playlistId);
+      }
+    },
+
+    // ===== Tab / 选择 =====
+
+    setActiveTab(tab: OverlayTab): void {
       this.activeTab = tab;
+    },
+
+    selectPlaylist(id: string | null): void {
+      this.selectedPlaylistId = id;
     },
   },
 });
+
+export { LOCAL_PLAYLIST_ID, UPLOAD_PLAYLIST_ID, AI_PLAYLIST_ID };

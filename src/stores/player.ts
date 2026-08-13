@@ -42,9 +42,9 @@ export const usePlayerStore = defineStore('player', {
           if (remaining < 15 && remaining > 0 && playerStore.preloadedIndex === -1) {
             const playlistStore = usePlaylistStore();
             const nextIdx = playlistStore.peekNextIndex();
-            if (nextIdx >= 0 && nextIdx !== playlistStore.currentIndex) {
+            if (nextIdx >= 0 && nextIdx !== playlistStore.queue.currentIndex) {
               playerStore.preloadedIndex = nextIdx;
-              void playlistStore.resolveTrack(playlistStore.currentList, nextIdx).then((resolved) => {
+              void playlistStore.resolveTrack(nextIdx).then((resolved) => {
                 if (resolved) {
                   playerStore.preloadedUrl = resolved.url;
                   engine.preloadNext(resolved.url);

@@ -6,7 +6,7 @@ import { createDefaultProviders } from '@/provider';
 import { addBgmHistory } from '@/ai/BgmHistory';
 import { buildChatContext } from '@/ai/ContextBuilder';
 import { buildFcAuxPrompt, buildFcSystemPrompt, buildFcUserPrompt } from '@/ai/PromptBuilder';
-import { runBgmAgentLoop } from '@/ai/CustomApiClient';
+import { runBgmAgentLoop, isAiApiError } from '@/ai/CustomApiClient';
 import { t } from '@/i18n';
 import { logger } from '@/utils/logger';
 import {
@@ -299,7 +299,16 @@ export class FunctionCallMode {
     } catch (err) {
       logger.error('AI agent loop failed:', err);
       if (typeof toastr !== 'undefined') {
-        toastr.error(t('AI recommendation failed'), '晓乐');
+        if (isAiApiError(err, 'cors')) {
+          toastr.error(t('Endpoint CORS blocked (agent)'), '晓乐');
+        } else if (isAiApiError(err, 'network')) {
+          toastr.error(t('Endpoint unreachable'), '晓乐');
+        } else if (isAiApiError(err, 'http')) {
+          const detail = `${err.status ?? ''} ${err.message}`.trim();
+          toastr.error(t('Endpoint HTTP error').replace('{detail}', detail), '晓乐');
+        } else {
+          toastr.error(t('AI recommendation failed'), '晓乐');
+        }
       }
     } finally {
       this.isAnalyzing = false;

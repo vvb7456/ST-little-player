@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useSettingsStore, usePlaylistStore } from '@/stores/index';
+import { useSettingsStore } from '@/stores/index';
 import type { PlayMode, WidgetMode, DockAlign, AiMode } from '@/types';
 import { t } from '@/i18n';
 import { logger } from '@/utils/logger';
 import { getBgmController } from '@/ai/BgmController';
-import { fetchCustomModels } from '@/ai/CustomApiClient';
+import { fetchCustomModels, isAiApiError } from '@/ai/CustomApiClient';
 import { TOGETHER_INTERCEPTOR } from '@/ai/prompts';
 import { OFFICIAL_WORKER_URL } from '@/provider';
 import ToggleSwitch from './ToggleSwitch.vue';
 import ComboBox from './ComboBox.vue';
 
 const settingsStore = useSettingsStore();
-const playlistStore = usePlaylistStore();
 
 type TabId = 'appearance' | 'playback' | 'ai' | 'general';
 const activeTab = ref<TabId>('appearance');
@@ -110,7 +109,18 @@ async function onFetchModels(): Promise<void> {
     }
   } catch (err: any) {
     logger.error('Failed to fetch models:', err);
-    if (typeof toastr !== 'undefined') toastr.error(t('Failed to fetch models'), '晓乐');
+    if (typeof toastr !== 'undefined') {
+      if (isAiApiError(err, 'cors')) {
+        toastr.error(t('Endpoint CORS blocked'), '晓乐');
+      } else if (isAiApiError(err, 'network')) {
+        toastr.error(t('Endpoint unreachable'), '晓乐');
+      } else if (isAiApiError(err, 'http')) {
+        const detail = `${err.status ?? ''} ${err.message}`.trim();
+        toastr.error(t('Endpoint HTTP error').replace('{detail}', detail), '晓乐');
+      } else {
+        toastr.error(t('Failed to fetch models'), '晓乐');
+      }
+    }
   } finally {
     fetchingModels.value = false;
   }
@@ -253,59 +263,6 @@ const importData = (): void => {
 
 const EXT_VERSION = __APP_VERSION__;
 const REPO_URL = 'https://github.com/vvb7456/ST-little-player';
-
-// ===== Playlist import/export (network list only) =====
-const exportPlaylist = (): void => {
-  const data = playlistStore.networkList.map(item => ({
-    song: item.song,
-    artist: item.artist,
-    providerId: item.providerId,
-    providerTrackId: item.providerTrackId,
-    providerPicId: item.providerPicId,
-  }));
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'st-little-player-playlist.json';
-  a.click();
-  URL.revokeObjectURL(url);
-  if (typeof toastr !== 'undefined') toastr.success(t('Playlist exported'), '晓乐');
-};
-
-const importPlaylist = (): void => {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = '.json';
-  input.onchange = async (e: Event): Promise<void> => {
-    const file = (e.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    const text = await file.text();
-    try {
-      const data = JSON.parse(text);
-      if (!Array.isArray(data)) throw new Error('Not an array');
-      const items = data
-        .filter((item: any) => item && typeof item.song === 'string')
-        .map((item: any) => ({
-          id: `stmp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-          song: item.song,
-          artist: item.artist,
-          source: 'network' as const,
-          providerId: item.providerId,
-          providerTrackId: item.providerTrackId,
-          providerPicId: item.providerPicId,
-          addedAt: Date.now(),
-        }));
-      playlistStore.networkList = items;
-      playlistStore.savePlaylistData();
-      if (typeof toastr !== 'undefined') toastr.success(t('Playlist imported'), '晓乐');
-    } catch (err) {
-      logger.error('Playlist import failed:', err);
-      if (typeof toastr !== 'undefined') toastr.error(`${t('Import failed')}：${err instanceof Error ? err.message : t('Invalid JSON')}`, '晓乐');
-    }
-  };
-  input.click();
-};
 
 // ===== Prompt Editor (uses ST native callPopup) =====
 async function openPromptEditor(): Promise<void> {
@@ -541,30 +498,6 @@ async function openPromptEditor(): Promise<void> {
             :model-value="!!settingsStore.settings.providers.find(p => p.id === 'local')?.enabled"
             @update:model-value="toggleLocalUpload"
           />
-        </div>
-
-        <!-- Section: Playlist Management -->
-        <div class="stmp-section-header">
-          <div class="stmp-section-title">{{ t('Playlist Management') }}</div>
-        </div>
-
-        <div class="stmp-row">
-          <div class="stmp-row-info">
-            <div class="stmp-row-title">{{ t('Export playlist') }}</div>
-            <div class="stmp-row-desc">{{ t('Save network playlist to a JSON file') }}</div>
-          </div>
-          <div class="menu_button menu_button_icon stmp-action-btn" @click="exportPlaylist">
-            <i class="fa-solid fa-file-export" />
-          </div>
-        </div>
-        <div class="stmp-row">
-          <div class="stmp-row-info">
-            <div class="stmp-row-title">{{ t('Import playlist') }}</div>
-            <div class="stmp-row-desc">{{ t('Load network playlist from a JSON file') }}</div>
-          </div>
-          <div class="menu_button menu_button_icon stmp-action-btn" @click="importPlaylist">
-            <i class="fa-solid fa-file-import" />
-          </div>
         </div>
       </div>
 

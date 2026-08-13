@@ -111,13 +111,110 @@ interface ChatMessage {
   tool_call_id?: string;
 }
 
+/**
+ * Semantic error thrown by the custom API client.
+ * - `cors`: browser blocked the request (likely CORS policy); cross-origin fetch threw before any response arrived
+ * - `network`: request never reached the server (DNS failure, connection refused, offline, etc.)
+ * - `http`: server responded with a non-2xx status code (see `status`)
+ * - `unknown`: anything else
+ *
+ * Note: browsers cannot reliably distinguish CORS rejection from a genuine network
+ * failure (both surface as a TypeError "Failed to fetch" with no response body). We
+ * therefore flag cross-origin failures that look like a CORS preflight rejection as
+ * `cors`, but callers should treat `cors` and `network` as "endpoint unreachable
+ * from the browser" when giving user-facing advice.
+ */
+export class AiApiError extends Error {
+  readonly kind: 'cors' | 'network' | 'http' | 'unknown';
+  readonly status?: number;
+  readonly endpoint?: string;
+
+  constructor(
+    kind: 'cors' | 'network' | 'http' | 'unknown',
+    message: string,
+    opts?: { status?: number; endpoint?: string; cause?: unknown },
+  ) {
+    super(message);
+    this.name = 'AiApiError';
+    this.kind = kind;
+    this.status = opts?.status;
+    this.endpoint = opts?.endpoint;
+    if (opts?.cause !== undefined) {
+      (this as any).cause = opts.cause;
+    }
+  }
+}
+
+/** True if `err` is an AiApiError with the given kind. */
+export function isAiApiError(
+  err: unknown,
+  kind?: 'cors' | 'network' | 'http' | 'unknown',
+): err is AiApiError {
+  return err instanceof AiApiError && (kind === undefined || err.kind === kind);
+}
+
+/**
+ * Classify a raw fetch error into a semantic kind.
+ *
+ * Browsers collapse CORS rejection, DNS failure, connection refused, and TLS
+ * errors all into a `TypeError: Failed to fetch` with no status. We can only
+ * guess: if the target URL is cross-origin, treat it as `cors`; otherwise it's
+ * a `network` failure.
+ */
+function classifyFetchFailure(
+  err: unknown,
+  targetUrl: string,
+): 'cors' | 'network' | 'unknown' {
+  // Any non-TypeError thrown before response → unknown
+  if (!(err instanceof TypeError)) return 'unknown';
+  // Cross-origin → most likely CORS (preflight blocked or no ACAO header)
+  try {
+    const u = new URL(targetUrl);
+    const sameOrigin =
+      typeof window !== 'undefined' &&
+      u.origin === window.location.origin;
+    return sameOrigin ? 'network' : 'cors';
+  } catch {
+    return 'network';
+  }
+}
+
+/** Wrap a fetch call and rethrow failures as AiApiError. */
+async function fetchOrThrow(
+  url: string,
+  init: RequestInit,
+): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch (err) {
+    const kind = classifyFetchFailure(err, url);
+    throw new AiApiError(kind, kindMessage(kind, url), {
+      endpoint: url,
+      cause: err,
+    });
+  }
+}
+
+function kindMessage(kind: 'cors' | 'network' | 'http' | 'unknown', url: string): string {
+  switch (kind) {
+    case 'cors':
+      return `Endpoint blocked by CORS (browser cannot read response): ${url}`;
+    case 'network':
+      return `Cannot reach endpoint (network error): ${url}`;
+    case 'http':
+      return `Endpoint returned an HTTP error: ${url}`;
+    case 'unknown':
+      return `Request to endpoint failed: ${url}`;
+  }
+}
+
 // ===== Model fetching =====
 
 export async function fetchCustomModels(): Promise<string[]> {
   const settings = useSettingsStore().settings;
   const url = settings.aiApiUrl.replace(/\/$/, '') + '/models';
 
-  const res = await fetch(url, {
+  const res = await fetchOrThrow(url, {
     method: 'GET',
     headers: {
       ...(settings.aiApiKey ? { Authorization: `Bearer ${settings.aiApiKey}` } : {}),
@@ -126,7 +223,10 @@ export async function fetchCustomModels(): Promise<string[]> {
 
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    throw new Error(`API ${res.status}: ${text}`);
+    throw new AiApiError('http', `${res.status} ${res.statusText}`.trim() + (text ? `: ${text.slice(0, 200)}` : ''), {
+      status: res.status,
+      endpoint: url,
+    });
   }
 
   const data = await res.json();
@@ -155,7 +255,7 @@ async function callChatCompletions(
 
   logger.debug('BGM API request:', { model: settings.aiModel, messageCount: messages.length });
 
-  const res = await fetch(url, {
+  const res = await fetchOrThrow(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -167,7 +267,10 @@ async function callChatCompletions(
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     logger.warn('BGM API error: ' + res.status, text);
-    throw new Error(`API ${res.status}: ${text}`);
+    throw new AiApiError('http', `${res.status} ${res.statusText}`.trim() + (text ? `: ${text.slice(0, 200)}` : ''), {
+      status: res.status,
+      endpoint: url,
+    });
   }
 
   const data = await res.json();

@@ -121,6 +121,36 @@ defineProps<{ name: string; size?: number }>();
       <circle cx="3.5" cy="12" r="1.5" fill="currentColor" stroke="none" />
       <circle cx="3.5" cy="18" r="1.5" fill="currentColor" stroke="none" />
     </template>
+    <!-- chevron-left (back) -->
+    <template v-else-if="name === 'chevron-left'">
+      <polyline points="15 18 9 12 15 6" />
+    </template>
+    <!-- heart (favorites) -->
+    <template v-else-if="name === 'heart'">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" fill="currentColor" stroke="none" />
+    </template>
+    <!-- sparkles (AI) -->
+    <template v-else-if="name === 'sparkles'">
+      <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z" fill="currentColor" stroke="none" />
+      <path d="M19 14l.7 2.1L22 17l-2.3.9L19 20l-.7-2.1L16 17l2.3-.9L19 14z" fill="currentColor" stroke="none" />
+    </template>
+    <!-- upload -->
+    <template v-else-if="name === 'upload'">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+      <polyline points="17 8 12 3 7 8" />
+      <line x1="12" y1="3" x2="12" y2="15" />
+    </template>
+    <!-- bookmark (collection) -->
+    <template v-else-if="name === 'bookmark'">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" fill="currentColor" stroke="none" />
+    </template>
+    <!-- refresh-cw (sync) -->
+    <template v-else-if="name === 'refresh-cw'">
+      <polyline points="23 4 23 10 17 10" />
+      <polyline points="1 20 1 14 7 14" />
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
+      <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14" />
+    </template>
   </svg>
 </template>
 

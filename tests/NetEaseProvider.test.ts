@@ -157,4 +157,76 @@ describe('NetEaseProvider', () => {
     expect(capturedHeaders!['X-Netease-Cookie']).toBe('mycookie');
     expect(capturedHeaders!['X-Netease-Params']).toBeTruthy();
   });
+
+  it('fetchPlaylists returns null when workerURL not configured', async () => {
+    const p = new NetEaseProvider({ cookie: 'c' });
+    const result = await p.fetchPlaylists();
+    expect(result).toBeNull();
+  });
+
+  it('fetchPlaylists returns null when cookie not set', async () => {
+    const p = new NetEaseProvider({ workerURL: 'https://w.test' });
+    const result = await p.fetchPlaylists();
+    expect(result).toBeNull();
+  });
+
+  it('fetchPlaylists maps worker response to summary array', async () => {
+    mockFetch.mockImplementation(() =>
+      jsonResp({
+        success: true,
+        data: [
+          { id: '1', name: '我喜欢的音乐', trackCount: 127, cover: 'http://x/c.jpg', specialType: 5 },
+          { id: '2', name: '歌单2', trackCount: 10, cover: 'http://x/c2.jpg', specialType: 0 },
+        ],
+      }),
+    );
+    const p = new NetEaseProvider({ workerURL: 'https://w.test', cookie: 'c' });
+    const result = await p.fetchPlaylists();
+    expect(result).not.toBeNull();
+    expect(result).toHaveLength(2);
+    expect(result![0]).toEqual({
+      id: '1', name: '我喜欢的音乐', trackCount: 127, cover: 'http://x/c.jpg', specialType: 5,
+    });
+  });
+
+  it('fetchPlaylist returns null when cookie not set', async () => {
+    const p = new NetEaseProvider({ workerURL: 'https://w.test' });
+    const result = await p.fetchPlaylist('123');
+    expect(result).toBeNull();
+  });
+
+  it('fetchPlaylist maps worker response to detail with songs', async () => {
+    mockFetch.mockImplementation(() =>
+      jsonResp({
+        success: true,
+        data: {
+          name: '我喜欢的音乐',
+          cover: 'http://x/cover.jpg',
+          songs: [
+            { id: '100', name: '稻香', artist: '周杰伦', duration: 223, picId: 'pic100' },
+            { id: '101', name: '夜曲', artist: '周杰伦', duration: 225 },
+          ],
+        },
+      }),
+    );
+    const p = new NetEaseProvider({ workerURL: 'https://w.test', cookie: 'c' });
+    const result = await p.fetchPlaylist('123');
+    expect(result).not.toBeNull();
+    expect(result!.name).toBe('我喜欢的音乐');
+    expect(result!.cover).toBe('http://x/cover.jpg');
+    expect(result!.songs).toHaveLength(2);
+    expect(result!.songs[0]).toEqual({
+      id: '100', name: '稻香', artist: '周杰伦', duration: 223, provider: 'netease', picId: 'pic100',
+    });
+    expect(result!.songs[1].picId).toBeUndefined();
+  });
+
+  it('fetchPlaylist returns null on API error', async () => {
+    mockFetch.mockImplementation(() =>
+      jsonResp({ success: false, error: 'Empty or private playlist' }),
+    );
+    const p = new NetEaseProvider({ workerURL: 'https://w.test', cookie: 'c' });
+    const result = await p.fetchPlaylist('123');
+    expect(result).toBeNull();
+  });
 });

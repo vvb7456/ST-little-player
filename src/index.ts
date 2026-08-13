@@ -143,9 +143,16 @@ export async function clean(): Promise<void> {
     // 1. Delete uploaded server files in parallel before wiping playlist data
     const playlistData = ctx.extensionSettings[`${MODULE_NAME}-playlist`];
     if (playlistData && typeof playlistData === 'object') {
-      const serverList = (playlistData as { server?: { serverPath?: string }[] }).server;
-      if (Array.isArray(serverList)) {
-        const paths = serverList.map((item) => item?.serverPath).filter((p): p is string => !!p);
+      const data = playlistData as { playlists?: { source?: string; songs?: { serverPath?: string }[] }[] };
+      if (Array.isArray(data.playlists)) {
+        const paths: string[] = [];
+        for (const pl of data.playlists) {
+          if (pl?.source === 'upload' && Array.isArray(pl.songs)) {
+            for (const s of pl.songs) {
+              if (s?.serverPath) paths.push(s.serverPath);
+            }
+          }
+        }
         await Promise.all(paths.map((p) => deleteFile(p).catch((err) => {
           logger.warn('Clean: failed to delete file:', p, err);
         })));

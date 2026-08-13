@@ -19,7 +19,7 @@ A scene-aware music player extension for SillyTavern. Adds a compact, theme-inte
 
 ### Music Sources
 
-- **NetEase Cloud Music**: Search and play from NetEase Cloud Music (music.163.com). Uses a Cloudflare Worker as the backend proxy. You can use the official Worker or self-host your own. Requires a `MUSIC_U` cookie from music.163.com for playback. See [NetEase Setup](#netease-setup) below.
+- **NetEase Cloud Music**: Search and play from NetEase Cloud Music (music.163.com). Uses a Cloudflare Worker as the backend proxy. You can use the official Worker or self-host your own. Requires a `MUSIC_U` cookie from music.163.com for playback. Supports syncing your NetEase account playlists (including "My Favorites"). See [NetEase Setup](#netease-setup) below.
 - **Server Upload**: Upload audio files to the ST server for playback
 
 Enable or disable sources independently in Settings -> Playback -> Data Sources.
@@ -43,7 +43,7 @@ AI analyzes the conversation and automatically selects fitting background music.
 
 - **BGM history**: Recently played songs are tracked per-chat for AI context
 - **Custom prompts**: Editable BGM instruction prompt for Together mode with macro support
-- **Chat playlist**: AI-selected songs are automatically added to the Chat playlist tab, where you can replay them anytime. The chat playlist is cleared on page reload.
+- **Queue insertion**: AI-selected songs are inserted into the current play queue and played immediately, without interrupting the existing playlist's playback
 
 ### Slash Commands
 
@@ -129,11 +129,10 @@ Recently played: {{xiaoyueRecentPlayed}}
 2. Click the player widget to expand it
 3. Click the **search** icon (left side of controls)
 4. Type a song name and press Enter
-5. Click a result to play it immediately, or click `+` to add to playlist
-6. Click the **playlist** icon to view your queue - songs are organized into tabs:
-   - **Network**: Songs added from search
-   - **Upload**: Files uploaded to the server (shown when upload source is enabled)
-   - **Chat**: Songs selected by AI (shown when AI BGM is active)
+5. Click a result to play it immediately, or click `+` to add to your collection playlist
+6. Click the **playlist** icon to view the dual-tab interface:
+   - **Now Playing**: The current play queue, showing the playing track and upcoming songs
+   - **Playlists**: All playlists, organized into "My Playlists" (Collection, Upload, AI Picks) and "NetEase Playlists" (synced from your NetEase account, with "My Favorites" pinned to top). Click a playlist to browse its songs, then click a song to play the playlist from that point
 
 ### AI BGM
 
@@ -162,7 +161,7 @@ If the AI recommends a song that can't be found on any enabled music source, a w
 Four-tab settings panel (Appearance / Playback / AI / General):
 
 - **Appearance**: Widget mode, dock alignment, custom opacity, drag mini text toggle
-- **Playback**: Default volume, play mode (list loop / random / single loop), crossfade, data sources (NetEase Cloud Music mode, cookie, Worker URL, upload), playlist import/export
+- **Playback**: Default volume, play mode (list loop / random / single loop), crossfade, data sources (NetEase Cloud Music mode, cookie, Worker URL, upload)
 - **AI**: AI BGM toggle, mode selection, custom API configuration, context messages, auto trigger, trigger on greeting, prompt role (system/user), custom prompt editor
 - **General**: Debug mode, settings import/export, about
 
@@ -245,14 +244,16 @@ Deploying your own Worker gives you full control and avoids depending on the off
 | `/detail?id=...` | GET | Get song metadata (name, artist, cover) |
 | `/lyric?id=...` | GET | Get LRC lyrics |
 | `/auth` | GET | Verify cookie validity (requires `X-Netease-Cookie` header) |
+| `/playlists` | GET | Get current account's playlist list (requires `X-Netease-Cookie` header) |
+| `/playlist?id=...` | GET | Get all songs in a playlist (requires `X-Netease-Cookie` header) |
 
 ## Data & Storage
 
 | Data | Scope | Persisted? |
 |------|-------|------------|
 | Extension settings | Per-user | Yes |
-| Playlist (network + upload) | Per-user | Yes |
-| AI-selected songs (chat playlist) | Per-chat | No (cleared on reload) |
+| Playlists (Collection, Upload, NetEase sync, AI Picks) | Per-user | Yes |
+| Play queue | Per-user | Yes |
 | BGM play history | Per-chat | Yes |
 | Uploaded audio files | Per-user | Yes |
 | Player state (current track, playing) | - | No (lost on reload) |
