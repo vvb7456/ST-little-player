@@ -4,6 +4,10 @@ English | [简体中文](./README.zh-CN.md)
 
 A scene-aware music player extension for SillyTavern. Adds a compact, theme-integrated music widget with AI-driven background music selection, time-synced lyrics, and slash command control.
 
+<p align="center">
+  <img src="./images/ui-overview.png" alt="ST-Little-Player UI overview" width="100%" />
+</p>
+
 ## Features
 
 ### Player Widget

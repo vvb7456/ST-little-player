@@ -4,6 +4,10 @@
 
 SillyTavern 情景音乐播放器扩展。提供紧凑的、与 ST 主题深度融合的音乐播放组件，支持 AI 驱动的背景音乐选曲、歌词同步、斜杠命令控制。
 
+<p align="center">
+  <img src="./images/ui-overview-zh.png" alt="晓乐-界面总览" width="100%" />
+</p>
+
 ## 功能
 
 ### 播放器组件
