@@ -536,23 +536,31 @@ export const usePlaylistStore = defineStore('playlist', {
             cover: p.cover,
             songs: existing?.songs ?? [],
             updatedAt: existing?.updatedAt ?? now,
-            syncedAt: now,
+            syncedAt: existing?.syncedAt,
           };
         });
-        this.playlists = this.playlists.filter((p) => p.source !== 'netease');
-        this.playlists.push(...newNetease);
+        this.playlists = [
+          ...this.playlists.filter((p) => p.source !== 'netease'),
+          ...newNetease,
+        ];
+        if (
+          this.queue.sourcePlaylistId &&
+          !this.playlists.some((p) => p.id === this.queue.sourcePlaylistId)
+        ) {
+          this.queue.sourcePlaylistId = undefined;
+        }
         this.savePlaylistData();
 
-        // Auto-sync songs for playlists that have no songs yet (limited concurrency)
-        const toSync = newNetease.filter((p) => p.songs.length === 0);
-        if (toSync.length > 0) {
+        // Refresh songs for every playlist (limited concurrency)
+        if (newNetease.length > 0) {
           const CONCURRENCY = 3;
-          for (let i = 0; i < toSync.length; i += CONCURRENCY) {
-            const batch = toSync.slice(i, i + CONCURRENCY);
-            await Promise.all(batch.map((p) => this.syncNeteasePlaylist(p.id).catch((err) => {
+          for (let i = 0; i < newNetease.length; i += CONCURRENCY) {
+            const batch = newNetease.slice(i, i + CONCURRENCY);
+            await Promise.all(batch.map((p) => this.syncNeteasePlaylist(p.id, false).catch((err) => {
               logger.warn('Auto-sync playlist failed: ' + p.name, err);
             })));
           }
+          this.savePlaylistData();
         }
       } catch (err) {
         logger.error('syncNeteasePlaylists failed:', err);
@@ -561,20 +569,22 @@ export const usePlaylistStore = defineStore('playlist', {
       }
     },
 
-    async syncNeteasePlaylist(playlistId: string): Promise<void> {
+    async syncNeteasePlaylist(playlistId: string, persist = true): Promise<boolean> {
       const pl = this.getPlaylist(playlistId);
-      if (!pl || pl.source !== 'netease' || !pl.neteaseId) return;
-      if (this.syncingPlaylistIds.includes(playlistId)) return;
+      if (!pl || pl.source !== 'netease' || !pl.neteaseId) return false;
+      if (this.syncingPlaylistIds.includes(playlistId)) return false;
       const settingsStore = useSettingsStore();
       const workerURL = getNeteaseWorkerURL(settingsStore.settings);
       const cookie = settingsStore.settings.neteaseCookie;
-      if (!workerURL || !cookie) return;
+      if (!workerURL || !cookie) return false;
       this.syncingPlaylistIds.push(playlistId);
       try {
         const provider = new NetEaseProvider({ workerURL, cookie });
         const detail = await provider.fetchPlaylist(pl.neteaseId);
-        if (!detail) return;
-        pl.songs = detail.songs.map((s) => ({
+        if (!detail) return false;
+        const target = this.getPlaylist(playlistId);
+        if (!target || target.neteaseId !== pl.neteaseId) return false;
+        target.songs = detail.songs.map((s) => ({
           id: genId(),
           song: s.name,
           artist: s.artist,
@@ -584,12 +594,14 @@ export const usePlaylistStore = defineStore('playlist', {
           providerPicId: s.picId,
           addedAt: Date.now(),
         }));
-        pl.cover = detail.cover;
-        pl.syncedAt = Date.now();
-        pl.updatedAt = Date.now();
-        this.savePlaylistData();
+        target.cover = detail.cover;
+        target.syncedAt = Date.now();
+        target.updatedAt = Date.now();
+        if (persist) this.savePlaylistData();
+        return true;
       } catch (err) {
         logger.error('syncNeteasePlaylist failed:', err);
+        return false;
       } finally {
         this.syncingPlaylistIds = this.syncingPlaylistIds.filter((id) => id !== playlistId);
       }

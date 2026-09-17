@@ -175,6 +175,7 @@ const zhCN: Record<string, string> = {
   'Not synced': '未同步',
   'Syncing...': '同步中...',
   'Playlist synced': '歌单已同步',
+  'Sync failed': '同步失败',
 };
 
 let currentLang: string | null = null;

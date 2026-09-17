@@ -257,7 +257,10 @@ async function handlePlaylistDetail(request: Request): Promise<Response> {
   if (!pl) return errorResponse('Playlist not found', 404);
 
   const trackIds = Array.isArray(pl.trackIds) ? pl.trackIds.map((t: any) => t.id) : [];
-  if (trackIds.length === 0) return errorResponse('Empty or private playlist', 400);
+  // Empty playlists are valid; only treat trackCount > 0 with no trackIds as an anomaly
+  if (trackIds.length === 0 && Number(pl.trackCount ?? 0) > 0) {
+    return errorResponse('Playlist tracks unavailable', 400);
+  }
 
   // 2. Batch fetch song details (1000 per batch)
   const BATCH_SIZE = 1000;

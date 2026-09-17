@@ -83,29 +83,29 @@ function isPlaylistSyncing(id: string): boolean {
 }
 
 async function syncPlaylist(playlistId: string): Promise<void> {
-  await playlistStore.syncNeteasePlaylist(playlistId);
-  if (typeof toastr !== 'undefined') toastr.success(t('Playlist synced'), '晓乐');
+  const ok = await playlistStore.syncNeteasePlaylist(playlistId);
+  if (typeof toastr === 'undefined') return;
+  if (ok) toastr.success(t('Playlist synced'), '晓乐');
+  else toastr.warning(t('Sync failed'), '晓乐');
 }
 
 function openPlaylistDetail(playlistId: string): void {
   const pl = playlistStore.getPlaylist(playlistId);
   if (!pl) return;
-  if (pl.source === 'netease' && pl.songs.length === 0) {
+  if (pl.source === 'netease' && !pl.syncedAt) {
     void syncPlaylist(playlistId);
   }
   playlistStore.selectPlaylist(playlistId);
 }
 
 function playlistSongCount(pl: Playlist): string {
-  if (pl.songs.length > 0) return `${pl.songs.length} ${t('songs')}`;
-  if (pl.source === 'netease') {
-    return isPlaylistSyncing(pl.id) ? t('Syncing...') : t('Not synced');
-  }
-  return '0 ' + t('songs');
+  if (isPlaylistSyncing(pl.id)) return t('Syncing...');
+  if (pl.source === 'netease' && !pl.syncedAt) return t('Not synced');
+  return `${pl.songs.length} ${t('songs')}`;
 }
 
 function isNeteaseNotSynced(pl: Playlist): boolean {
-  return pl.source === 'netease' && pl.songs.length === 0;
+  return pl.source === 'netease' && !pl.syncedAt;
 }
 </script>
 

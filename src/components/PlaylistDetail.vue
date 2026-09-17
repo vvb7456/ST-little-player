@@ -47,7 +47,11 @@ function removeSong(songId: string): void {
           <span class="stmp-item-song">{{ item.song }}</span>
           <span v-if="item.artist" class="stmp-item-artist">{{ item.artist }}</span>
         </div>
-        <button class="stmp-item-del" @click.stop="removeSong(item.id)">
+        <button
+          v-if="selectedPlaylist?.source !== 'netease'"
+          class="stmp-item-del"
+          @click.stop="removeSong(item.id)"
+        >
           <Icon name="x" :size="14" />
         </button>
       </div>
